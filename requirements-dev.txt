@@ -1,0 +1,10 @@
+# requirements for developers and CI
+-r requirements.txt
+
+pytest==7.4.4
+
+# Lint
+black==24.4.2
+mypy==1.10.0
+ruff==0.4.6
+pylint==3.2.2
