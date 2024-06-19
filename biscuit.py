@@ -31,6 +31,12 @@ class TheoriqRequest:
         self.from_addr = from_addr
         self.to_addr = to_addr
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        else:
+            return False
+
     def to_fact(self, req_id: str) -> Fact:
         return Fact(
             "theoriq:request({req_id}, {body_hash}, {from_addr}, {to_addr})",
@@ -48,6 +54,12 @@ class TheoriqBudget:
         self.amount = amount
         self.currency = currency
         self.voucher = voucher
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        else:
+            return False
 
     def to_fact(self, req_id: str) -> Fact:
         return Fact(
@@ -67,6 +79,12 @@ class RequestFacts:
         self.request = request
         self.budget = budget
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        else:
+            return False
+
     @staticmethod
     def from_biscuit(biscuit: Biscuit) -> "RequestFacts":
         rule = Rule(
@@ -79,11 +97,12 @@ class RequestFacts:
         authorizer.add_token(biscuit)
         facts = authorizer.query(rule)
 
-        [req_id, body_hash, from_addr, to_addr, amount, currency, voucher] = map(lambda x: str(x), facts)
+        [req_id, body_hash, from_addr, to_addr, amount, currency, voucher] = facts[0].terms
+        request_id = UUID(req_id)
         theoriq_req = TheoriqRequest(str(body_hash), str(from_addr), str(to_addr))
         theoriq_budget = TheoriqBudget(amount, currency, voucher)
 
-        return RequestFacts(req_id, theoriq_req, theoriq_budget)
+        return RequestFacts(request_id, theoriq_req, theoriq_budget)
 
     def to_block(self) -> BlockBuilder:
         block_builder = BlockBuilder("")
@@ -99,6 +118,12 @@ class TheoriqResponse:
         self.body_hash = body_hash
         self.to_addr = to_addr
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        else:
+            return False
+
     def to_fact(self, req_id: str) -> Fact:
         return Fact(
             "theoriq:response({req_id}, {body_hash}, {to_addr})",
@@ -110,6 +135,12 @@ class TheoriqCost:
     def __init__(self, amount: str, currency: str):
         self.amount = amount
         self.currency = currency
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        else:
+            return False
 
     def to_fact(self, req_id: str) -> Fact:
         return Fact(
@@ -124,6 +155,12 @@ class ResponseFacts:
         self.response = response
         self.cost = cost
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        else:
+            return False
+
     @staticmethod
     def from_biscuit(biscuit: Biscuit) -> "ResponseFacts":
         rule = Rule(
@@ -136,11 +173,12 @@ class ResponseFacts:
         authorizer.add_token(biscuit)
         facts = authorizer.query(rule)
 
-        [req_id, body_hash, to_addr, amount, currency] = facts
+        [req_id, body_hash, to_addr, amount, currency] = facts[0].terms
+        request_id = UUID(req_id)
         theoriq_resp = TheoriqResponse(body_hash, to_addr)
         theoriq_cost = TheoriqCost(amount, currency)
 
-        return ResponseFacts(req_id, theoriq_resp, theoriq_cost)
+        return ResponseFacts(request_id, theoriq_resp, theoriq_cost)
 
     def to_block(self) -> BlockBuilder:
         block_builder = BlockBuilder("")

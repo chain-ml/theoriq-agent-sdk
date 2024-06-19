@@ -14,6 +14,9 @@ from biscuit import *
 #   -> Attenuate a biscuit with request facts (Add a third party block)
 #   -> Attenuate a biscuit with response facts (Add a third party block)
 
+# FIXME:
+#   -> Maybe we should add a verification in the authorizer to check that subject.addr == theoriq:request.to_addr
+
 
 def authorizer(subject_addr: str) -> Authorizer:
     """
