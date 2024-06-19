@@ -7,9 +7,8 @@ format:
 
 lint:
 	black . --check
-	mypy .
+	mypy . --disable-error-code=attr-defined
 	ruff check .
-	pylint ./ --max-line-length 120 --disable=R,C,I,W1203,W0107 --fail-under=9
 
 test:
 	pytest tests

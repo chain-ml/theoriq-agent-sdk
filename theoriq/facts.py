@@ -1,31 +1,14 @@
 """
-Module defining helpers to work with biscuit data.
+Theoriq biscuit facts
 """
 
-from biscuit_auth import Biscuit, Rule, Authorizer, BlockBuilder, Fact
 from uuid import UUID
-
-
-# TODO: Add tests
-
-
-def get_subject_address(biscuit: Biscuit) -> str:
-    """Get the subject address defined in the biscuit data."""
-
-    rule = Rule(
-        """
-        address($address) <- theoriq:subject("agent", $address)
-        """
-    )
-
-    authorizer = Authorizer()
-    authorizer.add_token(biscuit)
-
-    facts = authorizer.query(rule)
-    return facts[0].terms[0]
+from biscuit_auth import Fact, Rule, Biscuit, Authorizer, BlockBuilder
 
 
 class TheoriqRequest:
+    """`theoriq:request` fact"""
+
     def __init__(self, body_hash: str, from_addr: str, to_addr: str):
         self.body_hash = body_hash
         self.from_addr = from_addr
@@ -38,6 +21,7 @@ class TheoriqRequest:
             return False
 
     def to_fact(self, req_id: str) -> Fact:
+        """Convert to a biscuit fact"""
         return Fact(
             "theoriq:request({req_id}, {body_hash}, {from_addr}, {to_addr})",
             {
@@ -50,6 +34,8 @@ class TheoriqRequest:
 
 
 class TheoriqBudget:
+    """`theoriq:budget` fact"""
+
     def __init__(self, amount: str, currency: str, voucher: str):
         self.amount = amount
         self.currency = currency
@@ -62,6 +48,7 @@ class TheoriqBudget:
             return False
 
     def to_fact(self, req_id: str) -> Fact:
+        """Convert to a biscuit fact"""
         return Fact(
             "theoriq:budget({req_id}, {amount}, {currency}, {voucher})",
             {
@@ -74,6 +61,8 @@ class TheoriqBudget:
 
 
 class RequestFacts:
+    """Required facts inside the request biscuit"""
+
     def __init__(self, req_id: UUID, request: TheoriqRequest, budget: TheoriqBudget):
         self.req_id = req_id
         self.request = request
@@ -87,6 +76,8 @@ class RequestFacts:
 
     @staticmethod
     def from_biscuit(biscuit: Biscuit) -> "RequestFacts":
+        """Read request facts from biscuit"""
+
         rule = Rule(
             """
             data($req_id, $body_hash, $from_addr, $target_addr, $amount, $currency, $voucher) <- theoriq:request($req_id, $body_hash, $from_addr, $target_addr), theoriq:budget($req_id, $amount, $currency, $voucher)
@@ -97,14 +88,17 @@ class RequestFacts:
         authorizer.add_token(biscuit)
         facts = authorizer.query(rule)
 
-        [req_id, body_hash, from_addr, to_addr, amount, currency, voucher] = facts[0].terms
+        [req_id, body_hash, from_addr, to_addr, amount, currency, voucher] = facts[
+            0
+        ].terms
         request_id = UUID(req_id)
-        theoriq_req = TheoriqRequest(str(body_hash), str(from_addr), str(to_addr))
+        theoriq_req = TheoriqRequest(body_hash, from_addr, to_addr)
         theoriq_budget = TheoriqBudget(amount, currency, voucher)
 
         return RequestFacts(request_id, theoriq_req, theoriq_budget)
 
     def to_block(self) -> BlockBuilder:
+        """Construct a biscuit block using the requestfacts"""
         block_builder = BlockBuilder("")
         request_id = str(self.req_id)
         block_builder.add_fact(self.request.to_fact(request_id))
@@ -114,6 +108,8 @@ class RequestFacts:
 
 
 class TheoriqResponse:
+    """`theoriq:response` fact"""
+
     def __init__(self, body_hash: str, to_addr: str):
         self.body_hash = body_hash
         self.to_addr = to_addr
@@ -125,6 +121,7 @@ class TheoriqResponse:
             return False
 
     def to_fact(self, req_id: str) -> Fact:
+        """Convert to a biscuit fact"""
         return Fact(
             "theoriq:response({req_id}, {body_hash}, {to_addr})",
             {"req_id": req_id, "body_hash": self.body_hash, "to_addr": self.to_addr},
@@ -132,6 +129,8 @@ class TheoriqResponse:
 
 
 class TheoriqCost:
+    """`theoriq:cost` fact"""
+
     def __init__(self, amount: str, currency: str):
         self.amount = amount
         self.currency = currency
@@ -143,6 +142,7 @@ class TheoriqCost:
             return False
 
     def to_fact(self, req_id: str) -> Fact:
+        """Convert to a biscuit fact"""
         return Fact(
             "theoriq:cost({req_id}, {amount}, {currency})",
             {"req_id": req_id, "amount": self.amount, "currency": self.currency},
@@ -150,6 +150,8 @@ class TheoriqCost:
 
 
 class ResponseFacts:
+    """Required facts inside the response biscuit"""
+
     def __init__(self, req_id: UUID, response: TheoriqResponse, cost: TheoriqCost):
         self.req_id = req_id
         self.response = response
@@ -163,6 +165,7 @@ class ResponseFacts:
 
     @staticmethod
     def from_biscuit(biscuit: Biscuit) -> "ResponseFacts":
+        """Read response facts from biscuit"""
         rule = Rule(
             """
             data($req_id, $body_hash, $target_addr, $amount, $currency) <- theoriq:response($req_id, $body_hash, $target_addr), theoriq:cost($req_id, $amount, $currency)
@@ -181,17 +184,10 @@ class ResponseFacts:
         return ResponseFacts(request_id, theoriq_resp, theoriq_cost)
 
     def to_block(self) -> BlockBuilder:
+        """Construct a biscuit block using the response facts"""
         block_builder = BlockBuilder("")
         request_id = str(self.req_id)
         block_builder.add_fact(self.response.to_fact(request_id))
         block_builder.add_fact(self.cost.to_fact(request_id))
 
         return block_builder
-
-
-def get_request_facts(biscuit: Biscuit) -> RequestFacts:
-    return RequestFacts.from_biscuit(biscuit)
-
-
-def get_response_facts(biscuit: Biscuit) -> ResponseFacts:
-    return ResponseFacts.from_biscuit(biscuit)
