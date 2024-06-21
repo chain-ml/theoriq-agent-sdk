@@ -7,13 +7,15 @@ from theoriq.facts import RequestFacts, ResponseFacts
 from datetime import datetime, timezone
 from biscuit_auth import Biscuit, Rule, Authorizer, Policy, Check, KeyPair
 
+from theoriq.types import AgentAddress
 
-def get_subject_address(biscuit: Biscuit) -> str:
+
+def get_subject_address(biscuit: Biscuit) -> AgentAddress:
     """Get the subject address of a biscuit."""
     rule = Rule("""address($address) <- theoriq:subject("agent", $address)""")
     authorizer = _biscuit_authorizer(biscuit)
     facts = authorizer.query(rule)
-    return facts[0].terms[0]
+    return AgentAddress(facts[0].terms[0])
 
 
 def get_request_facts(biscuit: Biscuit) -> RequestFacts:
@@ -26,16 +28,16 @@ def get_response_facts(biscuit: Biscuit) -> ResponseFacts:
     return ResponseFacts.from_biscuit(biscuit)
 
 
-def default_authorizer(subject_addr: str) -> Authorizer:
+def default_authorizer(agent_addr: AgentAddress) -> Authorizer:
     """
     Build an authorizer object for Biscuit authorization.
-    :param subject_addr: subject address of the receiver of the biscuit
+    :param agent_addr: subject address of the receiver of the biscuit
     :return: Authorizer object
     """
     authorizer = Authorizer()
 
     # Add subject address policy
-    subject_addr_policy = Policy("""allow if theoriq:subject("agent", {addr})""", {"addr": subject_addr})
+    subject_addr_policy = Policy("""allow if theoriq:subject("agent", {addr})""", {"addr": str(agent_addr)})
     authorizer.add_policy(subject_addr_policy)
 
     # Add expiration check

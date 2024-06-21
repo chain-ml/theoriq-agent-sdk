@@ -21,7 +21,8 @@ from theoriq.facts import RequestFacts, ResponseFacts
 def agent_biscuit(request, biscuit_facts) -> biscuit_auth.Biscuit:
     def _biscuit_builder(addr: str, exp: Optional[datetime] = None) -> biscuit_auth.Biscuit:
         root_kp = KeyPair()
-        authority = utils.new_authority_block(subject_addr=addr, expires_at=exp)
+        agent_addr = utils.to_agent_address(addr)
+        authority = utils.new_authority_block(subject_addr=agent_addr, expires_at=exp)
         authority.merge(biscuit_facts)
         return authority.build(root_kp.private_key)
 
@@ -37,7 +38,8 @@ def biscuit_facts(request_facts, response_facts) -> biscuit_auth.BlockBuilder:
 @pytest.fixture
 def request_facts(request) -> RequestFacts:
     if getattr(request, "param", None) is None:
-        return utils.new_req_facts(b"Hello World", "0x01", "0x02", 10)
+        default_agent_address = utils.to_agent_address("0x02")
+        return utils.new_req_facts(b"Hello World", "0x01", default_agent_address, 10)
     else:
         (body, from_addr, to_addr, amount) = request.param
         return utils.new_req_facts(body, from_addr, to_addr, amount)
@@ -58,14 +60,14 @@ def one_hour_ago() -> datetime:
 
 @pytest.mark.parametrize("agent_biscuit", ["0x02"], indirect=True)
 def test_authorization(agent_biscuit):
-    authorizer = default_authorizer("0x02")
+    authorizer = default_authorizer(utils.to_agent_address("0x02"))
     authorizer.add_token(agent_biscuit)
     authorizer.authorize()
 
 
 @pytest.mark.parametrize("agent_biscuit", ["0x02"], indirect=True)
 def test_authorization_wrong_subject_address_raises_authorization_error(agent_biscuit):
-    wrong_subject_address = "0x42"
+    wrong_subject_address = utils.to_agent_address("0x42")
     authorizer = default_authorizer(wrong_subject_address)
     authorizer.add_token(agent_biscuit)
 
@@ -75,7 +77,7 @@ def test_authorization_wrong_subject_address_raises_authorization_error(agent_bi
 
 @pytest.mark.parametrize("agent_biscuit", [{"addr": "0x02", "exp": one_hour_ago()}], indirect=True)
 def test_authorization_expired_raises_authorization_error(agent_biscuit):
-    authorizer = default_authorizer("0x01")
+    authorizer = default_authorizer(utils.to_agent_address("0x02"))
     authorizer.add_token(agent_biscuit)
 
     with pytest.raises(AuthorizationError):
@@ -98,25 +100,18 @@ def test_read_response_facts(agent_biscuit, response_facts):
 
 @pytest.mark.parametrize("agent_biscuit", ["0x02"], indirect=True)
 def test_append_request_facts(agent_biscuit):
-    # Attenuate biscuit with request facts
     agent_kp = KeyPair()
-    req_facts = utils.new_req_facts(b"help", "0x02", "0x03", 5)
+    req_facts = utils.new_req_facts(b"help", "0x02", utils.to_agent_address("0x03"), 5)
     agent_biscuit = theoriq.biscuit.attenuate_for_request(agent_biscuit, req_facts, agent_kp)
 
     assert agent_biscuit.block_count() == 2
 
 
+@pytest.mark.parametrize("request_facts", [(b"hello", "0x01", "0x02", 10)], indirect=True)
 @pytest.mark.parametrize("agent_biscuit", ["0x02"], indirect=True)
-def test_append_response_facts(agent_biscuit):
-    root_kp = KeyPair()
-    authority = utils.new_authority_block("0x01")
-    req_facts = utils.new_req_facts(b"hello", "0x01", "0x02", 10)
-    authority.merge(req_facts.to_block())
-    biscuit = authority.build(root_kp.private_key)
-
-    # Attenuate biscuit with response facts
+def test_append_response_facts(agent_biscuit, request_facts):
     agent_kp = KeyPair()
-    resp_facts = utils.new_resp_facts(req_facts.req_id, b"hi", "0x01", 2)
-    agent_biscuit = theoriq.biscuit.attenuate_for_response(biscuit, resp_facts, agent_kp)
+    resp_facts = utils.new_resp_facts(request_facts.req_id, b"hi", "0x01", 2)
+    agent_biscuit = theoriq.biscuit.attenuate_for_response(agent_biscuit, resp_facts, agent_kp)
 
     assert agent_biscuit.block_count() == 2
