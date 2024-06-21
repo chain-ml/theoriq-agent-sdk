@@ -1,7 +1,12 @@
-import uuid
+from typing import Optional
+
+import biscuit_auth
+import biscuit_auth.biscuit_auth
 import pytest
 import theoriq.biscuit
 import utils
+
+from uuid import uuid4
 
 from theoriq.biscuit import default_authorizer
 
@@ -12,93 +17,97 @@ from biscuit_auth import KeyPair, AuthorizationError
 from theoriq.facts import RequestFacts, ResponseFacts
 
 
-def test_authorization():
-    root_kp = KeyPair()
+@pytest.fixture
+def agent_biscuit(request, biscuit_facts) -> biscuit_auth.Biscuit:
+    def _biscuit_builder(addr: str, exp: datetime = None) -> biscuit_auth.Biscuit:
+        root_kp = KeyPair()
+        authority = utils.new_authority_block(subject_addr=addr, expires_at=exp)
+        authority.merge(biscuit_facts)
+        return authority.build(root_kp.private_key)
 
-    subject_address = "0x1234"
-    authority = utils.new_authority_block(subject_address)
-    biscuit = authority.build(root_kp.private_key)
+    param = request.param
+    return _biscuit_builder(**param) if type(param) is dict else _biscuit_builder(param)
 
-    authorizer = default_authorizer(subject_address)
-    authorizer.add_token(biscuit)
+
+@pytest.fixture
+def biscuit_facts(request_facts, response_facts) -> biscuit_auth.BlockBuilder:
+    return request_facts.to_block() if response_facts is None else response_facts.to_block()
+
+
+@pytest.fixture
+def request_facts(request) -> RequestFacts:
+    if getattr(request, 'param', None) is None:
+        return utils.new_req_facts(b"Hello World", "0x01", "0x02", 10)
+    else:
+        (body, from_addr, to_addr, amount) = request.param
+        return utils.new_req_facts(body, from_addr, to_addr, amount)
+
+
+@pytest.fixture
+def response_facts(request) -> Optional[ResponseFacts]:
+    if getattr(request, 'param', None) is None:
+        return None
+    else:
+        (uuid, body, to_addr, amount) = request.param
+        return utils.new_resp_facts(uuid, body, to_addr, amount)
+
+
+def one_hour_ago() -> datetime:
+    return datetime.now(timezone.utc) - timedelta(hours=1)
+
+
+@pytest.mark.parametrize("agent_biscuit", ["0x02"], indirect=True)
+def test_authorization(agent_biscuit):
+    authorizer = default_authorizer("0x02")
+    authorizer.add_token(agent_biscuit)
     authorizer.authorize()
 
 
-def test_authorization_wrong_subject_address_raises_authorization_error():
-    root_kp = KeyPair()
-
-    subject_address = "0x1234"
-    authority = utils.new_authority_block(subject_address)
-    biscuit = authority.build(root_kp.private_key)
-
-    authorizer = default_authorizer("0x12345")
-    authorizer.add_token(biscuit)
+@pytest.mark.parametrize("agent_biscuit", ["0x02"], indirect=True)
+def test_authorization_wrong_subject_address_raises_authorization_error(agent_biscuit):
+    wrong_subject_address = "0x42"
+    authorizer = default_authorizer(wrong_subject_address)
+    authorizer.add_token(agent_biscuit)
 
     with pytest.raises(AuthorizationError):
         authorizer.authorize()
 
 
-def test_authorization_expired_raises_authorization_error():
-    root_kp = KeyPair()
-
-    subject_address = "0x1234"
-    expires_at = datetime.now(tz=timezone.utc) - timedelta(hours=1)
-    authority = utils.new_authority_block(subject_address, expires_at)
-    biscuit = authority.build(root_kp.private_key)
-
-    authorizer = default_authorizer(subject_address)
-    authorizer.add_token(biscuit)
+@pytest.mark.parametrize("agent_biscuit", [{"addr": "0x02", "exp": one_hour_ago()}], indirect=True)
+def test_authorization_expired_raises_authorization_error(agent_biscuit):
+    authorizer = default_authorizer("0x01")
+    authorizer.add_token(agent_biscuit)
 
     with pytest.raises(AuthorizationError):
         authorizer.authorize()
 
 
-def test_read_request_facts():
-    root_kp = KeyPair()
-
-    # Build biscuit
-    authority = utils.new_authority_block("0x01")
-    req_facts = utils.new_req_facts(b"hello", "0x01", "0x02", 10.0)
-    req_block = req_facts.to_block()
-    authority.merge(req_block)
-    biscuit = authority.build(root_kp.private_key)
-
-    # Read facts and make assertions
-    read_facts = RequestFacts.from_biscuit(biscuit)
-    assert read_facts == req_facts
+@pytest.mark.parametrize("request_facts", [(b"hello", "0x01", "0x02", 10.0)], indirect=True)
+@pytest.mark.parametrize("agent_biscuit", ["0x02"], indirect=True)
+def test_read_request_facts(request_facts, agent_biscuit):
+    read_facts = RequestFacts.from_biscuit(agent_biscuit)
+    assert read_facts == request_facts
 
 
-def test_read_response_facts():
-    root_kp = KeyPair()
-
-    # Build biscuit
-    authority = utils.new_authority_block("0x01")
-    resp_facts = utils.new_resp_facts(uuid.uuid4(), b"hello", "0x01", 10.0)
-    resp_block = resp_facts.to_block()
-    authority.merge(resp_block)
-    biscuit = authority.build(root_kp.private_key)
-
-    # Read facts and make assertions
-    read_facts = ResponseFacts.from_biscuit(biscuit)
-    assert read_facts == resp_facts
+@pytest.mark.parametrize("response_facts", [(uuid4(), b"hello", "0x01", 5)], indirect=True)
+@pytest.mark.parametrize("agent_biscuit", ["0x01"], indirect=True)
+def test_read_response_facts(agent_biscuit, response_facts):
+    read_facts = ResponseFacts.from_biscuit(agent_biscuit)
+    assert read_facts == response_facts
 
 
-def test_append_request_facts():
-    root_kp = KeyPair()
-    authority = utils.new_authority_block("0x01")
-    req_facts = utils.new_req_facts(b"hello", "0x01", "0x02", 10.0)
-    authority.merge(req_facts.to_block())
-    biscuit = authority.build(root_kp.private_key)
-
+@pytest.mark.parametrize("agent_biscuit", ["0x02"], indirect=True)
+def test_append_request_facts(agent_biscuit):
     # Attenuate biscuit with request facts
     agent_kp = KeyPair()
     req_facts = utils.new_req_facts(b"help", "0x02", "0x03", 5.0)
-    agent_biscuit = theoriq.biscuit.attenuate_for_request(biscuit, req_facts, agent_kp)
+    agent_biscuit = theoriq.biscuit.attenuate_for_request(agent_biscuit, req_facts, agent_kp)
 
     assert agent_biscuit.block_count() == 2
 
 
-def test_append_response_facts():
+@pytest.mark.parametrize("agent_biscuit", ["0x02"], indirect=True)
+def test_append_response_facts(agent_biscuit):
     root_kp = KeyPair()
     authority = utils.new_authority_block("0x01")
     req_facts = utils.new_req_facts(b"hello", "0x01", "0x02", 10.0)
