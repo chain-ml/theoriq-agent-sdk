@@ -24,7 +24,7 @@ def test_authorization():
     authorizer.authorize()
 
 
-def test_authorization_wrong_subject_address():
+def test_authorization_wrong_subject_address_raises_authorization_error():
     root_kp = KeyPair()
 
     subject_address = "0x1234"
@@ -38,7 +38,7 @@ def test_authorization_wrong_subject_address():
         authorizer.authorize()
 
 
-def test_authorization_expired():
+def test_authorization_expired_raises_authorization_error():
     root_kp = KeyPair()
 
     subject_address = "0x1234"
