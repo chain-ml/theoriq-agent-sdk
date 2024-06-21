@@ -20,7 +20,7 @@ class AgentAddress:
         :raise TypeError: if the address is not 32 bytes long or does not only contain hex digits
         """
         AgentAddress._verify_address_length(address)
-        # AgentAddress._verify_address_content(address)
+        AgentAddress._verify_address_content(address)
 
     @staticmethod
     def _verify_address_length(address: str) -> None:
