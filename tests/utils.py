@@ -18,9 +18,7 @@ from theoriq.facts import (
 )
 
 
-def new_authority_block(
-    subject_addr: str, expires_at: Optional[datetime] = None
-) -> BiscuitBuilder:
+def new_authority_block(subject_addr: str, expires_at: Optional[datetime] = None) -> BiscuitBuilder:
     """Creates a new authority block"""
     expires_at = expires_at or datetime.now(tz=timezone.utc) + timedelta(hours=1)
     expiration_timestamp = int(expires_at.timestamp())
@@ -33,18 +31,14 @@ def new_authority_block(
     )
 
 
-def new_req_facts(
-    body: bytes, from_addr: str, to_addr: str, amount: float
-) -> RequestFacts:
+def new_req_facts(body: bytes, from_addr: str, to_addr: str, amount: int) -> RequestFacts:
     """Creates a new request facts for testing purposes"""
     theoriq_req = TheoriqRequest(hash_body(body), from_addr, to_addr)
     theoriq_budget = TheoriqBudget(str(amount), "USDC", "")
     return RequestFacts(uuid.uuid4(), theoriq_req, theoriq_budget)
 
 
-def new_resp_facts(
-    req_id: uuid.UUID, body: bytes, to_addr: str, amount: float
-) -> ResponseFacts:
+def new_resp_facts(req_id: uuid.UUID, body: bytes, to_addr: str, amount: int) -> ResponseFacts:
     """Creates a new response facts for testing purposes"""
     theoriq_resp = TheoriqResponse(hash_body(body), to_addr)
     theoriq_cost = TheoriqCost(str(amount), "USDC")
@@ -52,7 +46,7 @@ def new_resp_facts(
 
 
 def hash_body(body: bytes) -> str:
-    """Hash the given bytes using Keccak256 algorithm"""
-    hasher = hashlib.sha3_256()
+    """Hash the given bytes using sha256"""
+    hasher = hashlib.sha256()
     hasher.update(body)
     return hasher.hexdigest()

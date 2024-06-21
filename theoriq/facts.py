@@ -88,9 +88,7 @@ class RequestFacts:
         authorizer.add_token(biscuit)
         facts = authorizer.query(rule)
 
-        [req_id, body_hash, from_addr, to_addr, amount, currency, voucher] = facts[
-            0
-        ].terms
+        [req_id, body_hash, from_addr, to_addr, amount, currency, voucher] = facts[0].terms
         request_id = UUID(req_id)
         theoriq_req = TheoriqRequest(body_hash, from_addr, to_addr)
         theoriq_budget = TheoriqBudget(amount, currency, voucher)

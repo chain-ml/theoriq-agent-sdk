@@ -35,32 +35,23 @@ def default_authorizer(subject_addr: str) -> Authorizer:
     authorizer = Authorizer()
 
     # Add subject address policy
-    subject_addr_policy = Policy(
-        """allow if theoriq:subject("agent", {addr})""", {"addr": subject_addr}
-    )
+    subject_addr_policy = Policy("""allow if theoriq:subject("agent", {addr})""", {"addr": subject_addr})
     authorizer.add_policy(subject_addr_policy)
 
     # Add expiration check
     now = int(datetime.now(timezone.utc).timestamp())
-    expiration_check = Check(
-        "check if theoriq:expires_at($time), $time > {now}", {"now": now}
-    )
+    expiration_check = Check("check if theoriq:expires_at($time), $time > {now}", {"now": now})
     authorizer.add_check(expiration_check)
 
     return authorizer
 
 
-# type: ignore[attr-defined]
-def attenuate_for_request(
-    biscuit: Biscuit, req_facts: RequestFacts, external_kp: KeyPair
-) -> Biscuit:
+def attenuate_for_request(biscuit: Biscuit, req_facts: RequestFacts, external_kp: KeyPair) -> Biscuit:
     """Attenuate a biscuit with the given request facts by appending a third party block"""
     return biscuit.append_third_party_block(external_kp, req_facts.to_block())
 
 
-def attenuate_for_response(
-    biscuit: Biscuit, resp_facts: ResponseFacts, external_kp: KeyPair
-) -> Biscuit:
+def attenuate_for_response(biscuit: Biscuit, resp_facts: ResponseFacts, external_kp: KeyPair) -> Biscuit:
     """Attenuate a biscuit with the given response facts by appending a third party block"""
     return biscuit.append_third_party_block(external_kp, resp_facts.to_block())
 
