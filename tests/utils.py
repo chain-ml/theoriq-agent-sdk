@@ -46,12 +46,6 @@ def new_resp_facts(req_id: uuid.UUID, body: bytes, to_addr: str, amount: int) ->
     return ResponseFacts(req_id, theoriq_resp, theoriq_cost)
 
 
-def to_agent_address(addr: str) -> AgentAddress:
-    """Create an agent address filling the given addr with zeroes"""
-    sanitized_address = addr.ljust(32, "0")
-    return AgentAddress(sanitized_address)
-
-
 def hash_body(body: bytes) -> str:
     """Hash the given bytes using sha256"""
     hasher = hashlib.sha256()

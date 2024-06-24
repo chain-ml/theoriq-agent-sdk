@@ -62,14 +62,14 @@ def one_hour_ago() -> datetime:
 
 @pytest.mark.parametrize("agent_biscuit", ["00000000000000000000000000000002"], indirect=True)
 def test_authorization(agent_biscuit):
-    authorizer = default_authorizer(utils.to_agent_address("00000000000000000000000000000002"))
+    authorizer = default_authorizer(AgentAddress("00000000000000000000000000000002"))
     authorizer.add_token(agent_biscuit)
     authorizer.authorize()
 
 
 @pytest.mark.parametrize("agent_biscuit", ["00000000000000000000000000000002"], indirect=True)
 def test_authorization_wrong_subject_address_raises_authorization_error(agent_biscuit):
-    wrong_subject_address = utils.to_agent_address("00000000000000000000000000000042")
+    wrong_subject_address = AgentAddress("00000000000000000000000000000042")
     authorizer = default_authorizer(wrong_subject_address)
     authorizer.add_token(agent_biscuit)
 
@@ -77,16 +77,22 @@ def test_authorization_wrong_subject_address_raises_authorization_error(agent_bi
         authorizer.authorize()
 
 
-@pytest.mark.parametrize("agent_biscuit", [{"addr": "00000000000000000000000000000002", "exp": one_hour_ago()}], indirect=True)
+@pytest.mark.parametrize(
+    "agent_biscuit", [{"addr": "00000000000000000000000000000002", "exp": one_hour_ago()}], indirect=True
+)
 def test_authorization_expired_raises_authorization_error(agent_biscuit):
-    authorizer = default_authorizer(utils.to_agent_address("00000000000000000000000000000002"))
+    authorizer = default_authorizer(AgentAddress("00000000000000000000000000000002"))
     authorizer.add_token(agent_biscuit)
 
     with pytest.raises(AuthorizationError):
         authorizer.authorize()
 
 
-@pytest.mark.parametrize("request_facts", [(b"hello", "00000000000000000000000000000001", "00000000000000000000000000000002", 10)], indirect=True)
+@pytest.mark.parametrize(
+    "request_facts",
+    [(b"hello", "00000000000000000000000000000001", "00000000000000000000000000000002", 10)],
+    indirect=True,
+)
 @pytest.mark.parametrize("agent_biscuit", ["00000000000000000000000000000002"], indirect=True)
 def test_read_request_facts(request_facts, agent_biscuit):
     read_facts = RequestFacts.from_biscuit(agent_biscuit)
@@ -110,7 +116,11 @@ def test_append_request_facts(agent_biscuit):
     assert agent_biscuit.block_count() == 2
 
 
-@pytest.mark.parametrize("request_facts", [(b"hello", "00000000000000000000000000000001", "00000000000000000000000000000002", 10)], indirect=True)
+@pytest.mark.parametrize(
+    "request_facts",
+    [(b"hello", "00000000000000000000000000000001", "00000000000000000000000000000002", 10)],
+    indirect=True,
+)
 @pytest.mark.parametrize("agent_biscuit", ["00000000000000000000000000000002"], indirect=True)
 def test_append_response_facts(agent_biscuit, request_facts):
     agent_kp = KeyPair()
