@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling", "hatch-requirements-txt"]
+build-backend = "hatchling.build"
+
+[project]
+name = "theoriq"
+version = "0.0.1"
+description = ""
+readme = "README.md"
+requires-python = ">=3.9"
+authors = []
+dynamic = ["dependencies"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]
+
+[tool.pytest.ini_options]
+log_cli = "True"
+log_cli_level = "DEBUG"
+log_cli_format = "[%(asctime)s %(levelname)s %(threadName)s %(name)s:%(funcName)s:%(lineno)s] %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S%z"
+
+[tool.black]
+line-length = 120
+
+[tool.mypy]
+exclude = "(?x)(venv|docs|tmp)"
+mypy_path = "./stubs"
+explicit_package_bases = "true"
+
+[tool.ruff]
+exclude = ["__init__.py", "docs", "tmp"]
+line-length = 120
