@@ -4,14 +4,14 @@ from theoriq.types import AgentAddress
 
 
 valid_agent_address = [
-    "48656c6c6f20776f726c642c20746869",
-    "12346c6c6f20776f726c642c20746869",
-    "12346c6c6f20776f726c642c20FFFFFF",
+    "48656c6c6f20776f726c642c2074686948656c6c6f20776f726c642c20746869",
+    "12346c6c6f20776f726c642c2074686948656c6c6f20776f726c642c20746869",
+    "148656c6c6f20776f726c642c207468692346c6c6f20776f726c642c20FFFFFF",
 ]
 
 invalid_agent_address = [
-    ("48656c6c6f20776f726c642c20746", "address must be 32 bytes long"),
-    ("12346c6c6f20776f726c642c2074686X", "address must only contain hex digits"),
+    ("148656c6c6f20776f726c642c207468692346c6c6f20776f726c642c20FFFF", "address must be 32 bytes long"),
+    ("148656c6c6f20776f726c642c207468692346c6c6f20776f726c642c20XXXXXX", "address must only contain hex digits"),
 ]
 
 
