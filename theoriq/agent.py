@@ -78,7 +78,7 @@ class Agent:
 
     def _verify_target_address(self, req_facts: RequestFacts) -> bool:
         """Verify the request facts target our agent"""
-        target_address = req_facts.request.to_addr
+        target_address = AgentAddress(req_facts.request.to_addr)
         return target_address == self.config.agent_address
 
     @staticmethod
