@@ -133,6 +133,11 @@ class TheoriqCost:
         self.amount = amount
         self.currency = currency
 
+    @classmethod
+    def zero(cls, currency: str) -> "TheoriqCost":
+        """Return a zero cost"""
+        return cls("0", currency)
+
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return self.__dict__ == other.__dict__

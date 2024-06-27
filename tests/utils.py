@@ -1,6 +1,5 @@
 """Utilities used in tests."""
 
-import hashlib
 import uuid
 
 from datetime import datetime, timedelta, timezone
@@ -17,6 +16,7 @@ from theoriq.facts import (
     TheoriqCost,
 )
 from theoriq.types import AgentAddress
+from theoriq.utils import hash_body
 
 
 def new_authority_block(subject_addr: AgentAddress, expires_at: Optional[datetime] = None) -> BiscuitBuilder:
@@ -44,10 +44,3 @@ def new_resp_facts(req_id: uuid.UUID, body: bytes, to_addr: str, amount: int) ->
     theoriq_resp = TheoriqResponse(hash_body(body), to_addr)
     theoriq_cost = TheoriqCost(str(amount), "USDC")
     return ResponseFacts(req_id, theoriq_resp, theoriq_cost)
-
-
-def hash_body(body: bytes) -> str:
-    """Hash the given bytes using sha256"""
-    hasher = hashlib.sha256()
-    hasher.update(body)
-    return hasher.hexdigest()

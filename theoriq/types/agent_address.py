@@ -1,7 +1,5 @@
 """Theoriq types"""
 
-import string
-
 
 class AgentAddress:
     """
@@ -19,18 +17,16 @@ class AgentAddress:
         Verify the address
         :raise TypeError: if the address is not 32 bytes long or does not only contain hex digits
         """
-        AgentAddress._verify_address_length(address)
-        AgentAddress._verify_address_content(address)
-
-    @staticmethod
-    def _verify_address_length(address: str) -> None:
-        if len(address) != 32:
-            raise TypeError(f"address must be 32 bytes long: {address}")
-
-    @staticmethod
-    def _verify_address_content(address: str) -> None:
-        if not all(c in string.hexdigits for c in address):
+        try:
+            if len(bytes.fromhex(address)) != 32:
+                raise TypeError(f"address must be 32 bytes long: {address}")
+        except ValueError:
             raise TypeError(f"address must only contain hex digits: {address}")
 
     def __str__(self) -> str:
         return self.address
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, AgentAddress):
+            return self.address == other.address
+        return False
