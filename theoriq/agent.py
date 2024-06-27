@@ -1,4 +1,3 @@
-import hashlib
 import os
 
 import biscuit_auth
@@ -8,6 +7,7 @@ from theoriq.error import VerificationError, ParseBiscuitError
 from theoriq.facts import RequestFacts, TheoriqCost
 from theoriq.types import AgentAddress, RequestBiscuit, ResponseBiscuit
 from theoriq.biscuit import default_authorizer
+from theoriq.utils import hash_body
 
 
 class AgentConfig:
@@ -84,10 +84,5 @@ class Agent:
     @staticmethod
     def _verify_request_body(req_facts: RequestFacts, body: bytes) -> bool:
         """Verify that the request facts match with the given body"""
-        hashed_received_body = Agent._hash_body(body)
+        hashed_received_body = hash_body(body)
         return hashed_received_body == req_facts.request.body_hash
-
-    @staticmethod
-    def _hash_body(body: bytes) -> bytes:
-        """Hash the given body using the sha256 algorithm."""
-        return hashlib.sha256(body).digest()
