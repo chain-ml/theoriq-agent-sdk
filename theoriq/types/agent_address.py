@@ -29,3 +29,4 @@ class AgentAddress:
     def __eq__(self, other: object) -> bool:
         if isinstance(other, AgentAddress):
             return self.address == other.address
+        return False
