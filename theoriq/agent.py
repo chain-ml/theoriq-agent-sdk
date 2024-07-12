@@ -2,6 +2,7 @@ import os
 
 import biscuit_auth
 from biscuit_auth import PublicKey, PrivateKey, Biscuit, KeyPair
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from theoriq.error import VerificationError, ParseBiscuitError
 from theoriq.facts import RequestFacts, TheoriqCost
@@ -86,3 +87,9 @@ class Agent:
         """Verify that the request facts match with the given body"""
         hashed_received_body = hash_body(body)
         return hashed_received_body == req_facts.request.body_hash
+
+    def sign_challenge(self, challenge: bytes) -> bytes:
+        """Sign the given challenge with the `Agent`'s private key"""
+        private_key_bytes = bytes(self.config.agent_private_key.to_bytes())
+        private_key = Ed25519PrivateKey.from_private_bytes(private_key_bytes)
+        return private_key.sign(challenge)
