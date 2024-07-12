@@ -7,9 +7,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
     - name: Setup python ${{ inputs.python-version }}
       uses: actions/setup-python@v4
       with:
