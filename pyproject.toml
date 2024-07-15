@@ -17,6 +17,11 @@ allow-direct-references = true
 [tool.hatch.metadata.hooks.requirements_txt]
 files = ["requirements.txt"]
 
+[project.optional-dependencies]
+flask = [
+    "Flask"
+]
+
 [tool.pytest.ini_options]
 log_cli = "True"
 log_cli_level = "DEBUG"
