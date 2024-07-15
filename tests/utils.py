@@ -50,21 +50,34 @@ def new_resp_facts(req_id: uuid.UUID, body: bytes, to_addr: str, amount: int) ->
 
 
 @pytest.fixture
-def agent_config() -> AgentConfig:
+def agent_config(theoriq_kp, agent_kp) -> AgentConfig:
     """
     Fixture creating an `AgentConfig` for testing purposes
 
     :return: AgentConfig
     """
 
-    theoriq_public_key = KeyPair()
-    agent_keypair = KeyPair()
+    theoriq_public_key = KeyPair() if theoriq_kp is None else theoriq_kp
+    agent_keypair = KeyPair() if agent_kp is None else agent_kp
 
     return AgentConfig(
         theoriq_public_key=theoriq_public_key.public_key,
         private_key=agent_keypair.private_key,
         address=AgentAddress("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
     )
+
+
+@pytest.fixture
+def theoriq_kp() -> KeyPair:
+    """Generate a theoriq keypair"""
+    return KeyPair()
+
+
+@pytest.fixture
+def agent_kp() -> KeyPair:
+    """Generate an agent keypair"""
+    return KeyPair()
+
 
 
 @pytest.fixture()
