@@ -2,15 +2,13 @@ import json
 import uuid
 
 import flask
-from biscuit_auth.biscuit_auth import Biscuit, KeyPair
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 import pytest
 from flask.testing import FlaskClient
 
 import theoriq_extra.flask
 
-from theoriq.facts import TheoriqCost, ResponseFacts
-from theoriq.types import ResponseBiscuit
+from theoriq.facts import TheoriqCost
 from .utils import new_req_facts, new_req_biscuit
 
 from theoriq.schemas import ChallengeResponseBody
