@@ -75,9 +75,7 @@ def execute(func: Callable[[], Response]) -> Response:
 def process_biscuit_request(agent: Agent, request: flask.Request) -> RequestBiscuit:
     try:
         bearer_token = get_bearer_token(request)
-        print("Received", bearer_token)
         request_body = request.data
-        print(request_body)
         return agent.parse_and_verify_biscuit(bearer_token, request_body)
     except (ParseBiscuitError, VerificationError) as err:
         raise flask.abort(401, err)
