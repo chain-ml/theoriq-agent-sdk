@@ -1,6 +1,5 @@
 """Helpers to write agent using a flask web app."""
 
-from contextvars import ContextVar
 from typing import Callable
 
 import flask
@@ -9,22 +8,10 @@ from flask import Blueprint, request, jsonify, Response
 from theoriq.agent import Agent, AgentConfig
 from theoriq.error import VerificationError, ParseBiscuitError
 from theoriq.facts import TheoriqCost
-from theoriq.schemas import ChallengeRequestBody, ExecuteRequestBody
+from theoriq.schemas import ChallengeRequestBody, ExecuteRequestBody, ExecuteRequest
 from theoriq.types import RequestBiscuit, ResponseBiscuit
 
-
-class ExecuteRequest:
-    """Request used when calling the `execute` endpoint"""
-
-    def __init__(self, body: ExecuteRequestBody, biscuit: RequestBiscuit):
-        self.body = body
-        self.biscuit = biscuit
-
-
-# Todo: Move into a globals?
-agent_var: ContextVar[Agent] = ContextVar("agent")
-execute_request_var: ContextVar[ExecuteRequest] = ContextVar("execute_request")
-execute_response_cost_var: ContextVar[TheoriqCost] = ContextVar("theoriq_cost", default=TheoriqCost.zero("USDC"))
+from theoriq_extra.globals import agent_var, execute_response_cost_var, execute_request_var
 
 
 def theoriq_blueprint(agent_config: AgentConfig, execute_fn: Callable[[], Response]) -> Blueprint:

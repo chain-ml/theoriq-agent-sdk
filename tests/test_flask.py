@@ -6,8 +6,10 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 import pytest
 from flask.testing import FlaskClient
 
-import theoriq.flask_server
+import theoriq_extra.flask
 from biscuit_auth import KeyPair
+
+from theoriq.facts import TheoriqCost
 from .utils import new_authority_block, new_req_facts
 
 from theoriq.schemas import DialogItem, ChallengeResponseBody
@@ -25,7 +27,7 @@ def app(agent_config: AgentConfig) -> Flask:
     app.config["TESTING"] = True
     print("app", agent_config.agent_address)
 
-    app.register_blueprint(theoriq.flask_server.theoriq_blueprint(agent_config, echo_last_prompt))
+    app.register_blueprint(theoriq_extra.flask.theoriq_blueprint(agent_config, echo_last_prompt))
 
     return app
 
@@ -109,8 +111,11 @@ def test_execute_request(theoriq_kp, agent_kp, agent_config: AgentConfig, client
     response = client.post("/theoriq/api/v1alpha1/execute", data=req_body_bytes, headers=headers)
     print(response.data)
     assert response.status_code == 200
+    print(response.headers)
 
 
-def echo_last_prompt(items: list[DialogItem]) -> flask.Response:
-    last_prompt = items[-1].items[0].data
+def echo_last_prompt() -> flask.Response:
+    execute_request = theoriq_extra.flask.execute_request_var.get()
+    last_prompt = execute_request.body.items[-1].items[0].data
+    theoriq_extra.flask.execute_response_cost_var.set(TheoriqCost(amount="10", currency="BTC"))
     return flask.Response(last_prompt)
