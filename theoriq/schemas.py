@@ -17,16 +17,18 @@ class DialogItem(BaseModel):
     items: list[DialogItemBlock]
 
 
-class ExecuteRequest(BaseModel):
+class ExecuteRequestBody(BaseModel):
     items: list[DialogItem]
 
 
-class ChallengeRequest(BaseModel):
+class ChallengeRequestBody(BaseModel):
     """Schema for a challenge request."""
 
     nonce: str
 
 
-class ChallengeResponse(BaseModel):
+class ChallengeResponseBody(BaseModel):
+    """Schema for a challenge request."""
+
     nonce: str
     signature: str

@@ -10,7 +10,7 @@ import theoriq.flask_server
 from biscuit_auth import KeyPair
 from .utils import new_authority_block, new_req_facts
 
-from theoriq.schemas import DialogItem, ChallengeResponse
+from theoriq.schemas import DialogItem, ChallengeResponseBody
 
 from flask import Flask
 
@@ -48,7 +48,7 @@ def test_sign_challenge(client: FlaskClient, agent_public_key: Ed25519PublicKey)
 
     assert response.status_code == 200
 
-    challenge_response = ChallengeResponse.model_validate(response.json)
+    challenge_response = ChallengeResponseBody.model_validate(response.json)
     signature = bytes.fromhex(challenge_response.signature)
     response_nonce = bytes.fromhex(challenge_response.nonce)
     agent_public_key.verify(signature, response_nonce)

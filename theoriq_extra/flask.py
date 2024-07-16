@@ -1,27 +1,33 @@
-from datetime import timezone, datetime
+"""Helpers to write agent using a flask web app."""
+
+from contextvars import ContextVar
 from typing import Callable
 
 import flask
-from flask import Blueprint, request, jsonify
-from contextvars import ContextVar
+from flask import Blueprint, request, jsonify, Response
 
 from theoriq.agent import Agent, AgentConfig
 from theoriq.error import VerificationError, ParseBiscuitError
 from theoriq.facts import TheoriqCost
-from theoriq.schemas import DialogItem, DialogItemBlock, ExecuteRequestBody
+from theoriq.schemas import ChallengeRequestBody, ExecuteRequestBody
 from theoriq.types import RequestBiscuit, ResponseBiscuit
 
+
+class ExecuteRequest:
+    """Request used when calling the `execute` endpoint"""
+
+    def __init__(self, body: ExecuteRequestBody, biscuit: RequestBiscuit):
+        self.body = body
+        self.biscuit = biscuit
+
+
+# Todo: Move into a globals?
 agent_var: ContextVar[Agent] = ContextVar("agent")
+execute_request_var: ContextVar[ExecuteRequest] = ContextVar("execute_request")
+execute_response_cost_var: ContextVar[TheoriqCost] = ContextVar("theoriq_cost", default=TheoriqCost.zero("USDC"))
 
 
-class ExecuteAgentRequest:
-    def __init__(self, http_request: flask.Request, agent: Agent, biscuit: RequestBiscuit):
-        self.http_request = http_request
-        self.agent = agent
-        self.req_biscuit = biscuit
-
-
-def theoriq_blueprint(agent_config: AgentConfig, execute_fn: Callable[[list[DialogItem]], flask.Response]) -> Blueprint:
+def theoriq_blueprint(agent_config: AgentConfig, execute_fn: Callable[[], Response]) -> Blueprint:
     """
     Theoriq blueprint
     :return: a blueprint with all the routes required by the `theoriq` protocol
@@ -48,21 +54,30 @@ def theoriq_system_blueprint() -> Blueprint:
 
 def sign_challenge():
     """Sign endpoint"""
-    json_body = request.json
-    nonce: str = json_body["nonce"]
-    nonce_bytes = bytes.fromhex(nonce)
+    challenge_body = ChallengeRequestBody.model_validate(request.json)
+    nonce_bytes = bytes.fromhex(challenge_body.nonce)
     signature = agent_var.get().sign_challenge(nonce_bytes)
-    return jsonify({"signature": signature.hex(), "nonce": nonce})
+    return jsonify({"signature": signature.hex(), "nonce": challenge_body.nonce})
 
 
-def execute(func: Callable[[list[DialogItem]], flask.Response]) -> flask.Response:
+class ExecuteResponse:
+    def __init__(self, body: bytes, cost: TheoriqCost):
+        pass
+
+
+def execute(func: Callable[[], Response]) -> Response:
     """Execute endpoint"""
     agent = agent_var.get()
-    req_biscuit = process_biscuit_request(agent, request)
 
-    # TODO: Set biscuit as context var! (Maybe in something called theoriq.ExecuteRequest
-    execute_request = ExecuteRequestBody.model_validate(request.json)
-    response = func(execute_request.items)
+    # Validate the execute request
+    req_biscuit = process_biscuit_request(agent, request)
+    execute_request_body = ExecuteRequestBody.model_validate(request.json)
+
+    # Make sure that the execute_request_var is available when running the `func` callable.
+    execute_request_var.set(ExecuteRequest(execute_request_body, req_biscuit))
+
+    # Execute user's function
+    response = func()
 
     resp_biscuit = process_biscuit_response(agent, req_biscuit, response)
     response = add_biscuit_to_response(response, resp_biscuit)
@@ -81,12 +96,6 @@ def process_biscuit_request(agent: Agent, request: flask.Request) -> RequestBisc
         raise flask.abort(401, err)
 
 
-def process_biscuit_response(agent: Agent, req_biscuit: RequestBiscuit, response: flask.Response) -> ResponseBiscuit:
-    resp_body = response.get_data()
-    cost = TheoriqCost.zero("USDC")
-    return agent.attenuate_biscuit_for_response(req_biscuit, resp_body, cost)
-
-
 def get_bearer_token(request: flask.Request) -> str:
     """Get the bearer token from the request"""
     authorization = request.headers.get("Authorization")
@@ -96,20 +105,10 @@ def get_bearer_token(request: flask.Request) -> str:
         return authorization[len("bearer ") :]
 
 
-def get_last_request(request_json: dict) -> str:
-    """Retrieve the last request from the request"""
-    items = request_json.get("items", [])
-    last_item = items[-1]
-    return last_item["items"][0]["data"]
-
-
-def new_response(answer: int) -> DialogItem:
-    return DialogItem(
-        timestamp=datetime.now(tz=timezone.utc).isoformat(),
-        source="AwesomeSum",
-        sourceType="Agent",
-        items=[DialogItemBlock(type="text:markdown", data=str(answer))],
-    )
+def process_biscuit_response(agent: Agent, req_biscuit: RequestBiscuit, response: flask.Response) -> ResponseBiscuit:
+    resp_body = response.get_data()
+    cost = execute_response_cost_var.get()
+    return agent.attenuate_biscuit_for_response(req_biscuit, resp_body, cost)
 
 
 def add_biscuit_to_response(response: flask.Response, resp_biscuit: ResponseBiscuit) -> flask.Response:
