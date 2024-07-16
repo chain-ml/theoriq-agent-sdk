@@ -8,10 +8,10 @@ from contextvars import ContextVar
 from theoriq.agent import Agent, AgentConfig
 from theoriq.error import VerificationError, ParseBiscuitError
 from theoriq.facts import TheoriqCost
-from theoriq.schemas import DialogItem, DialogItemBlock
+from theoriq.schemas import DialogItem, DialogItemBlock, ExecuteRequest
 from theoriq.types import RequestBiscuit, ResponseBiscuit
 
-agent_var = ContextVar("agent")
+agent_var: ContextVar[Agent] = ContextVar("agent")
 
 
 def theoriq_blueprint(agent_config: AgentConfig, execute_fn: Callable[[list[DialogItem]], flask.Response]) -> Blueprint:
@@ -45,10 +45,7 @@ def sign_challenge():
     nonce: str = json_body["nonce"]
     nonce_bytes = bytes.fromhex(nonce)
     signature = agent_var.get().sign_challenge(nonce_bytes)
-    return jsonify({
-        "signature": signature.hex(),
-        "nonce": nonce
-    })
+    return jsonify({"signature": signature.hex(), "nonce": nonce})
 
 
 def execute(func: Callable[[list[DialogItem]], flask.Response]) -> flask.Response:
@@ -57,9 +54,8 @@ def execute(func: Callable[[list[DialogItem]], flask.Response]) -> flask.Respons
     req_biscuit = process_biscuit_request(agent, request)
 
     # TODO: Set biscuit as context var! (Maybe in something called theoriq.ExecuteRequest
-    dialog_item = request.json["items"]
-    dialog_item = list(map(lambda x: DialogItem.model_validate(x), dialog_item))
-    response = func(dialog_item)
+    execute_request = ExecuteRequest.model_validate(request.json)
+    response = func(execute_request.items)
 
     resp_biscuit = process_biscuit_response(agent, req_biscuit, response)
     response = add_biscuit_to_response(response, resp_biscuit)
@@ -86,14 +82,18 @@ def process_biscuit_response(agent: Agent, req_biscuit: RequestBiscuit, response
 
 def get_bearer_token(request: flask.Request) -> str:
     """Get the bearer token from the request"""
-    return request.headers.get('Authorization')[len("bearer "):]
+    authorization = request.headers.get("Authorization")
+    if not authorization:
+        raise VerificationError("Authorization header is missing")
+    else:
+        return authorization[len("bearer ") :]
 
 
 def get_last_request(request_json: dict) -> str:
     """Retrieve the last request from the request"""
-    items = request_json.get('items', [])
+    items = request_json.get("items", [])
     last_item = items[-1]
-    return last_item['items'][0]['data']
+    return last_item["items"][0]["data"]
 
 
 def new_response(answer: int) -> DialogItem:
@@ -101,7 +101,7 @@ def new_response(answer: int) -> DialogItem:
         timestamp=datetime.now(tz=timezone.utc).isoformat(),
         source="AwesomeSum",
         sourceType="Agent",
-        items=[DialogItemBlock(type="text:markdown", data=str(answer))]
+        items=[DialogItemBlock(type="text:markdown", data=str(answer))],
     )
 
 

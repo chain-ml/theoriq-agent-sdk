@@ -5,9 +5,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-import pytest
-from biscuit_auth import BiscuitBuilder, KeyPair
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+from biscuit_auth import BiscuitBuilder
 
 from theoriq.facts import (
     TheoriqRequest,
@@ -19,7 +17,6 @@ from theoriq.facts import (
 )
 from theoriq.types import AgentAddress
 from theoriq.utils import hash_body
-from theoriq.agent import AgentConfig
 
 
 def new_authority_block(subject_addr: AgentAddress, expires_at: Optional[datetime] = None) -> BiscuitBuilder:
@@ -47,41 +44,3 @@ def new_resp_facts(req_id: uuid.UUID, body: bytes, to_addr: str, amount: int) ->
     theoriq_resp = TheoriqResponse(hash_body(body), to_addr)
     theoriq_cost = TheoriqCost(str(amount), "USDC")
     return ResponseFacts(req_id, theoriq_resp, theoriq_cost)
-
-
-@pytest.fixture
-def agent_config(theoriq_kp, agent_kp) -> AgentConfig:
-    """
-    Fixture creating an `AgentConfig` for testing purposes
-
-    :return: AgentConfig
-    """
-
-    theoriq_public_key = KeyPair() if theoriq_kp is None else theoriq_kp
-    agent_keypair = KeyPair() if agent_kp is None else agent_kp
-
-    return AgentConfig(
-        theoriq_public_key=theoriq_public_key.public_key,
-        private_key=agent_keypair.private_key,
-        address=AgentAddress("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
-    )
-
-
-@pytest.fixture
-def theoriq_kp() -> KeyPair:
-    """Generate a theoriq keypair"""
-    return KeyPair()
-
-
-@pytest.fixture
-def agent_kp() -> KeyPair:
-    """Generate an agent keypair"""
-    return KeyPair()
-
-
-
-@pytest.fixture()
-def agent_public_key(agent_config: AgentConfig) -> Ed25519PublicKey:
-    agent_keypair = KeyPair.from_private_key(agent_config.agent_private_key)
-    public_key_bytes = bytes(agent_keypair.public_key.to_bytes())
-    return Ed25519PublicKey.from_public_bytes(public_key_bytes)

@@ -15,3 +15,18 @@ class DialogItem(BaseModel):
     source: str
     sourceType: str
     items: list[DialogItemBlock]
+
+
+class ExecuteRequest(BaseModel):
+    items: list[DialogItem]
+
+
+class ChallengeRequest(BaseModel):
+    """Schema for a challenge request."""
+
+    nonce: str
+
+
+class ChallengeResponse(BaseModel):
+    nonce: str
+    signature: str
