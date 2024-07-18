@@ -1,22 +1,19 @@
 import json
 import uuid
-
-import flask
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 import pytest
-from flask.testing import FlaskClient
-
 import theoriq_extra.flask
 
-from theoriq.facts import TheoriqCost
-from .utils import new_req_facts, new_req_biscuit
-
-from theoriq.schemas import ChallengeResponseBody
-
 from flask import Flask
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+from flask.testing import FlaskClient
+from datetime import datetime, timezone
 
+from theoriq.execute import ExecuteRequest, ExecuteResponse
+from theoriq.schemas import ChallengeResponseBody, DialogItem, DialogItemBlock
+from theoriq.facts import TheoriqCost
 from theoriq.agent import AgentConfig
 
+from .utils import new_req_facts, new_req_biscuit
 from tests.fixtures import *  # noqa: F403
 
 
@@ -81,12 +78,20 @@ def test_send_execute_request(theoriq_kp, agent_kp, agent_config: AgentConfig, c
 
     response = client.post("/theoriq/api/v1alpha1/execute", data=req_body_bytes, headers=headers)
     assert response.status_code == 200
-    assert response.json == "My name is John Doe"
+
+    response_body = DialogItem.model_validate(response.json)
+    assert response_body.items[0].data == "My name is John Doe"
 
 
-def echo_last_prompt() -> flask.Response:
-    execute_request = theoriq_extra.flask.execute_request_var.get()
-    assert execute_request.biscuit.req_facts.budget.amount == "10"
-    last_prompt = execute_request.body.items[-1].items[0].data
-    theoriq_extra.flask.execute_response_cost_var.set(TheoriqCost(amount="5", currency="BTC"))
-    return flask.jsonify(last_prompt)
+def echo_last_prompt(request: ExecuteRequest) -> ExecuteResponse:
+    assert request.biscuit.req_facts.budget.amount == "10"
+    last_prompt = request.body.items[-1].items[0].data
+
+    response_body = DialogItem(
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        source="My Test Agent",
+        sourceType="Agent",
+        items=[DialogItemBlock(type="text", data=last_prompt)],
+    )
+
+    return ExecuteResponse(response_body, TheoriqCost(amount="5", currency="BTC"))

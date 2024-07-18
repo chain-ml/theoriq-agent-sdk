@@ -1,20 +1,19 @@
 """Helpers to write agent using a flask web app."""
 
-from typing import Callable
-
 import flask
 from flask import Blueprint, request, jsonify, Response
 
 from theoriq.agent import Agent, AgentConfig
 from theoriq.error import VerificationError, ParseBiscuitError
+from theoriq.execute import ExecuteFn, ExecuteRequest
 from theoriq.facts import TheoriqCost
-from theoriq.schemas import ChallengeRequestBody, ExecuteRequestBody, ExecuteRequest
+from theoriq.schemas import ChallengeRequestBody, ExecuteRequestBody
 from theoriq.types import RequestBiscuit, ResponseBiscuit
 
-from theoriq_extra.globals import agent_var, execute_response_cost_var, execute_request_var
+from theoriq_extra.globals import agent_var
 
 
-def theoriq_blueprint(agent_config: AgentConfig, execute_fn: Callable[[], Response]) -> Blueprint:
+def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteFn) -> Blueprint:
     """
     Theoriq blueprint
     :return: a blueprint with all the routes required by the `theoriq` protocol
@@ -47,12 +46,7 @@ def sign_challenge():
     return jsonify({"signature": signature.hex(), "nonce": challenge_body.nonce})
 
 
-class ExecuteResponse:
-    def __init__(self, body: bytes, cost: TheoriqCost):
-        pass
-
-
-def execute(func: Callable[[], Response]) -> Response:
+def execute(func: ExecuteFn) -> Response:
     """Execute endpoint"""
     agent = agent_var.get()
 
@@ -61,13 +55,14 @@ def execute(func: Callable[[], Response]) -> Response:
     execute_request_body = ExecuteRequestBody.model_validate(request.json)
 
     # Make sure that the execute_request_var is available when running the `func` callable.
-    execute_request_var.set(ExecuteRequest(execute_request_body, req_biscuit))
+    execute_request = ExecuteRequest(execute_request_body, req_biscuit)
 
     # Execute user's function
-    response = func()
+    execute_response = func(execute_request)
 
-    resp_biscuit = process_biscuit_response(agent, req_biscuit, response)
-    response = add_biscuit_to_response(response, resp_biscuit)
+    flask_response = jsonify(execute_response.body.dict())
+    resp_biscuit = new_response_biscuit(agent, req_biscuit, flask_response, execute_response.theoriq_cost)
+    response = add_biscuit_to_response(flask_response, resp_biscuit)
 
     return response
 
@@ -90,9 +85,10 @@ def get_bearer_token(request: flask.Request) -> str:
         return authorization[len("bearer ") :]
 
 
-def process_biscuit_response(agent: Agent, req_biscuit: RequestBiscuit, response: flask.Response) -> ResponseBiscuit:
+def new_response_biscuit(
+    agent: Agent, req_biscuit: RequestBiscuit, response: flask.Response, cost: TheoriqCost
+) -> ResponseBiscuit:
     resp_body = response.get_data()
-    cost = execute_response_cost_var.get()
     return agent.attenuate_biscuit_for_response(req_biscuit, resp_body, cost)
 
 
