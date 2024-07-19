@@ -68,6 +68,7 @@ def execute(func: ExecuteFn) -> Response:
 
 
 def process_biscuit_request(agent: Agent, request: flask.Request) -> RequestBiscuit:
+    """Retrieve the biscuit from an 'execute' request"""
     try:
         bearer_token = get_bearer_token(request)
         request_body = request.data
@@ -88,6 +89,7 @@ def get_bearer_token(request: flask.Request) -> str:
 def new_response_biscuit(
     agent: Agent, req_biscuit: RequestBiscuit, response: flask.Response, cost: TheoriqCost
 ) -> ResponseBiscuit:
+    """Build a biscuit for the response to an 'execute' request."""
     resp_body = response.get_data()
     return agent.attenuate_biscuit_for_response(req_biscuit, resp_body, cost)
 

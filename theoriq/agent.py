@@ -13,7 +13,7 @@ from theoriq.utils import hash_body
 
 
 class AgentConfig:
-    """Expected configuration for a `theoriq` agent."""
+    """Expected configuration for a 'theoriq' agent."""
 
     def __init__(self, theoriq_public_key: PublicKey, agent_kp: KeyPair):
         self.theoriq_public_key = theoriq_public_key
@@ -32,7 +32,14 @@ class AgentConfig:
 
 
 class Agent:
-    """Class used to interact with the biscuits"""
+    """
+    Class holding general functionality needed for a 'theoriq' agent.
+
+    This class helps with the integration with biscuits and theoriq signing challenge.
+
+    Attributes:
+        config (AgentConfig): Agent configuration.
+    """
 
     def __init__(self, config: AgentConfig):
         self.config = config

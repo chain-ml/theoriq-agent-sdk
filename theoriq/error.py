@@ -1,4 +1,8 @@
-"""Error returned by the theoriq SDK."""
+"""
+error.py
+
+Errors returned by the theoriq SDK
+"""
 
 
 class VerificationError(Exception):
