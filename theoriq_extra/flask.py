@@ -20,16 +20,25 @@ def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteFn) -> Bluep
     :return: a blueprint with all the routes required by the `theoriq` protocol
     """
 
-    blueprint = Blueprint("theoriq", __name__, url_prefix="/theoriq/api/v1alpha1")
+    main_blueprint = Blueprint("main_blueprint", __name__)
 
-    @blueprint.before_request
+    backward_compatible_blueprint = Blueprint("old_theoriq", __name__, url_prefix="/api/v1alpha1")
+    backward_compatible_blueprint.add_url_rule(
+        "/behaviors/chat-completion", view_func=lambda: execute(execute_fn), methods=["POST"]
+    )
+    main_blueprint.register_blueprint(backward_compatible_blueprint)
+
+    theoriq_blueprint = Blueprint("theoriq", __name__, url_prefix="/theoriq/api/v1alpha1")
+
+    @main_blueprint.before_request
     def set_context():
         agent_var.set(Agent(agent_config))
 
-    blueprint.register_blueprint(theoriq_system_blueprint())
-    blueprint.add_url_rule("/execute", view_func=lambda: execute(execute_fn), methods=["POST"])
+    theoriq_blueprint.register_blueprint(theoriq_system_blueprint())
+    theoriq_blueprint.add_url_rule("/execute", view_func=lambda: execute(execute_fn), methods=["POST"])
+    main_blueprint.register_blueprint(theoriq_blueprint)
 
-    return blueprint
+    return main_blueprint
 
 
 def theoriq_system_blueprint() -> Blueprint:

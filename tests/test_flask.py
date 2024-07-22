@@ -160,6 +160,37 @@ def test_send_execute_request_when_execute_fn_fails_returns_500(
     assert response.status_code == 500
 
 
+def test_send_chat_completion_request(theoriq_kp, agent_kp, agent_config: AgentConfig, client: FlaskClient):
+    request_body = {
+        "items": [
+            {
+                "timestamp": "123",
+                "sourceType": "user",
+                "source": "0x012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01234567",
+                "items": [{"data": "My name is John Doe", "type": "text"}],
+            }
+        ]
+    }
+
+    # Generate a request biscuit
+    req_body_str = json.dumps(request_body)
+    req_body_bytes = req_body_str.encode("utf-8")
+    from_address = "012345689012345689012345689012345689"
+    request_facts = new_req_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
+    req_biscuit = new_req_biscuit(request_facts, theoriq_kp)
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "bearer " + req_biscuit.to_base64(),
+    }
+
+    response = client.post("/api/v1alpha1/behaviors/chat-completion", data=req_body_bytes, headers=headers)
+    assert response.status_code == 200
+
+    response_body = DialogItem.model_validate(response.json)
+    assert response_body.items[0].data == "My name is John Doe"
+
+
 def echo_last_prompt(request: ExecuteRequest) -> ExecuteResponse:
     assert request.biscuit.req_facts.budget.amount == "10"
     last_prompt = request.body.items[-1].items[0].data
