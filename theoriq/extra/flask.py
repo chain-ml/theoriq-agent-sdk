@@ -11,7 +11,7 @@ from theoriq.facts import TheoriqCost
 from theoriq.schemas import ChallengeRequestBody, ExecuteRequestBody
 from theoriq.types import RequestBiscuit, ResponseBiscuit
 
-from theoriq_extra.globals import agent_var
+from theoriq.extra.globals import agent_var
 
 
 def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteFn) -> Blueprint:
