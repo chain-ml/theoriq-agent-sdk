@@ -1,5 +1,4 @@
 """Helpers to write agent using a flask web app."""
-from typing import Any
 
 import flask
 import pydantic
@@ -111,6 +110,6 @@ def add_biscuit_to_response(response: flask.Response, resp_biscuit: ResponseBisc
 
 def new_error_response(agent: Agent, req_biscuit: RequestBiscuit, status_code: int, body: Exception) -> flask.Response:
     response = jsonify({"error": str(body)})
-    response.status = status_code
+    response.status = str(status_code)
     resp_biscuit = new_response_biscuit(agent, req_biscuit, response, TheoriqCost.zero("USDC"))
     return add_biscuit_to_response(response, resp_biscuit)

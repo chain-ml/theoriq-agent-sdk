@@ -83,7 +83,9 @@ def test_send_execute_request(theoriq_kp, agent_kp, agent_config: AgentConfig, c
     assert response_body.items[0].data == "My name is John Doe"
 
 
-def test_send_execute_request_without_biscuit_returns_401(theoriq_kp, agent_kp, agent_config: AgentConfig, client: FlaskClient):
+def test_send_execute_request_without_biscuit_returns_401(
+    theoriq_kp, agent_kp, agent_config: AgentConfig, client: FlaskClient
+):
     request_body = {
         "items": [
             {
@@ -99,7 +101,9 @@ def test_send_execute_request_without_biscuit_returns_401(theoriq_kp, agent_kp, 
     assert response.status_code == 401
 
 
-def test_send_execute_request_with_ill_formatted_body_returns_400(theoriq_kp, agent_kp, agent_config: AgentConfig, client: FlaskClient):
+def test_send_execute_request_with_ill_formatted_body_returns_400(
+    theoriq_kp, agent_kp, agent_config: AgentConfig, client: FlaskClient
+):
     request_body = {
         "items": [
             {
@@ -125,7 +129,9 @@ def test_send_execute_request_with_ill_formatted_body_returns_400(theoriq_kp, ag
     assert response.status_code == 400
 
 
-def test_send_execute_request_when_execute_fn_fails_returns_500(theoriq_kp, agent_kp, agent_config: AgentConfig, client: FlaskClient):
+def test_send_execute_request_when_execute_fn_fails_returns_500(
+    theoriq_kp, agent_kp, agent_config: AgentConfig, client: FlaskClient
+):
     request_body = {
         "items": [
             {
@@ -150,6 +156,7 @@ def test_send_execute_request_when_execute_fn_fails_returns_500(theoriq_kp, agen
     }
 
     response = client.post("/theoriq/api/v1alpha1/execute", data=req_body_bytes, headers=headers)
+    print(response.headers)
     assert response.status_code == 500
 
 
