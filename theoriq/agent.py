@@ -3,6 +3,7 @@ import os
 import biscuit_auth
 from biscuit_auth import PublicKey, PrivateKey, Biscuit, KeyPair
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from sha3 import keccak_256  # type: ignore
 
 from theoriq.error import VerificationError, ParseBiscuitError
 from theoriq.facts import RequestFacts, TheoriqCost
@@ -14,18 +15,20 @@ from theoriq.utils import hash_body
 class AgentConfig:
     """Expected configuration for a `theoriq` agent."""
 
-    def __init__(self, theoriq_public_key: PublicKey, private_key: PrivateKey, address: AgentAddress):
+    def __init__(self, theoriq_public_key: PublicKey, agent_kp: KeyPair):
         self.theoriq_public_key = theoriq_public_key
-        self.agent_private_key = private_key
-        self.agent_address = address
+        self.agent_private_key = agent_kp.private_key
+        # TODO: Rename to AgentId
+        agent_pk_hash = keccak_256(bytes(agent_kp.public_key.to_bytes())).hexdigest()
+        self.agent_address = AgentAddress(agent_pk_hash)
 
     @classmethod
     def from_env(cls) -> "AgentConfig":
         theoriq_public_key = PublicKey.from_hex(os.environ["THEORIQ_PUBLIC_KEY"])
         agent_private_key = PrivateKey.from_hex(os.environ["AGENT_PRIVATE_KEY"])
-        agent_address = AgentAddress(os.environ["AGENT_ADDRESS"])
+        agent_kp = KeyPair.from_private_key(agent_private_key)
 
-        return cls(theoriq_public_key, agent_private_key, agent_address)
+        return cls(theoriq_public_key, agent_kp)
 
 
 class Agent:

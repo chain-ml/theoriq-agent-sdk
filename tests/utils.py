@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from biscuit_auth import BiscuitBuilder
+from biscuit_auth import BiscuitBuilder, Biscuit, KeyPair
 
 from theoriq.facts import (
     TheoriqRequest,
@@ -44,3 +44,11 @@ def new_resp_facts(req_id: uuid.UUID, body: bytes, to_addr: str, amount: int) ->
     theoriq_resp = TheoriqResponse(hash_body(body), to_addr)
     theoriq_cost = TheoriqCost(str(amount), "USDC")
     return ResponseFacts(req_id, theoriq_resp, theoriq_cost)
+
+
+def new_req_biscuit(req_facts: RequestFacts, keypair: KeyPair) -> Biscuit:
+    """Creates a new request biscuit for testing purposes"""
+    agent_address = AgentAddress(req_facts.request.to_addr)
+    authority = new_authority_block(agent_address)
+    authority.merge(req_facts.to_block())
+    return authority.build(keypair.private_key)

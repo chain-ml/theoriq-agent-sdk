@@ -1,10 +1,13 @@
 # requirements for developers and CI
 -r requirements.txt
 
-pytest==7.4.*
+pytest==7.4
 
 # Lint
-black==24.4.*
-mypy==1.10.*
-ruff==0.4.*
-pylint==3.2.*
+black==24.4
+mypy==1.10
+ruff==0.4
+pylint==3.2
+
+# Flask
+flask==3.0
