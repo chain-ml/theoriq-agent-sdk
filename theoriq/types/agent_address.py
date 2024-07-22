@@ -1,6 +1,7 @@
 """Theoriq types"""
 
 
+# TODO: Rename this class to AgentId
 class AgentAddress:
     """
     Address of an agent registered on the `theoriq` protocol

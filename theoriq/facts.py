@@ -127,7 +127,9 @@ class TheoriqResponse:
 
 
 class TheoriqCost:
-    """`theoriq:cost` fact"""
+    """
+    Biscuit fact representing the cost for the execution of an 'execute' request.
+    """
 
     def __init__(self, amount: str, currency: str):
         self.amount = amount
