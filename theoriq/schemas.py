@@ -51,6 +51,7 @@ class ExecuteRequestBody(BaseModel):
     Attributes:
         items (list[DialogItemBlock]): A list of DialogItemBlock objects consisting of request/response from the user and agent.
     """
+
     items: list[DialogItem]
 
 

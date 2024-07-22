@@ -1,6 +1,7 @@
 """Helpers to write agent using a flask web app."""
 
 import flask
+import pydantic
 from flask import Blueprint, request, jsonify, Response
 
 from theoriq.agent import Agent, AgentConfig
@@ -50,25 +51,34 @@ def execute(func: ExecuteFn) -> Response:
     """Execute endpoint"""
     agent = agent_var.get()
 
-    # Validate the execute request
+    # Process the request biscuit. If not present, return a 401 error
     req_biscuit = process_biscuit_request(agent, request)
-    execute_request_body = ExecuteRequestBody.model_validate(request.json)
 
-    # Make sure that the execute_request_var is available when running the `func` callable.
-    execute_request = ExecuteRequest(execute_request_body, req_biscuit)
-
-    # Execute user's function
-    execute_response = func(execute_request)
-
-    flask_response = jsonify(execute_response.body.dict())
-    resp_biscuit = new_response_biscuit(agent, req_biscuit, flask_response, execute_response.theoriq_cost)
-    response = add_biscuit_to_response(flask_response, resp_biscuit)
+    try:
+        # Execute user's function
+        execute_request_body = ExecuteRequestBody.model_validate(request.json)
+        execute_request = ExecuteRequest(execute_request_body, req_biscuit)
+        execute_response = func(execute_request)
+        response = jsonify(execute_response.body.dict())
+        resp_biscuit = new_response_biscuit(agent, req_biscuit, response, execute_response.theoriq_cost)
+        response = add_biscuit_to_response(response, resp_biscuit)
+    except pydantic.ValidationError as err:
+        response = new_error_response(agent, req_biscuit, 400, err)
+    except Exception as err:
+        response = new_error_response(agent, req_biscuit, 500, err)
 
     return response
 
 
 def process_biscuit_request(agent: Agent, request: flask.Request) -> RequestBiscuit:
-    """Retrieve the biscuit from an 'execute' request"""
+    """
+    Retrieve and process the request biscuit
+
+    :param agent: Agent processing the biscuit
+    :param request: http request received by the agent
+    :return: RequestBiscuit
+    :raises: If the biscuit could not be processed, a flask response is returned with the 401 status code.
+    """
     try:
         bearer_token = get_bearer_token(request)
         request_body = request.data
@@ -97,3 +107,10 @@ def new_response_biscuit(
 def add_biscuit_to_response(response: flask.Response, resp_biscuit: ResponseBiscuit) -> flask.Response:
     response.headers.add("authorization", f"bearer {resp_biscuit.to_base64()}")
     return response
+
+
+def new_error_response(agent: Agent, req_biscuit: RequestBiscuit, status_code: int, body: Exception) -> flask.Response:
+    response = jsonify({"error": str(body)})
+    response.status = str(status_code)
+    resp_biscuit = new_response_biscuit(agent, req_biscuit, response, TheoriqCost.zero("USDC"))
+    return add_biscuit_to_response(response, resp_biscuit)

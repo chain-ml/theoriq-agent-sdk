@@ -83,9 +83,89 @@ def test_send_execute_request(theoriq_kp, agent_kp, agent_config: AgentConfig, c
     assert response_body.items[0].data == "My name is John Doe"
 
 
+def test_send_execute_request_without_biscuit_returns_401(
+    theoriq_kp, agent_kp, agent_config: AgentConfig, client: FlaskClient
+):
+    request_body = {
+        "items": [
+            {
+                "timestamp": "123",
+                "sourceType": "user",
+                "source": "0x012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01234567",
+                "items": [{"data": "My name is John Doe", "type": "text"}],
+            }
+        ]
+    }
+
+    response = client.post("/theoriq/api/v1alpha1/execute", json=request_body)
+    assert response.status_code == 401
+
+
+def test_send_execute_request_with_ill_formatted_body_returns_400(
+    theoriq_kp, agent_kp, agent_config: AgentConfig, client: FlaskClient
+):
+    request_body = {
+        "items": [
+            {
+                "source": "0x012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01234567",
+                "items": [{"data": "My name is John Doe", "type": "text"}],
+            }
+        ]
+    }
+
+    # Generate a request biscuit
+    req_body_str = json.dumps(request_body)
+    req_body_bytes = req_body_str.encode("utf-8")
+    from_address = "012345689012345689012345689012345689"
+    request_facts = new_req_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
+    req_biscuit = new_req_biscuit(request_facts, theoriq_kp)
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "bearer " + req_biscuit.to_base64(),
+    }
+
+    response = client.post("/theoriq/api/v1alpha1/execute", data=req_body_bytes, headers=headers)
+    assert response.status_code == 400
+
+
+def test_send_execute_request_when_execute_fn_fails_returns_500(
+    theoriq_kp, agent_kp, agent_config: AgentConfig, client: FlaskClient
+):
+    request_body = {
+        "items": [
+            {
+                "timestamp": "123",
+                "sourceType": "user",
+                "source": "0x012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01234567",
+                "items": [{"data": "My name is John Doe should fail", "type": "text"}],
+            }
+        ]
+    }
+
+    # Generate a request biscuit
+    req_body_str = json.dumps(request_body)
+    req_body_bytes = req_body_str.encode("utf-8")
+    from_address = "012345689012345689012345689012345689"
+    request_facts = new_req_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
+    req_biscuit = new_req_biscuit(request_facts, theoriq_kp)
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "bearer " + req_biscuit.to_base64(),
+    }
+
+    response = client.post("/theoriq/api/v1alpha1/execute", data=req_body_bytes, headers=headers)
+    print(response.headers)
+    assert response.status_code == 500
+
+
 def echo_last_prompt(request: ExecuteRequest) -> ExecuteResponse:
     assert request.biscuit.req_facts.budget.amount == "10"
     last_prompt = request.body.items[-1].items[0].data
+
+    if "should fail" in last_prompt:
+        raise Exception("Execute function fails")
 
     response_body = DialogItem(
         timestamp=datetime.now(timezone.utc).isoformat(),
