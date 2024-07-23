@@ -1,7 +1,6 @@
 import json
 import uuid
 import pytest
-import theoriq_extra.flask
 
 from flask import Flask
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
@@ -12,6 +11,7 @@ from theoriq.execute import ExecuteRequest, ExecuteResponse
 from theoriq.schemas import ChallengeResponseBody, DialogItem, DialogItemBlock
 from theoriq.facts import TheoriqCost
 from theoriq.agent import AgentConfig
+from theoriq.extra.flask import theoriq_blueprint
 
 from .utils import new_req_facts, new_req_biscuit
 from tests.fixtures import *  # noqa: F403
@@ -22,7 +22,7 @@ def app(agent_config: AgentConfig) -> Flask:
     app = Flask(__name__)
     app.config["TESTING"] = True
 
-    app.register_blueprint(theoriq_extra.flask.theoriq_blueprint(agent_config, echo_last_prompt))
+    app.register_blueprint(theoriq_blueprint(agent_config, echo_last_prompt))
 
     return app
 

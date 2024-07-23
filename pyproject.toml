@@ -19,7 +19,7 @@ files = ["requirements.txt"]
 
 [project.optional-dependencies]
 flask = [
-    "Flask"
+    "Flask",
 ]
 
 [tool.pytest.ini_options]
