@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 import biscuit_auth
@@ -13,17 +15,17 @@ from theoriq.utils import hash_body
 
 
 class AgentConfig:
-    """Expected configuration for a 'theoriq' agent."""
+    """Expected configuration for a 'Theoriq' agent."""
 
-    def __init__(self, theoriq_public_key: PublicKey, agent_kp: KeyPair):
-        self.theoriq_public_key = theoriq_public_key
-        self.agent_private_key = agent_kp.private_key
+    def __init__(self, theoriq_public_key: PublicKey, agent_kp: KeyPair) -> None:
+        self.theoriq_public_key: PublicKey = theoriq_public_key
+        self.agent_private_key: PrivateKey = agent_kp.private_key
         # TODO: Rename to AgentId
         agent_pk_hash = keccak_256(bytes(agent_kp.public_key.to_bytes())).hexdigest()
         self.agent_address = AgentAddress(agent_pk_hash)
 
     @classmethod
-    def from_env(cls) -> "AgentConfig":
+    def from_env(cls) -> AgentConfig:
         theoriq_public_key = PublicKey.from_hex(os.environ["THEORIQ_PUBLIC_KEY"])
         agent_private_key = PrivateKey.from_hex(os.environ["AGENT_PRIVATE_KEY"])
         agent_kp = KeyPair.from_private_key(agent_private_key)
@@ -33,7 +35,7 @@ class AgentConfig:
 
 class Agent:
     """
-    Class holding general functionality needed for a 'theoriq' agent.
+    Class holding general functionality needed for a 'Theoriq' agent.
 
     This class helps with the integration with biscuits and theoriq signing challenge.
 
@@ -41,7 +43,7 @@ class Agent:
         config (AgentConfig): Agent configuration.
     """
 
-    def __init__(self, config: AgentConfig):
+    def __init__(self, config: AgentConfig) -> None:
         self.config = config
 
     def parse_and_verify_biscuit(self, token: str, body: bytes) -> RequestBiscuit:
@@ -54,9 +56,9 @@ class Agent:
         :raises VerificationError: if the biscuit is not valid.
         """
         biscuit = self._parse_biscuit_from_base64(token)
-        req_biscuit = RequestBiscuit(biscuit)
-        self._verify_biscuit(req_biscuit, body)
-        return req_biscuit
+        request_biscuit = RequestBiscuit(biscuit)
+        self._verify_biscuit(request_biscuit, body)
+        return request_biscuit
 
     def attenuate_biscuit_for_response(
         self, req_biscuit: RequestBiscuit, body: bytes, cost: TheoriqCost
@@ -68,9 +70,9 @@ class Agent:
         try:
             return Biscuit.from_base64(token, self.config.theoriq_public_key)
         except biscuit_auth.BiscuitValidationError as validation_err:
-            raise ParseBiscuitError(validation_err)
+            raise ParseBiscuitError(f"fail to parse token {token[:3]}") from validation_err
 
-    def _verify_biscuit(self, req_biscuit: RequestBiscuit, body: bytes):
+    def _verify_biscuit(self, req_biscuit: RequestBiscuit, body: bytes) -> None:
         self._authorize_biscuit(req_biscuit)
         self._verify_biscuit_facts(req_biscuit, body)
 
@@ -80,7 +82,7 @@ class Agent:
         authorizer.add_token(req_biscuit.biscuit)
         authorizer.authorize()
 
-    def _verify_biscuit_facts(self, req_biscuit: RequestBiscuit, body: bytes):
+    def _verify_biscuit_facts(self, req_biscuit: RequestBiscuit, body: bytes) -> None:
         req_facts = req_biscuit.req_facts
         if not (self._verify_target_address(req_facts)):
             raise VerificationError("biscuit's target address does not match our agent's address")

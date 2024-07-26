@@ -50,12 +50,12 @@ def default_authorizer(agent_addr: AgentAddress) -> Authorizer:
 
 def attenuate_for_request(biscuit: Biscuit, req_facts: RequestFacts, external_kp: KeyPair) -> Biscuit:
     """Attenuate a biscuit with the given request facts by appending a third party block"""
-    return biscuit.append_third_party_block(external_kp, req_facts.to_block())
+    return biscuit.append_third_party_block(external_kp, req_facts.to_block())  # type: ignore
 
 
 def attenuate_for_response(biscuit: Biscuit, resp_facts: ResponseFacts, external_kp: KeyPair) -> Biscuit:
     """Attenuate a biscuit with the given response facts by appending a third party block"""
-    return biscuit.append_third_party_block(external_kp, resp_facts.to_block())
+    return biscuit.append_third_party_block(external_kp, resp_facts.to_block())  # type: ignore
 
 
 def _biscuit_authorizer(biscuit: Biscuit) -> Authorizer:

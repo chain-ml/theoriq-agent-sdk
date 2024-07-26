@@ -4,10 +4,10 @@
 pytest==7.4
 
 # Lint
-black==24.4
-mypy==1.10
-ruff==0.4
-pylint==3.2
+black==24.4.2
+mypy==1.11.0
+ruff==0.5.5
+pylint==3.2.6
 
 # Flask
-flask==3.0
+flask~=3.0

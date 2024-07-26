@@ -19,15 +19,15 @@ class ResponseBiscuit:
 class RequestBiscuit:
     """Request biscuit used by the `theoriq` protocol"""
 
-    def __init__(self, biscuit: Biscuit):
+    def __init__(self, biscuit: Biscuit) -> None:
         req_facts = RequestFacts.from_biscuit(biscuit)
         self.biscuit = biscuit
         self.req_facts = req_facts
 
     def attenuate_for_response(self, body: bytes, cost: TheoriqCost, agent_kp: KeyPair) -> ResponseBiscuit:
         hashed_body = hash_body(body)
-        theoriq_resp = TheoriqResponse(hashed_body, self.req_facts.request.from_addr)
-        resp_facts = ResponseFacts(self.req_facts.req_id, theoriq_resp, cost)
-        attenuated_biscuit = theoriq.biscuit.attenuate_for_response(self.biscuit, resp_facts, agent_kp)
+        theoriq_response = TheoriqResponse(body_hash=hashed_body, to_addr=self.req_facts.request.from_addr)
+        response_facts = ResponseFacts(self.req_facts.req_id, theoriq_response, cost)
+        attenuated_biscuit = theoriq.biscuit.attenuate_for_response(self.biscuit, response_facts, agent_kp)
 
-        return ResponseBiscuit(attenuated_biscuit, resp_facts)
+        return ResponseBiscuit(attenuated_biscuit, response_facts)

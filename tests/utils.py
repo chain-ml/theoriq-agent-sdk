@@ -14,6 +14,7 @@ from theoriq.facts import (
     TheoriqResponse,
     ResponseFacts,
     TheoriqCost,
+    Currency,
 )
 from theoriq.types import AgentAddress
 from theoriq.utils import hash_body
@@ -34,19 +35,19 @@ def new_authority_block(subject_addr: AgentAddress, expires_at: Optional[datetim
 
 def new_req_facts(body: bytes, from_addr: str, to_addr: AgentAddress, amount: int) -> RequestFacts:
     """Creates a new request facts for testing purposes"""
-    theoriq_req = TheoriqRequest(hash_body(body), from_addr, str(to_addr))
-    theoriq_budget = TheoriqBudget(str(amount), "USDC", "")
-    return RequestFacts(uuid.uuid4(), theoriq_req, theoriq_budget)
+    theoriq_request = TheoriqRequest(body_hash=hash_body(body), from_addr=from_addr, to_addr=str(to_addr))
+    theoriq_budget = TheoriqBudget.from_amount(amount=str(amount), currency=Currency.USDC)
+    return RequestFacts(uuid.uuid4(), theoriq_request, theoriq_budget)
 
 
-def new_resp_facts(req_id: uuid.UUID, body: bytes, to_addr: str, amount: int) -> ResponseFacts:
+def new_response_facts(req_id: uuid.UUID, body: bytes, to_addr: str, amount: int) -> ResponseFacts:
     """Creates a new response facts for testing purposes"""
-    theoriq_resp = TheoriqResponse(hash_body(body), to_addr)
-    theoriq_cost = TheoriqCost(str(amount), "USDC")
-    return ResponseFacts(req_id, theoriq_resp, theoriq_cost)
+    theoriq_response = TheoriqResponse(body_hash=hash_body(body), to_addr=to_addr)
+    theoriq_cost = TheoriqCost(amount=str(amount), currency=Currency.USDC)
+    return ResponseFacts(req_id, theoriq_response, theoriq_cost)
 
 
-def new_req_biscuit(req_facts: RequestFacts, keypair: KeyPair) -> Biscuit:
+def new_request_biscuit(req_facts: RequestFacts, keypair: KeyPair) -> Biscuit:
     """Creates a new request biscuit for testing purposes"""
     agent_address = AgentAddress(req_facts.request.to_addr)
     authority = new_authority_block(agent_address)

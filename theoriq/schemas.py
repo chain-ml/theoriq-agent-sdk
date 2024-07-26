@@ -1,7 +1,7 @@
 """
 schemas.py
 
-This module contains the schemas used by the theoriq endpoint.
+This module contains the schemas used by the Theoriq endpoint.
 """
 
 from pydantic import BaseModel

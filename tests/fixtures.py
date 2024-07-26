@@ -23,7 +23,7 @@ def agent_kp() -> KeyPair:
 
 
 @pytest.fixture
-def agent_config(theoriq_kp: Optional[KeyPair], agent_kp: Optional[KeyPair]):
+def agent_config(theoriq_kp: Optional[KeyPair], agent_kp: Optional[KeyPair]) -> AgentConfig:
     """
     Fixture creating an `AgentConfig` for testing purposes
 
@@ -35,10 +35,7 @@ def agent_config(theoriq_kp: Optional[KeyPair], agent_kp: Optional[KeyPair]):
     theoriq_kp = KeyPair() if theoriq_kp is None else theoriq_kp
     agent_kp = KeyPair() if agent_kp is None else agent_kp
 
-    return AgentConfig(
-        theoriq_public_key=theoriq_kp.public_key,
-        agent_kp=agent_kp,
-    )
+    return AgentConfig(theoriq_public_key=theoriq_kp.public_key, agent_kp=agent_kp)
 
 
 @pytest.fixture

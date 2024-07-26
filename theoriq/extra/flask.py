@@ -7,7 +7,7 @@ from flask import Blueprint, request, jsonify, Response
 from theoriq.agent import Agent, AgentConfig
 from theoriq.error import VerificationError, ParseBiscuitError
 from theoriq.execute import ExecuteFn, ExecuteRequest
-from theoriq.facts import TheoriqCost
+from theoriq.facts import TheoriqCost, Currency
 from theoriq.schemas import ChallengeRequestBody, ExecuteRequestBody
 from theoriq.types import RequestBiscuit, ResponseBiscuit
 
@@ -48,7 +48,7 @@ def theoriq_system_blueprint() -> Blueprint:
     return blueprint
 
 
-def sign_challenge():
+def sign_challenge() -> Response:
     """Sign endpoint"""
     challenge_body = ChallengeRequestBody.model_validate(request.json)
     nonce_bytes = bytes.fromhex(challenge_body.nonce)
@@ -61,20 +61,20 @@ def execute(func: ExecuteFn) -> Response:
     agent = agent_var.get()
 
     # Process the request biscuit. If not present, return a 401 error
-    req_biscuit = process_biscuit_request(agent, request)
+    request_biscuit = process_biscuit_request(agent, request)
 
     try:
         # Execute user's function
         execute_request_body = ExecuteRequestBody.model_validate(request.json)
-        execute_request = ExecuteRequest(execute_request_body, req_biscuit)
+        execute_request = ExecuteRequest(execute_request_body, request_biscuit)
         execute_response = func(execute_request)
         response = jsonify(execute_response.body.dict())
-        resp_biscuit = new_response_biscuit(agent, req_biscuit, response, execute_response.theoriq_cost)
-        response = add_biscuit_to_response(response, resp_biscuit)
+        response_biscuit = new_response_biscuit(agent, request_biscuit, response, execute_response.theoriq_cost)
+        response = add_biscuit_to_response(response, response_biscuit)
     except pydantic.ValidationError as err:
-        response = new_error_response(agent, req_biscuit, 400, err)
+        response = new_error_response(agent, request_biscuit, 400, err)
     except Exception as err:
-        response = new_error_response(agent, req_biscuit, 500, err)
+        response = new_error_response(agent, request_biscuit, 500, err)
 
     return response
 
@@ -121,5 +121,5 @@ def add_biscuit_to_response(response: flask.Response, resp_biscuit: ResponseBisc
 def new_error_response(agent: Agent, req_biscuit: RequestBiscuit, status_code: int, body: Exception) -> flask.Response:
     response = jsonify({"error": str(body)})
     response.status = str(status_code)
-    resp_biscuit = new_response_biscuit(agent, req_biscuit, response, TheoriqCost.zero("USDC"))
+    resp_biscuit = new_response_biscuit(agent, req_biscuit, response, TheoriqCost.zero(Currency.USDC))
     return add_biscuit_to_response(response, resp_biscuit)
