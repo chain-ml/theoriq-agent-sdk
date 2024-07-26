@@ -9,11 +9,11 @@ from datetime import datetime, timezone
 
 from theoriq.execute import ExecuteRequest, ExecuteResponse
 from theoriq.schemas import ChallengeResponseBody, DialogItem, DialogItemBlock
-from theoriq.facts import TheoriqCost
+from theoriq.facts import TheoriqCost, Currency
 from theoriq.agent import AgentConfig
 from theoriq.extra.flask import theoriq_blueprint
 
-from .utils import new_req_facts, new_req_biscuit
+from .utils import new_req_facts, new_request_biscuit
 from tests.fixtures import *  # noqa: F403
 
 
@@ -23,7 +23,6 @@ def app(agent_config: AgentConfig) -> Flask:
     app.config["TESTING"] = True
 
     app.register_blueprint(theoriq_blueprint(agent_config, echo_last_prompt))
-
     return app
 
 
@@ -69,7 +68,7 @@ def test_send_execute_request(theoriq_kp, agent_kp, agent_config: AgentConfig, c
     req_body_bytes = req_body_str.encode("utf-8")
     from_address = "012345689012345689012345689012345689"
     request_facts = new_req_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
-    req_biscuit = new_req_biscuit(request_facts, theoriq_kp)
+    req_biscuit = new_request_biscuit(request_facts, theoriq_kp)
 
     headers = {
         "Content-Type": "application/json",
@@ -118,7 +117,7 @@ def test_send_execute_request_with_ill_formatted_body_returns_400(
     req_body_bytes = req_body_str.encode("utf-8")
     from_address = "012345689012345689012345689012345689"
     request_facts = new_req_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
-    req_biscuit = new_req_biscuit(request_facts, theoriq_kp)
+    req_biscuit = new_request_biscuit(request_facts, theoriq_kp)
 
     headers = {
         "Content-Type": "application/json",
@@ -148,7 +147,7 @@ def test_send_execute_request_when_execute_fn_fails_returns_500(
     req_body_bytes = req_body_str.encode("utf-8")
     from_address = "012345689012345689012345689012345689"
     request_facts = new_req_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
-    req_biscuit = new_req_biscuit(request_facts, theoriq_kp)
+    req_biscuit = new_request_biscuit(request_facts, theoriq_kp)
 
     headers = {
         "Content-Type": "application/json",
@@ -177,7 +176,7 @@ def test_send_chat_completion_request(theoriq_kp, agent_kp, agent_config: AgentC
     req_body_bytes = req_body_str.encode("utf-8")
     from_address = "012345689012345689012345689012345689"
     request_facts = new_req_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
-    req_biscuit = new_req_biscuit(request_facts, theoriq_kp)
+    req_biscuit = new_request_biscuit(request_facts, theoriq_kp)
 
     headers = {
         "Content-Type": "application/json",
@@ -205,4 +204,4 @@ def echo_last_prompt(request: ExecuteRequest) -> ExecuteResponse:
         items=[DialogItemBlock(type="text", data=last_prompt)],
     )
 
-    return ExecuteResponse(response_body, TheoriqCost(amount="5", currency="BTC"))
+    return ExecuteResponse(response_body, TheoriqCost(amount="5", currency=Currency.USDC))

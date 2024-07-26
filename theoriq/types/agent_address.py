@@ -8,7 +8,7 @@ class AgentAddress:
     Agent's address must be a 32 bytes hex encoded string
     """
 
-    def __init__(self, address: str):
+    def __init__(self, address: str) -> None:
         self._verify_address(address)
         self.address = address
 
@@ -21,8 +21,8 @@ class AgentAddress:
         try:
             if len(bytes.fromhex(address)) != 32:
                 raise TypeError(f"address must be 32 bytes long: {address}")
-        except ValueError:
-            raise TypeError(f"address must only contain hex digits: {address}")
+        except ValueError as e:
+            raise TypeError(f"address must only contain hex digits: {address}") from e
 
     def __str__(self) -> str:
         return self.address

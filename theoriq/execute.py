@@ -6,7 +6,7 @@ Types and functions used by an Agent when executing a theoriq request
 
 from typing import Callable
 
-from theoriq.facts import TheoriqCost
+from theoriq.facts import TheoriqCost, Currency
 from theoriq.schemas import ExecuteRequestBody, DialogItem
 from theoriq.types import RequestBiscuit
 
@@ -20,7 +20,7 @@ class ExecuteRequest:
         biscuit (RequestBiscuit): Holds the authentication information sent to the 'execute' endpoint.
     """
 
-    def __init__(self, body: ExecuteRequestBody, biscuit: RequestBiscuit):
+    def __init__(self, body: ExecuteRequestBody, biscuit: RequestBiscuit) -> None:
         self.body = body
         self.biscuit = biscuit
 
@@ -31,13 +31,15 @@ class ExecuteResponse:
 
     Attributes:
         body (DialogItem): The body to encapsulate in the response payload.
-        theoriq_cost (TheoriqCost): Cost of the processing of the request.
+        cost (TheoriqCost): Cost of the processing of the request.
         status_code (int, optional): The status code of the response.
     """
 
-    def __init__(self, body: DialogItem, theoriq_cost: TheoriqCost = TheoriqCost.zero("USDC"), status_code: int = 200):
+    def __init__(
+        self, body: DialogItem, cost: TheoriqCost = TheoriqCost.zero(Currency.USDC), status_code: int = 200
+    ) -> None:
         self.body = body
-        self.theoriq_cost = theoriq_cost
+        self.theoriq_cost = cost
         self.status_code = status_code
 
 
