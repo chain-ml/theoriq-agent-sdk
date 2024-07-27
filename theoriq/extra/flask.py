@@ -6,7 +6,7 @@ from flask import Blueprint, request, jsonify, Response
 
 from theoriq.agent import Agent, AgentConfig
 from theoriq.error import VerificationError, ParseBiscuitError
-from theoriq.execute import ExecuteFn, ExecuteRequest
+from theoriq.execute import ExecuteRequestFn, ExecuteRequest
 from theoriq.facts import TheoriqCost, Currency
 from theoriq.schemas import ChallengeRequestBody, ExecuteRequestBody
 from theoriq.types import RequestBiscuit, ResponseBiscuit
@@ -14,7 +14,7 @@ from theoriq.types import RequestBiscuit, ResponseBiscuit
 from theoriq.extra.globals import agent_var
 
 
-def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteFn) -> Blueprint:
+def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn) -> Blueprint:
     """
     Theoriq blueprint
     :return: a blueprint with all the routes required by the `theoriq` protocol
@@ -56,7 +56,7 @@ def sign_challenge() -> Response:
     return jsonify({"signature": signature.hex(), "nonce": challenge_body.nonce})
 
 
-def execute(func: ExecuteFn) -> Response:
+def execute(execute_request_function: ExecuteRequestFn) -> Response:
     """Execute endpoint"""
     agent = agent_var.get()
 
@@ -67,8 +67,9 @@ def execute(func: ExecuteFn) -> Response:
         # Execute user's function
         execute_request_body = ExecuteRequestBody.model_validate(request.json)
         execute_request = ExecuteRequest(execute_request_body, request_biscuit)
-        execute_response = func(execute_request)
-        response = jsonify(execute_response.body.dict())
+        execute_response = execute_request_function(execute_request)
+
+        response = jsonify(execute_response.body.to_dict())
         response_biscuit = new_response_biscuit(agent, request_biscuit, response, execute_response.theoriq_cost)
         response = add_biscuit_to_response(response, response_biscuit)
     except pydantic.ValidationError as err:
