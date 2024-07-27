@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Sequence, TypeVar, Generic
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, field_serializer
 
 T_Data = TypeVar("T_Data")
 
@@ -156,11 +156,12 @@ class ExecuteRequestBody(BaseModel):
 
         return items
 
+    @field_serializer("items")
+    def serialize_items(cls, value):
+        return [item.to_dict() for item in value]
+
     class Config:
         arbitrary_types_allowed = True
-        json_encoders = {
-            DialogItem: lambda v: v.to_dict(),
-        }
 
 
 class ChallengeRequestBody(BaseModel):
