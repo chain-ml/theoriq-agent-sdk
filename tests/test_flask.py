@@ -198,4 +198,4 @@ def echo_last_prompt(request: ExecuteRequest) -> ExecuteResponse:
         raise Exception("Execute function fails")
 
     response_body = DialogItem.new_text(source="My Test Agent", text=last_prompt)
-    return ExecuteResponse(response_body, TheoriqCost(amount=5, currency=Currency.USDC))
+    return ExecuteResponse(response_body, TheoriqCost(amount="5", currency=Currency.USDC))
