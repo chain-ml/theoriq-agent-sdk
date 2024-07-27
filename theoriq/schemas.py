@@ -4,26 +4,59 @@ schemas.py
 This module contains the schemas used by the Theoriq endpoint.
 """
 
-from pydantic import BaseModel
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Sequence, TypeVar, Generic
+
+from pydantic import BaseModel, validator
+
+T_Data = TypeVar("T_Data")
 
 
-class DialogItemBlock(BaseModel):
-    """
-    Represents a specific dialogue item block within a DialogItem.
+class ItemBlock(Generic[T_Data]):
+    """ """
 
-    A DialogItemBlock is an individual component in a ConversationItem's list of items.
-    Each block contains data of a specific type which could be one of several formats such as text, markdown or code.
+    def __init__(self, *, bloc_type: str, data: T_Data):
+        self.bloc_type = bloc_type
+        self.data = data
 
-    Attributes:
-        type (str): Specifies the format of the text in the block.
-        data (str): Contains the actual response in the specified format.
-    """
-
-    type: str
-    data: str
+    def to_dict(self):
+        # Convert the object to a dictionary
+        return {"type": self.bloc_type, "data": self.data}
 
 
-class DialogItem(BaseModel):
+class RouteItem:
+    """ """
+
+    def __init__(self, name: str, score: float):
+        self.name = name
+        self.score = score
+
+    @classmethod
+    def from_dict(cls, values: Dict[str, Any]) -> RouteItem:
+        return cls(name=values["name"], score=values["score"])
+
+
+class RouteItemBlock(ItemBlock[Sequence[RouteItem]]):
+    """ """
+
+    def __init__(self, routes: Sequence[RouteItem]):
+        super().__init__(bloc_type="route", data=routes)
+
+    @classmethod
+    def from_dict(cls, data: Any):
+        return cls(routes=[RouteItem.from_dict(route) for route in data])
+
+
+class DialogItemBlock(ItemBlock[str]):
+    """ """
+
+    def __init__(self, text: str):
+        super().__init__(bloc_type="text", data=text)
+
+
+class DialogItem:
     """
     A DialogItem object represents a message from a source during a dialog.
 
@@ -34,14 +67,65 @@ class DialogItem(BaseModel):
     Attributes:
         timestamp (str): The creation time of the dialog item.
         source (str): The creator of the dialog item. In the agent context, this is the agent's ID in the Theoriq protocol.
-        sourceType (str): The type of the source that creates the dialog item. Can be either 'user' or 'agent'.
+        source_type (str): The type of the source that creates the dialog item. Can be either 'user' or 'agent'.
         items (list[DialogItemBlock]): A list of DialogItemBlock objects consisting of responses from the agent.
     """
 
-    timestamp: str
-    source: str
-    sourceType: str
-    items: list[DialogItemBlock]
+    def __init__(self, timestamp: str, source_type: str, source: str, items: List[ItemBlock[Any]]):
+        self.timestamp = timestamp
+        self.source = source
+        self.source_type = source_type
+        self.items = items
+
+    @classmethod
+    def from_dict(cls, values: Any | None) -> DialogItem:
+        if values is None:
+            raise ValueError("Cannot create a DialogItem from None")
+
+        items: List[ItemBlock[Any]] = []
+        for item in values["items"]:
+            block_type: str = item["type"]
+            if block_type.startswith("text"):
+                items.append(DialogItemBlock(text=item["data"]))
+            if block_type == "route":
+                items.append(RouteItemBlock.from_dict(item["data"]))
+
+        return cls(
+            timestamp=values["timestamp"],
+            source_type=values["sourceType"],
+            source=values["source"],
+            items=items,
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "timestamp": self.timestamp,
+            "sourceType": self.source_type,
+            "source": self.source,
+            "items": [item.to_dict() for item in self.items],
+        }
+
+    @classmethod
+    def new(cls, source: str, items: List[ItemBlock[Any]]) -> DialogItem:
+        return cls(timestamp=datetime.now(timezone.utc).isoformat(), source_type="Agent", source=source, items=items)
+
+    @classmethod
+    def new_text(cls, source: str, text: str) -> DialogItem:
+        return cls(
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            source_type="Agent",
+            source=source,
+            items=[DialogItemBlock(text)],
+        )
+
+    @classmethod
+    def new_route(cls, source: str, route: str, score) -> DialogItem:
+        return cls(
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            source_type="Agent",
+            source=source,
+            items=[RouteItemBlock([RouteItem(route, score)])],
+        )
 
 
 class ExecuteRequestBody(BaseModel):
@@ -49,10 +133,34 @@ class ExecuteRequestBody(BaseModel):
     Represents the expected payload for an execute request.
 
     Attributes:
-        items (list[DialogItemBlock]): A list of DialogItemBlock objects consisting of request/response from the user and agent.
+        items (list[DialogItem]): A list of DialogItem objects consisting of request/response from the user and agent.
     """
 
-    items: list[DialogItem]
+    items: Sequence[DialogItem]
+
+    @validator("items", pre=True)
+    def validate_items(cls, value):
+        if not isinstance(value, Sequence):
+            raise ValueError("items must be a sequence")
+
+        items = []
+        for item in value:
+            if isinstance(item, DialogItem):
+                items.append(item)
+            else:
+                try:
+                    dialog_item = DialogItem.from_dict(item)
+                    items.append(dialog_item)
+                except Exception as e:
+                    raise ValueError from e
+
+        return items
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {
+            DialogItem: lambda v: v.to_dict(),
+        }
 
 
 class ChallengeRequestBody(BaseModel):

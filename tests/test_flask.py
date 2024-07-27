@@ -3,12 +3,12 @@ import uuid
 import pytest
 
 from flask import Flask
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from flask.testing import FlaskClient
-from datetime import datetime, timezone
+
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 from theoriq.execute import ExecuteRequest, ExecuteResponse
-from theoriq.schemas import ChallengeResponseBody, DialogItem, DialogItemBlock
+from theoriq.schemas import ChallengeResponseBody, DialogItem
 from theoriq.facts import TheoriqCost, Currency
 from theoriq.agent import AgentConfig
 from theoriq.extra.flask import theoriq_blueprint
@@ -78,7 +78,7 @@ def test_send_execute_request(theoriq_kp, agent_kp, agent_config: AgentConfig, c
     response = client.post("/theoriq/api/v1alpha1/execute", data=req_body_bytes, headers=headers)
     assert response.status_code == 200
 
-    response_body = DialogItem.model_validate(response.json)
+    response_body = DialogItem.from_dict(response.json)
     assert response_body.items[0].data == "My name is John Doe"
 
 
@@ -186,7 +186,7 @@ def test_send_chat_completion_request(theoriq_kp, agent_kp, agent_config: AgentC
     response = client.post("/api/v1alpha1/behaviors/chat-completion", data=req_body_bytes, headers=headers)
     assert response.status_code == 200
 
-    response_body = DialogItem.model_validate(response.json)
+    response_body = DialogItem.from_dict(response.json)
     assert response_body.items[0].data == "My name is John Doe"
 
 
@@ -197,11 +197,5 @@ def echo_last_prompt(request: ExecuteRequest) -> ExecuteResponse:
     if "should fail" in last_prompt:
         raise Exception("Execute function fails")
 
-    response_body = DialogItem(
-        timestamp=datetime.now(timezone.utc).isoformat(),
-        source="My Test Agent",
-        sourceType="Agent",
-        items=[DialogItemBlock(type="text", data=last_prompt)],
-    )
-
-    return ExecuteResponse(response_body, TheoriqCost(amount="5", currency=Currency.USDC))
+    response_body = DialogItem.new_text(source="My Test Agent", text=last_prompt)
+    return ExecuteResponse(response_body, TheoriqCost(amount=5, currency=Currency.USDC))
