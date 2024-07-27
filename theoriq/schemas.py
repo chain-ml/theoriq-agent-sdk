@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Sequence, TypeVar, Generic
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 T_Data = TypeVar("T_Data")
 
@@ -138,7 +138,7 @@ class ExecuteRequestBody(BaseModel):
 
     items: Sequence[DialogItem]
 
-    @validator("items", pre=True)
+    @field_validator("items", mode="before")
     def validate_items(cls, value):
         if not isinstance(value, Sequence):
             raise ValueError("items must be a sequence")
