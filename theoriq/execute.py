@@ -31,7 +31,7 @@ class ExecuteResponse:
 
     Attributes:
         body (DialogItem): The body to encapsulate in the response payload.
-        cost (TheoriqCost): Cost of the processing of the request.
+        theoriq_cost (TheoriqCost): Cost of the processing of the request.
         status_code (int, optional): The status code of the response.
     """
 
@@ -43,4 +43,4 @@ class ExecuteResponse:
         self.status_code = status_code
 
 
-ExecuteFn = Callable[[ExecuteRequest], ExecuteResponse]
+ExecuteRequestFn = Callable[[ExecuteRequest], ExecuteResponse]
