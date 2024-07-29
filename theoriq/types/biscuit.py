@@ -20,9 +20,8 @@ class RequestBiscuit:
     """Request biscuit used by the `theoriq` protocol"""
 
     def __init__(self, biscuit: Biscuit) -> None:
-        req_facts = RequestFacts.from_biscuit(biscuit)
         self.biscuit = biscuit
-        self.req_facts = req_facts
+        self.req_facts = RequestFacts.from_biscuit(biscuit)
 
     def attenuate_for_response(self, body: bytes, cost: TheoriqCost, agent_kp: KeyPair) -> ResponseBiscuit:
         hashed_body = hash_body(body)

@@ -4,10 +4,19 @@ Theoriq biscuit facts
 
 from __future__ import annotations
 
+import abc
 from enum import Enum
 from typing import Any, Optional
 from uuid import UUID
 from biscuit_auth import Fact, Rule, Biscuit, Authorizer, BlockBuilder
+
+from theoriq.utils import verify_address
+
+
+class FactConvertible(abc.ABC):
+    @abc.abstractmethod
+    def to_fact(self, req_id: str) -> Fact:
+        pass
 
 
 class Currency(Enum):
@@ -22,13 +31,13 @@ class Currency(Enum):
             raise ValueError(f"'{value}' is not a valid Currency") from e
 
 
-class TheoriqRequest:
+class TheoriqRequest(FactConvertible):
     """`theoriq:request` fact"""
 
     def __init__(self, *, body_hash: str, from_addr: str, to_addr: str) -> None:
         self.body_hash = body_hash
         self.from_addr = from_addr
-        self.to_addr = to_addr
+        self.to_addr = verify_address(to_addr)
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, self.__class__):
@@ -62,6 +71,10 @@ class TheoriqBudget:
         if isinstance(other, self.__class__):
             return self.__dict__ == other.__dict__
         return False
+
+    def __str__(self):
+        currency = self.currency.value if self.currency else None
+        return f"TheoriqBudget(amount={self.amount}, currency={currency}, voucher={self.voucher})"
 
     def to_fact(self, req_id: str) -> Fact:
         """Convert to a biscuit fact"""
@@ -131,7 +144,7 @@ class RequestFacts:
         return f"req_id={self.req_id}, request={self.request}, budget={self.budget}"
 
 
-class TheoriqResponse:
+class TheoriqResponse(FactConvertible):
     """`theoriq:response` fact"""
 
     def __init__(self, *, body_hash: str, to_addr: str) -> None:
@@ -150,20 +163,23 @@ class TheoriqResponse:
             {"req_id": req_id, "body_hash": self.body_hash, "to_addr": self.to_addr},
         )
 
+    def __str__(self):
+        return f"TheoriqResponse(body_hash={self.body_hash}, to_addr={self.to_addr})"
 
-class TheoriqCost:
+
+class TheoriqCost(FactConvertible):
     """
     Biscuit fact representing the cost for the execution of an 'execute' request.
     """
 
-    def __init__(self, *, amount: str, currency: Currency) -> None:
-        self.amount = amount
+    def __init__(self, *, amount: str | int, currency: Currency) -> None:
+        self.amount = str(amount)
         self.currency = currency
 
     @classmethod
     def zero(cls, currency: Currency) -> TheoriqCost:
         """Return a zero cost"""
-        return cls(amount="0", currency=currency)
+        return cls(amount=0, currency=currency)
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, self.__class__):
