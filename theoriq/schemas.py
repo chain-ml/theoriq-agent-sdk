@@ -49,7 +49,7 @@ class RouteItemBlock(ItemBlock[Sequence[RouteItem]]):
         return cls(routes=[RouteItem.from_dict(route) for route in data])
 
 
-class DialogItemBlock(ItemBlock[str]):
+class TextItemBlock(ItemBlock[str]):
     """ """
 
     def __init__(self, text: str):
@@ -68,7 +68,7 @@ class DialogItem:
         timestamp (str): The creation time of the dialog item.
         source (str): The creator of the dialog item. In the agent context, this is the agent's ID in the Theoriq protocol.
         source_type (str): The type of the source that creates the dialog item. Can be either 'user' or 'agent'.
-        items (list[DialogItemBlock]): A list of DialogItemBlock objects consisting of responses from the agent.
+        items (list[ItemBlock]): A list of ItemBlock objects consisting of responses from the agent.
     """
 
     def __init__(self, timestamp: str, source_type: str, source: str, items: List[ItemBlock[Any]]):
@@ -86,7 +86,7 @@ class DialogItem:
         for item in values["items"]:
             block_type: str = item["type"]
             if block_type.startswith("text"):
-                items.append(DialogItemBlock(text=item["data"]))
+                items.append(TextItemBlock(text=item["data"]))
             if block_type == "route":
                 items.append(RouteItemBlock.from_dict(item["data"]))
 
@@ -115,7 +115,7 @@ class DialogItem:
             timestamp=datetime.now(timezone.utc).isoformat(),
             source_type="Agent",
             source=source,
-            items=[DialogItemBlock(text)],
+            items=[TextItemBlock(text)],
         )
 
     @classmethod

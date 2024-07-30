@@ -1,5 +1,7 @@
 """Theoriq types"""
 
+from theoriq.utils import verify_address
+
 
 # TODO: Rename this class to AgentId
 class AgentAddress:
@@ -9,20 +11,7 @@ class AgentAddress:
     """
 
     def __init__(self, address: str) -> None:
-        self._verify_address(address)
-        self.address = address
-
-    @staticmethod
-    def _verify_address(address: str) -> None:
-        """
-        Verify the address
-        :raise TypeError: if the address is not 32 bytes long or does not only contain hex digits
-        """
-        try:
-            if len(bytes.fromhex(address)) != 32:
-                raise TypeError(f"address must be 32 bytes long: {address}")
-        except ValueError as e:
-            raise TypeError(f"address must only contain hex digits: {address}") from e
+        self.address = verify_address(address)
 
     def __str__(self) -> str:
         return self.address
