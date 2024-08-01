@@ -6,12 +6,13 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from biscuit_auth import Authorizer, Biscuit, BiscuitBuilder, Check, KeyPair, Policy, Rule
-from theoriq.facts import RequestFacts, ResponseFacts
 from theoriq.types import AgentAddress
+
+from .facts import RequestFacts, ResponseFacts
 
 
 def new_authority_block(subject_addr: str, expires_at: Optional[datetime] = None) -> BiscuitBuilder:
-    """Creates a new authority block"""
+    """Creates a new authority block builder."""
     expires_at = expires_at or datetime.now(tz=timezone.utc) + timedelta(days=365)
     expiration_timestamp = int(expires_at.timestamp())
     return BiscuitBuilder(

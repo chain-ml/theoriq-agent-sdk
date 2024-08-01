@@ -7,10 +7,11 @@ from flask import Flask
 from flask.testing import FlaskClient
 from tests.fixtures import *  # noqa: F403
 from theoriq.agent import AgentConfig
+from theoriq.biscuit import TheoriqCost
 from theoriq.execute import ExecuteRequest, ExecuteResponse
 from theoriq.extra.flask import theoriq_blueprint
-from theoriq.facts import Currency, TheoriqCost
 from theoriq.schemas import ChallengeResponseBody, DialogItem
+from theoriq.types.currency import Currency
 
 from .utils import new_req_facts, new_request_biscuit
 

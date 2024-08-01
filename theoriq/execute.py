@@ -6,9 +6,9 @@ Types and functions used by an Agent when executing a theoriq request
 
 from typing import Callable
 
-from theoriq.facts import Currency, TheoriqCost
+from theoriq.biscuit import RequestBiscuit, TheoriqCost
 from theoriq.schemas import DialogItem, ExecuteRequestBody
-from theoriq.types import RequestBiscuit
+from theoriq.types.currency import Currency
 
 
 class ExecuteRequest:

@@ -6,11 +6,11 @@ from __future__ import annotations
 
 import abc
 import uuid
-from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 from uuid import UUID
 
 from biscuit_auth import Authorizer, Biscuit, BlockBuilder, Fact, Rule
+from theoriq.types.currency import Currency
 from theoriq.utils import hash_body, verify_address
 
 
@@ -18,18 +18,6 @@ class FactConvertible(abc.ABC):
     @abc.abstractmethod
     def to_fact(self, req_id: str) -> Fact:
         pass
-
-
-class Currency(Enum):
-    USDC = "USDC"
-    USDT = "USDT"
-
-    @staticmethod
-    def from_value(value: Any):
-        try:
-            return Currency(str(value))
-        except ValueError as e:
-            raise ValueError(f"'{value}' is not a valid Currency") from e
 
 
 class TheoriqRequest(FactConvertible):
@@ -57,8 +45,14 @@ class TheoriqRequest(FactConvertible):
             },
         )
 
+    @classmethod
+    def from_body(cls, body: bytes, from_addr: str, to_addr: str) -> TheoriqRequest:
+        """Create a response fact from a response body"""
+        body_hash = hash_body(body)
+        return cls(body_hash=body_hash, from_addr=from_addr, to_addr=to_addr)
 
-class TheoriqBudget:
+
+class TheoriqBudget(FactConvertible):
     """`theoriq:budget` fact"""
 
     def __init__(self, *, amount: str | int, currency: Optional[Currency] = None, voucher: str) -> None:
@@ -94,61 +88,12 @@ class TheoriqBudget:
         return cls(amount=amount, currency=currency, voucher="")
 
     @classmethod
-    def from_voucher(cls, *, voucher: str) -> TheoriqBudget:
-        return cls(amount="", currency=None, voucher=voucher)
-
-
-class RequestFacts:
-    """Required facts inside the request biscuit"""
-
-    def __init__(self, req_id: UUID, request: TheoriqRequest, budget: TheoriqBudget) -> None:
-        self.req_id = req_id
-        self.request = request
-        self.budget = budget
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, self.__class__):
-            return self.__dict__ == other.__dict__
-        return False
-
-    @staticmethod
-    def from_biscuit(biscuit: Biscuit) -> RequestFacts:
-        """Read request facts from biscuit"""
-
-        rule = Rule(
-            """
-            data($req_id, $body_hash, $from_addr, $target_addr, $amount, $currency, $voucher) <- theoriq:request($req_id, $body_hash, $from_addr, $target_addr), theoriq:budget($req_id, $amount, $currency, $voucher)
-            """
-        )
-
-        authorizer = Authorizer()
-        authorizer.add_token(biscuit)
-        facts = authorizer.query(rule)
-
-        [req_id, body_hash, from_addr, to_addr, amount, currency, voucher] = facts[0].terms
-        request_id = UUID(req_id)
-        theoriq_request = TheoriqRequest(body_hash=body_hash, from_addr=from_addr, to_addr=to_addr)
-        theoriq_budget = TheoriqBudget(amount=amount, currency=Currency.from_value(currency), voucher=voucher)
-
-        return RequestFacts(request_id, theoriq_request, theoriq_budget)
-
-    def to_block_builder(self) -> BlockBuilder:
-        """Construct a biscuit block using the requestfacts"""
-        block_builder = BlockBuilder("")
-        request_id = str(self.req_id)
-        block_builder.add_fact(self.request.to_fact(request_id))
-        block_builder.add_fact(self.budget.to_fact(request_id))
-
-        return block_builder
-
-    def __str__(self):
-        return f"req_id={self.req_id}, request={self.request}, budget={self.budget}"
+    def empty(cls) -> TheoriqBudget:
+        return cls(amount=0, currency=Currency.USDC, voucher="")
 
     @classmethod
-    def default(cls, body: bytes, from_addr: str, to_addr: str) -> RequestFacts:
-        theoriq_req = TheoriqRequest(body_hash=hash_body(body), from_addr=from_addr, to_addr=to_addr)
-        theoriq_budget = TheoriqBudget.from_amount(amount=0, currency=Currency.USDC)
-        return cls(uuid.uuid4(), theoriq_req, theoriq_budget)
+    def from_voucher(cls, *, voucher: str) -> TheoriqBudget:
+        return cls(amount="", currency=None, voucher=voucher)
 
 
 class TheoriqResponse(FactConvertible):
@@ -208,6 +153,57 @@ class TheoriqCost(FactConvertible):
 
     def __str__(self):
         return f"TheoriqCost(amount={self.amount}, currency={self.currency.value})"
+
+
+class RequestFacts:
+    """Required facts inside the request biscuit"""
+
+    def __init__(self, request_id: UUID | str, request: TheoriqRequest, budget: TheoriqBudget) -> None:
+        self.req_id = request_id if isinstance(request_id, UUID) else UUID(request_id)
+        self.request = request
+        self.budget = budget
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False
+
+    @staticmethod
+    def from_biscuit(biscuit: Biscuit) -> RequestFacts:
+        """Read request facts from biscuit"""
+
+        rule = Rule(
+            """
+            data($req_id, $body_hash, $from_addr, $target_addr, $amount, $currency, $voucher) <- theoriq:request($req_id, $body_hash, $from_addr, $target_addr), theoriq:budget($req_id, $amount, $currency, $voucher)
+            """
+        )
+
+        authorizer = Authorizer()
+        authorizer.add_token(biscuit)
+        facts = authorizer.query(rule)
+
+        [req_id, body_hash, from_addr, to_addr, amount, currency, voucher] = facts[0].terms
+        theoriq_request = TheoriqRequest(body_hash=body_hash, from_addr=from_addr, to_addr=to_addr)
+        theoriq_budget = TheoriqBudget(amount=amount, currency=Currency.from_value(currency), voucher=voucher)
+
+        return RequestFacts(req_id, theoriq_request, theoriq_budget)
+
+    def to_block_builder(self) -> BlockBuilder:
+        """Construct a biscuit block builder using the facts"""
+        block_builder = BlockBuilder("")
+        request_id = str(self.req_id)
+        block_builder.add_fact(self.request.to_fact(request_id))
+        block_builder.add_fact(self.budget.to_fact(request_id))
+
+        return block_builder
+
+    def __str__(self):
+        return f"RequestFacts(req_id={self.req_id}, request={self.request}, budget={self.budget})"
+
+    @classmethod
+    def default(cls, body: bytes, from_addr: str, to_addr: str) -> RequestFacts:
+        theoriq_req = TheoriqRequest.from_body(body=body, from_addr=from_addr, to_addr=to_addr)
+        return cls(uuid.uuid4(), theoriq_req, TheoriqBudget.empty())
 
 
 class ResponseFacts:

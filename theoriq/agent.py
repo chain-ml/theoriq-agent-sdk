@@ -5,10 +5,17 @@ import os
 import biscuit_auth
 from biscuit_auth import Biscuit, KeyPair, PrivateKey, PublicKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from theoriq.biscuit import default_authorizer
-from theoriq.error import AuthorizationError, ParseBiscuitError, VerificationError
-from theoriq.facts import RequestFacts, TheoriqCost
-from theoriq.types import AgentAddress, RequestBiscuit, ResponseBiscuit
+from theoriq.biscuit import (
+    AuthorizationError,
+    ParseBiscuitError,
+    RequestBiscuit,
+    RequestFacts,
+    ResponseBiscuit,
+    TheoriqCost,
+    VerificationError,
+    default_authorizer,
+)
+from theoriq.types import AgentAddress
 from theoriq.utils import hash_body
 
 
@@ -83,9 +90,9 @@ class Agent:
             raise AuthorizationError(f"biscuit is not authorized. {auth_err}") from auth_err
 
     def _verify_biscuit_facts(self, facts: RequestFacts, body: bytes) -> None:
-        if not (self._verify_target_address(facts)):
+        if not self._verify_target_address(facts):
             raise VerificationError("biscuit's target address does not match our agent's address")
-        if not (self._verify_request_body(facts, body)):
+        if not self._verify_request_body(facts, body):
             raise VerificationError("biscuit's request body does not match the received body")
 
     def _verify_target_address(self, req_facts: RequestFacts) -> bool:
@@ -101,6 +108,6 @@ class Agent:
 
     def sign_challenge(self, challenge: bytes) -> bytes:
         """Sign the given challenge with the Agent's private key"""
-        private_key_bytes = bytes(self.config.agent_private_key.to_bytes())
+        private_key_bytes = self.config.agent_private_key.to_bytes()
         private_key = Ed25519PrivateKey.from_private_bytes(private_key_bytes)
         return private_key.sign(challenge)

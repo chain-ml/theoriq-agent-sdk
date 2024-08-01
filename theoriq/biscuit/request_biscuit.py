@@ -1,17 +1,8 @@
-import theoriq.biscuit
 from biscuit_auth import Biscuit, KeyPair
-from theoriq.facts import RequestFacts, ResponseFacts, TheoriqCost, TheoriqResponse
 
-
-class ResponseBiscuit:
-    """Response biscuit used by the `theoriq` protocol"""
-
-    def __init__(self, biscuit: Biscuit, response_facts: ResponseFacts):
-        self.biscuit = biscuit
-        self.resp_facts = response_facts
-
-    def to_base64(self) -> str:
-        return self.biscuit.to_base64()
+from .biscuit import attenuate_for_response
+from .facts import RequestFacts, ResponseFacts, TheoriqCost, TheoriqResponse
+from .response_biscuit import ResponseBiscuit
 
 
 class RequestBiscuit:
@@ -24,6 +15,6 @@ class RequestBiscuit:
     def attenuate_for_response(self, body: bytes, cost: TheoriqCost, agent_kp: KeyPair) -> ResponseBiscuit:
         theoriq_response = TheoriqResponse.from_body(body, to_addr=self.req_facts.request.from_addr)
         response_facts = ResponseFacts(self.req_facts.req_id, theoriq_response, cost)
-        attenuated_biscuit = theoriq.biscuit.attenuate_for_response(self.biscuit, response_facts, agent_kp)
+        attenuated_biscuit = attenuate_for_response(self.biscuit, response_facts, agent_kp)
 
         return ResponseBiscuit(attenuated_biscuit, response_facts)

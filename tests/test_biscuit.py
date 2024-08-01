@@ -6,8 +6,14 @@ import biscuit_auth
 import pytest
 from biscuit_auth import AuthorizationError, KeyPair
 from tests import utils
-from theoriq.biscuit import attenuate_for_request, attenuate_for_response, default_authorizer, new_authority_block
-from theoriq.facts import RequestFacts, ResponseFacts
+from theoriq.biscuit import (
+    RequestFacts,
+    ResponseFacts,
+    attenuate_for_request,
+    attenuate_for_response,
+    default_authorizer,
+    new_authority_block,
+)
 from theoriq.types import AgentAddress
 
 ADDRESS_ONE: Final[str] = "0000000000000000000000000000000000000000000000000000000000000001"

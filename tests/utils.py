@@ -3,17 +3,10 @@
 import uuid
 
 from biscuit_auth import Biscuit, KeyPair
-from theoriq.biscuit import new_authority_block
-from theoriq.facts import (
-    Currency,
-    RequestFacts,
-    ResponseFacts,
-    TheoriqBudget,
-    TheoriqCost,
-    TheoriqRequest,
-    TheoriqResponse,
-)
+from theoriq.biscuit import RequestFacts, ResponseFacts, TheoriqCost, new_authority_block
+from theoriq.biscuit.facts import TheoriqBudget, TheoriqRequest, TheoriqResponse
 from theoriq.types import AgentAddress
+from theoriq.types.currency import Currency
 from theoriq.utils import hash_body
 
 
