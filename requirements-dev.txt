@@ -5,9 +5,10 @@ pytest==7.4
 
 # Lint
 black==24.4.2
-mypy==1.11.0
+mypy==1.11.1
 ruff==0.5.5
 pylint==3.2.6
+isort==5.13.2
 
 # Flask
 flask~=3.0

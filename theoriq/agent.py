@@ -3,14 +3,12 @@ from __future__ import annotations
 import os
 
 import biscuit_auth
-from biscuit_auth import PublicKey, PrivateKey, Biscuit, KeyPair
+from biscuit_auth import Biscuit, KeyPair, PrivateKey, PublicKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from sha3 import keccak_256  # type: ignore
-
-from theoriq.error import VerificationError, ParseBiscuitError
+from theoriq.biscuit import default_authorizer
+from theoriq.error import AuthorizationError, ParseBiscuitError, VerificationError
 from theoriq.facts import RequestFacts, TheoriqCost
 from theoriq.types import AgentAddress, RequestBiscuit, ResponseBiscuit
-from theoriq.biscuit import default_authorizer
 from theoriq.utils import hash_body
 
 
@@ -21,8 +19,7 @@ class AgentConfig:
         self.theoriq_public_key: PublicKey = theoriq_public_key
         self.agent_private_key: PrivateKey = agent_kp.private_key
         # TODO: Rename to AgentId
-        agent_pk_hash = keccak_256(bytes(agent_kp.public_key.to_bytes())).hexdigest()
-        self.agent_address = AgentAddress(agent_pk_hash)
+        self.agent_address = AgentAddress.from_public_key(agent_kp.public_key)
 
     @classmethod
     def from_env(cls) -> AgentConfig:
@@ -70,23 +67,25 @@ class Agent:
         try:
             return Biscuit.from_base64(token, self.config.theoriq_public_key)
         except biscuit_auth.BiscuitValidationError as validation_err:
-            raise ParseBiscuitError(f"fail to parse token {token[:3]}") from validation_err
+            raise ParseBiscuitError(f"fail to parse token {token[:3]}...") from validation_err
 
     def _verify_biscuit(self, req_biscuit: RequestBiscuit, body: bytes) -> None:
-        self._authorize_biscuit(req_biscuit)
-        self._verify_biscuit_facts(req_biscuit, body)
+        self._authorize_biscuit(req_biscuit.biscuit)
+        self._verify_biscuit_facts(req_biscuit.req_facts, body)
 
-    def _authorize_biscuit(self, req_biscuit: RequestBiscuit):
+    def _authorize_biscuit(self, biscuit: Biscuit):
         """Authorize the given biscuit."""
         authorizer = default_authorizer(self.config.agent_address)
-        authorizer.add_token(req_biscuit.biscuit)
-        authorizer.authorize()
+        authorizer.add_token(biscuit)
+        try:
+            authorizer.authorize()
+        except biscuit_auth.AuthorizationError as auth_err:
+            raise AuthorizationError(f"biscuit is not authorized. {auth_err}") from auth_err
 
-    def _verify_biscuit_facts(self, req_biscuit: RequestBiscuit, body: bytes) -> None:
-        req_facts = req_biscuit.req_facts
-        if not (self._verify_target_address(req_facts)):
+    def _verify_biscuit_facts(self, facts: RequestFacts, body: bytes) -> None:
+        if not (self._verify_target_address(facts)):
             raise VerificationError("biscuit's target address does not match our agent's address")
-        if not (self._verify_request_body(req_facts, body)):
+        if not (self._verify_request_body(facts, body)):
             raise VerificationError("biscuit's request body does not match the received body")
 
     def _verify_target_address(self, req_facts: RequestFacts) -> bool:

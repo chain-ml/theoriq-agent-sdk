@@ -1,20 +1,18 @@
 import json
 import uuid
-import pytest
 
+import pytest
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from flask import Flask
 from flask.testing import FlaskClient
-
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-
-from theoriq.execute import ExecuteRequest, ExecuteResponse
-from theoriq.schemas import ChallengeResponseBody, DialogItem
-from theoriq.facts import TheoriqCost, Currency
+from tests.fixtures import *  # noqa: F403
 from theoriq.agent import AgentConfig
+from theoriq.execute import ExecuteRequest, ExecuteResponse
 from theoriq.extra.flask import theoriq_blueprint
+from theoriq.facts import Currency, TheoriqCost
+from theoriq.schemas import ChallengeResponseBody, DialogItem
 
 from .utils import new_req_facts, new_request_biscuit
-from tests.fixtures import *  # noqa: F403
 
 
 @pytest.fixture

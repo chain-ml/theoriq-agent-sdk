@@ -2,16 +2,14 @@
 
 import flask
 import pydantic
-from flask import Blueprint, request, jsonify, Response
-
+from flask import Blueprint, Response, jsonify, request
 from theoriq.agent import Agent, AgentConfig
-from theoriq.error import VerificationError, ParseBiscuitError
-from theoriq.execute import ExecuteRequestFn, ExecuteRequest
-from theoriq.facts import TheoriqCost, Currency
+from theoriq.error import AuthorizationError, ParseBiscuitError, VerificationError
+from theoriq.execute import ExecuteRequest, ExecuteRequestFn
+from theoriq.extra.globals import agent_var
+from theoriq.facts import Currency, TheoriqCost
 from theoriq.schemas import ChallengeRequestBody, ExecuteRequestBody
 from theoriq.types import RequestBiscuit, ResponseBiscuit
-
-from theoriq.extra.globals import agent_var
 
 
 def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn) -> Blueprint:
@@ -93,7 +91,7 @@ def process_biscuit_request(agent: Agent, request: flask.Request) -> RequestBisc
         bearer_token = get_bearer_token(request)
         request_body = request.data
         return agent.parse_and_verify_biscuit(bearer_token, request_body)
-    except (ParseBiscuitError, VerificationError) as err:
+    except (ParseBiscuitError, VerificationError, AuthorizationError) as err:
         raise flask.abort(401, err)
 
 

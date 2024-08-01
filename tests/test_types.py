@@ -1,7 +1,5 @@
 import pytest
-
 from theoriq.types import AgentAddress
-
 
 valid_agent_address = [
     "48656c6c6f20776f726c642c2074686948656c6c6f20776f726c642c20746869",
