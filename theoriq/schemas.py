@@ -7,9 +7,9 @@ This module contains the schemas used by the Theoriq endpoint.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Sequence, TypeVar, Generic
+from typing import Any, Dict, Generic, List, Sequence, TypeVar
 
-from pydantic import BaseModel, field_validator, field_serializer
+from pydantic import BaseModel, field_serializer, field_validator
 
 T_Data = TypeVar("T_Data")
 

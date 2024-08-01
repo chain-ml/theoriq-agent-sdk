@@ -39,3 +39,11 @@ explicit_package_bases = "true"
 [tool.ruff]
 exclude = ["__init__.py", "docs", "tmp"]
 line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
+py_version=39
+src_paths = ["src"]
+skip = ["__init__.py"]
+skip_glob = ["**/venv/*", "**/docs/*", "**/stubs/*"]

@@ -2,12 +2,25 @@
 Helpers to work with biscuit data.
 """
 
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+
+from biscuit_auth import Authorizer, Biscuit, BiscuitBuilder, Check, KeyPair, Policy, Rule
 from theoriq.facts import RequestFacts, ResponseFacts
-
-from datetime import datetime, timezone
-from biscuit_auth import Biscuit, Rule, Authorizer, Policy, Check, KeyPair
-
 from theoriq.types import AgentAddress
+
+
+def new_authority_block(subject_addr: str, expires_at: Optional[datetime] = None) -> BiscuitBuilder:
+    """Creates a new authority block"""
+    expires_at = expires_at or datetime.now(tz=timezone.utc) + timedelta(days=365)
+    expiration_timestamp = int(expires_at.timestamp())
+    return BiscuitBuilder(
+        """
+        theoriq:subject("agent", {subject_addr});
+        theoriq:expires_at({expires_at});
+        """,
+        {"subject_addr": str(subject_addr), "expires_at": expiration_timestamp},
+    )
 
 
 def get_subject_address(biscuit: Biscuit) -> AgentAddress:
@@ -16,16 +29,6 @@ def get_subject_address(biscuit: Biscuit) -> AgentAddress:
     authorizer = _biscuit_authorizer(biscuit)
     facts = authorizer.query(rule)
     return AgentAddress(facts[0].terms[0])
-
-
-def get_request_facts(biscuit: Biscuit) -> RequestFacts:
-    """Get the request facts of a biscuit."""
-    return RequestFacts.from_biscuit(biscuit)
-
-
-def get_response_facts(biscuit: Biscuit) -> ResponseFacts:
-    """Get the response facts of a biscuit."""
-    return ResponseFacts.from_biscuit(biscuit)
 
 
 def default_authorizer(agent_addr: AgentAddress) -> Authorizer:
@@ -50,12 +53,12 @@ def default_authorizer(agent_addr: AgentAddress) -> Authorizer:
 
 def attenuate_for_request(biscuit: Biscuit, req_facts: RequestFacts, external_kp: KeyPair) -> Biscuit:
     """Attenuate a biscuit with the given request facts by appending a third party block"""
-    return biscuit.append_third_party_block(external_kp, req_facts.to_block())  # type: ignore
+    return biscuit.append_third_party_block(external_kp, req_facts.to_block_builder())  # type: ignore
 
 
 def attenuate_for_response(biscuit: Biscuit, resp_facts: ResponseFacts, external_kp: KeyPair) -> Biscuit:
     """Attenuate a biscuit with the given response facts by appending a third party block"""
-    return biscuit.append_third_party_block(external_kp, resp_facts.to_block())  # type: ignore
+    return biscuit.append_third_party_block(external_kp, resp_facts.to_block_builder())  # type: ignore
 
 
 def _biscuit_authorizer(biscuit: Biscuit) -> Authorizer:
