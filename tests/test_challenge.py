@@ -8,6 +8,7 @@ from theoriq.agent import Agent, AgentConfig
 def challenge() -> bytes:
     """Generate a random challenge using the uuid package"""
     from uuid import uuid4
+
     return uuid4().bytes
 
 
