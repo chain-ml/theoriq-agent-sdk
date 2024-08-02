@@ -1,4 +1,4 @@
-biscuit-python @ git+https://github.com/chain-ml/biscuit-python.git@3b0b7d66c344a25fa12f18c084d52ca9080c225e
+biscuit-python @ git+https://github.com/chain-ml/biscuit-python.git@0a26600d9676743124733d93a1bbdb2531d12a4d
 safe-pysha3==1.0.*
 pydantic==2.8.*
 cryptography==43.0.0
