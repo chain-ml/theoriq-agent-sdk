@@ -57,7 +57,7 @@ def test_send_execute_request(theoriq_kp, agent_kp, agent_config: AgentConfig, c
                 "timestamp": "123",
                 "sourceType": "user",
                 "source": "0x012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01234567",
-                "items": [{"data": "My name is John Doe", "type": "text"}],
+                "blocks": [{"data": {"text": "My name is John Doe"}, "type": "text"}],
             }
         ]
     }
@@ -78,7 +78,7 @@ def test_send_execute_request(theoriq_kp, agent_kp, agent_config: AgentConfig, c
     assert response.status_code == 200
 
     response_body = DialogItem.from_dict(response.json)
-    assert response_body.items[0].data == "My name is John Doe"
+    assert response_body.blocks[0].data.text == "My name is John Doe"
 
 
 def test_send_execute_request_without_biscuit_returns_401(
@@ -90,7 +90,7 @@ def test_send_execute_request_without_biscuit_returns_401(
                 "timestamp": "123",
                 "sourceType": "user",
                 "source": "0x012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01234567",
-                "items": [{"data": "My name is John Doe", "type": "text"}],
+                "blocks": [{"data": {"text": "My name is John Doe"}, "type": "text"}],
             }
         ]
     }
@@ -136,7 +136,7 @@ def test_send_execute_request_when_execute_fn_fails_returns_500(
                 "timestamp": "123",
                 "sourceType": "user",
                 "source": "0x012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01234567",
-                "items": [{"data": "My name is John Doe should fail", "type": "text"}],
+                "blocks": [{"data": {"text": "My name is John Doe should fail"}, "type": "text"}],
             }
         ]
     }
@@ -165,7 +165,7 @@ def test_send_chat_completion_request(theoriq_kp, agent_kp, agent_config: AgentC
                 "timestamp": "123",
                 "sourceType": "user",
                 "source": "0x012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01234567",
-                "items": [{"data": "My name is John Doe", "type": "text"}],
+                "blocks": [{"data": {"text": "My name is John Doe"}, "type": "text"}],
             }
         ]
     }
@@ -186,12 +186,12 @@ def test_send_chat_completion_request(theoriq_kp, agent_kp, agent_config: AgentC
     assert response.status_code == 200
 
     response_body = DialogItem.from_dict(response.json)
-    assert response_body.items[0].data == "My name is John Doe"
+    assert response_body.blocks[0].data.text == "My name is John Doe"
 
 
 def echo_last_prompt(request: ExecuteRequest) -> ExecuteResponse:
-    assert request.biscuit.req_facts.budget.amount == "10"
-    last_prompt = request.body.items[-1].items[0].data
+    assert request.biscuit.request_facts.budget.amount == "10"
+    last_prompt = request.body.items[-1].blocks[0].data.text
 
     if "should fail" in last_prompt:
         raise Exception("Execute function fails")

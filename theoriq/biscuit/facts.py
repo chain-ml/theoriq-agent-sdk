@@ -14,13 +14,13 @@ from theoriq.types.currency import Currency
 from theoriq.utils import hash_body, verify_address
 
 
-class FactConvertible(abc.ABC):
+class FactConvertibleBase(abc.ABC):
     @abc.abstractmethod
     def to_fact(self, req_id: str) -> Fact:
         pass
 
 
-class TheoriqRequest(FactConvertible):
+class TheoriqRequest(FactConvertibleBase):
     """`theoriq:request` fact"""
 
     def __init__(self, *, body_hash: str, from_addr: str, to_addr: str) -> None:
@@ -52,7 +52,7 @@ class TheoriqRequest(FactConvertible):
         return cls(body_hash=body_hash, from_addr=from_addr, to_addr=to_addr)
 
 
-class TheoriqBudget(FactConvertible):
+class TheoriqBudget(FactConvertibleBase):
     """`theoriq:budget` fact"""
 
     def __init__(self, *, amount: str | int, currency: Optional[Currency] = None, voucher: str) -> None:
@@ -96,7 +96,7 @@ class TheoriqBudget(FactConvertible):
         return cls(amount="", currency=None, voucher=voucher)
 
 
-class TheoriqResponse(FactConvertible):
+class TheoriqResponse(FactConvertibleBase):
     """`theoriq:response` fact"""
 
     def __init__(self, *, body_hash: str, to_addr: str) -> None:
@@ -125,7 +125,7 @@ class TheoriqResponse(FactConvertible):
         return cls(body_hash=body_hash, to_addr=to_addr)
 
 
-class TheoriqCost(FactConvertible):
+class TheoriqCost(FactConvertibleBase):
     """
     Biscuit fact representing the cost for the execution of an 'execute' request.
     """
@@ -202,8 +202,8 @@ class RequestFacts:
 
     @classmethod
     def default(cls, body: bytes, from_addr: str, to_addr: str) -> RequestFacts:
-        theoriq_req = TheoriqRequest.from_body(body=body, from_addr=from_addr, to_addr=to_addr)
-        return cls(uuid.uuid4(), theoriq_req, TheoriqBudget.empty())
+        theoriq_request = TheoriqRequest.from_body(body=body, from_addr=from_addr, to_addr=to_addr)
+        return cls(uuid.uuid4(), theoriq_request, TheoriqBudget.empty())
 
 
 class ResponseFacts:

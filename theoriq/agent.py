@@ -6,6 +6,7 @@ import biscuit_auth
 from biscuit_auth import Biscuit, KeyPair, PrivateKey, PublicKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from theoriq.biscuit import (
+    AgentAddress,
     AuthorizationError,
     ParseBiscuitError,
     RequestBiscuit,
@@ -13,9 +14,7 @@ from theoriq.biscuit import (
     ResponseBiscuit,
     TheoriqCost,
     VerificationError,
-    default_authorizer,
 )
-from theoriq.types import AgentAddress
 from theoriq.utils import hash_body
 
 
@@ -77,12 +76,12 @@ class Agent:
             raise ParseBiscuitError(f"fail to parse token {token[:3]}...") from validation_err
 
     def _verify_biscuit(self, req_biscuit: RequestBiscuit, body: bytes) -> None:
-        self._authorize_biscuit(req_biscuit.biscuit)
-        self._verify_biscuit_facts(req_biscuit.req_facts, body)
+        self._authorize_biscuit(req_biscuit._biscuit)
+        self._verify_biscuit_facts(req_biscuit.request_facts, body)
 
     def _authorize_biscuit(self, biscuit: Biscuit):
         """Authorize the given biscuit."""
-        authorizer = default_authorizer(self.config.agent_address)
+        authorizer = self.config.agent_address.default_authorizer()
         authorizer.add_token(biscuit)
         try:
             authorizer.authorize()
@@ -100,14 +99,19 @@ class Agent:
         target_address = AgentAddress(req_facts.request.to_addr)
         return target_address == self.config.agent_address
 
+    def sign_challenge(self, challenge: bytes) -> bytes:
+        """Sign the given challenge with the Agent's private key"""
+        private_key_bytes = bytes(self.config.agent_private_key.to_bytes())
+        private_key = Ed25519PrivateKey.from_private_bytes(private_key_bytes)
+        return private_key.sign(challenge)
+
     @staticmethod
     def _verify_request_body(req_facts: RequestFacts, body: bytes) -> bool:
         """Verify that the request facts match with the given body"""
         hashed_received_body = hash_body(body)
         return hashed_received_body == req_facts.request.body_hash
 
-    def sign_challenge(self, challenge: bytes) -> bytes:
-        """Sign the given challenge with the Agent's private key"""
-        private_key_bytes = bytes(self.config.agent_private_key.to_bytes())
-        private_key = Ed25519PrivateKey.from_private_bytes(private_key_bytes)
-        return private_key.sign(challenge)
+    @classmethod
+    def from_env(cls) -> Agent:
+        config = AgentConfig.from_env()
+        return cls(config)

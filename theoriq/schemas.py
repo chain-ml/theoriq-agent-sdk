@@ -6,32 +6,56 @@ This module contains the schemas used by the Theoriq endpoint.
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from typing import Any, Dict, Generic, List, Sequence, TypeVar
+from typing import Any, Dict, Generic, List, Optional, Sequence, TypeVar, Union
 
 from pydantic import BaseModel, field_serializer, field_validator
 
-T_Data = TypeVar("T_Data")
+
+class BaseData(ABC):
+    @abstractmethod
+    def to_dict(self) -> Dict[str, Any]:
+        pass
+
+
+T_Data = TypeVar("T_Data", bound=Union[BaseData, Sequence[BaseData]])
 
 
 class ItemBlock(Generic[T_Data]):
     """ """
 
-    def __init__(self, *, bloc_type: str, data: T_Data):
+    def __init__(
+        self, *, bloc_type: str, data: T_Data, key: Optional[str] = None, reference: Optional[str] = None
+    ) -> None:
         self.bloc_type = bloc_type
         self.data = data
+        self.key = key
+        self.reference = reference
 
-    def to_dict(self):
-        # Convert the object to a dictionary
-        return {"type": self.bloc_type, "data": self.data}
+    def to_dict(self) -> Dict[str, Any]:
+        result: Dict[str, Any] = {"type": self.bloc_type}
+        if isinstance(self.data, BaseData):
+            result["data"] = self.data.to_dict()
+        elif isinstance(self.data, Sequence):
+            result["data"] = {"items": [d.to_dict() for d in self.data]}
+
+        if self.key is not None:
+            result["key"] = self.key
+        if self.reference is not None:
+            result["ref"] = self.reference
+        return result
 
 
-class RouteItem:
+class RouteItem(BaseData):
     """ """
 
     def __init__(self, name: str, score: float):
         self.name = name
         self.score = score
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"name": self.name, "score": self.score}
 
     @classmethod
     def from_dict(cls, values: Dict[str, Any]) -> RouteItem:
@@ -45,15 +69,31 @@ class RouteItemBlock(ItemBlock[Sequence[RouteItem]]):
         super().__init__(bloc_type="route", data=routes)
 
     @classmethod
-    def from_dict(cls, data: Any):
-        return cls(routes=[RouteItem.from_dict(route) for route in data])
+    def from_dict(cls, data: Dict[str, Any]) -> RouteItemBlock:
+        items = data.get("items", [])
+        return cls(routes=[RouteItem.from_dict(route) for route in items])
 
 
-class TextItemBlock(ItemBlock[str]):
+class TextItem(BaseData):
     """ """
 
     def __init__(self, text: str):
-        super().__init__(bloc_type="text", data=text)
+        self.text = text
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"text": self.text}
+
+
+class TextItemBlock(ItemBlock[TextItem]):
+    """ """
+
+    def __init__(self, text: str, sub_type: Optional[str] = None):
+        sub_type = f":{sub_type}" if sub_type is not None else ""
+        super().__init__(bloc_type=f"text{sub_type}", data=TextItem(text=text))
+
+    @classmethod
+    def from_dict(cls, data: Any):
+        return cls(text=data["text"])
 
 
 class DialogItem:
@@ -71,30 +111,30 @@ class DialogItem:
         items (list[ItemBlock]): A list of ItemBlock objects consisting of responses from the agent.
     """
 
-    def __init__(self, timestamp: str, source_type: str, source: str, items: List[ItemBlock[Any]]):
+    def __init__(self, timestamp: str, source_type: str, source: str, blocks: List[ItemBlock[Any]]):
         self.timestamp = timestamp
         self.source = source
         self.source_type = source_type
-        self.items = items
+        self.blocks = blocks
 
     @classmethod
     def from_dict(cls, values: Any | None) -> DialogItem:
         if values is None:
             raise ValueError("Cannot create a DialogItem from None")
 
-        items: List[ItemBlock[Any]] = []
-        for item in values["items"]:
+        blocks: List[ItemBlock[Any]] = []
+        for item in values["blocks"]:
             block_type: str = item["type"]
             if block_type.startswith("text"):
-                items.append(TextItemBlock(text=item["data"]))
+                blocks.append(TextItemBlock.from_dict(item["data"]))
             if block_type == "route":
-                items.append(RouteItemBlock.from_dict(item["data"]))
+                blocks.append(RouteItemBlock.from_dict(item["data"]))
 
         return cls(
             timestamp=values["timestamp"],
             source_type=values["sourceType"],
             source=values["source"],
-            items=items,
+            blocks=blocks,
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -102,12 +142,12 @@ class DialogItem:
             "timestamp": self.timestamp,
             "sourceType": self.source_type,
             "source": self.source,
-            "items": [item.to_dict() for item in self.items],
+            "blocks": [block.to_dict() for block in self.blocks],
         }
 
     @classmethod
     def new(cls, source: str, items: List[ItemBlock[Any]]) -> DialogItem:
-        return cls(timestamp=datetime.now(timezone.utc).isoformat(), source_type="Agent", source=source, items=items)
+        return cls(timestamp=datetime.now(timezone.utc).isoformat(), source_type="Agent", source=source, blocks=items)
 
     @classmethod
     def new_text(cls, source: str, text: str) -> DialogItem:
@@ -115,7 +155,7 @@ class DialogItem:
             timestamp=datetime.now(timezone.utc).isoformat(),
             source_type="Agent",
             source=source,
-            items=[TextItemBlock(text)],
+            blocks=[TextItemBlock(text)],
         )
 
     @classmethod
@@ -124,7 +164,7 @@ class DialogItem:
             timestamp=datetime.now(timezone.utc).isoformat(),
             source_type="Agent",
             source=source,
-            items=[RouteItemBlock([RouteItem(route, score)])],
+            blocks=[RouteItemBlock([RouteItem(route, score)])],
         )
 
 

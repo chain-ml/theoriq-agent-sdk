@@ -3,9 +3,8 @@
 import uuid
 
 from biscuit_auth import Biscuit, KeyPair
-from theoriq.biscuit import RequestFacts, ResponseFacts, TheoriqCost, new_authority_block
+from theoriq.biscuit import AgentAddress, RequestFacts, ResponseFacts, TheoriqCost
 from theoriq.biscuit.facts import TheoriqBudget, TheoriqRequest, TheoriqResponse
-from theoriq.types import AgentAddress
 from theoriq.types.currency import Currency
 from theoriq.utils import hash_body
 
@@ -26,6 +25,6 @@ def new_response_facts(req_id: uuid.UUID, body: bytes, to_addr: str, amount: int
 
 def new_request_biscuit(req_facts: RequestFacts, keypair: KeyPair) -> Biscuit:
     """Creates a new request biscuit for testing purposes"""
-    authority = new_authority_block(req_facts.request.to_addr)
+    authority = AgentAddress(req_facts.request.to_addr).new_authority_builder()
     authority.merge(req_facts.to_block_builder())
     return authority.build(keypair.private_key)
