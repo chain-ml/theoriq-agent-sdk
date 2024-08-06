@@ -9,17 +9,13 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - uses: ./.github/actions/setup
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.12"
           rust-version: "1.79.0"
 
       - name: Run linter
