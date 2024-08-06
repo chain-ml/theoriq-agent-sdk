@@ -13,7 +13,6 @@ from .router import RouteItem, RouterItemBlock
 from .schemas import ItemBlock
 from .text import TextItemBlock
 
-
 block_classes: Dict[str, Type[ItemBlock]] = {
     "code": CodeItemBlock,
     "data": DataItemBlock,
