@@ -4,11 +4,12 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Sequence
 
 from pydantic import BaseModel, field_serializer, field_validator
-from theoriq.schemas import ImageItemBlock
-from theoriq.schemas.code import CodeItemBlock
-from theoriq.schemas.router import RouteItem, RoutesItemBlock
-from theoriq.schemas.schemas import ItemBlock
-from theoriq.schemas.text import TextItemBlock
+from .image import ImageItemBlock
+from .code import CodeItemBlock
+from .metrics import MetricsItemBlock
+from .router import RouteItem, RoutesItemBlock
+from .schemas import ItemBlock
+from .text import TextItemBlock
 
 
 class DialogItem:
@@ -48,6 +49,8 @@ class DialogItem:
                 blocks.append(ImageItemBlock.from_dict(item["data"], block_type))
             elif CodeItemBlock.is_valid(block_type):
                 blocks.append(CodeItemBlock.from_dict(item["data"], block_type))
+            elif MetricsItemBlock.is_valid(block_type):
+                blocks.append(MetricsItemBlock.from_dict(item["data"], block_type))
             else:
                 raise ValueError(f"invalid item type {block_type}")
 

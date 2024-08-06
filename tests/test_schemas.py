@@ -16,6 +16,16 @@ def test_schemas():
                         },
                         {"data": {"text": "My name is John Doe"}, "type": "text"},
                         {"data": {"code": "import numpy"}, "type": "code:python"},
+                        {
+                            "type": "metrics",
+                            "data": {
+                                "items": [
+                                    {"name": "accuracy", "value": 0.95, "trendPercentage": 0.05},
+                                    {"name": "precision", "value": 0.85, "trendPercentage": 0.15},
+                                    {"name": "recall", "value": 0.75, "trendPercentage": 0.25},
+                                ]
+                            }
+                        }
                     ],
                 }
             ]
@@ -28,3 +38,4 @@ def test_schemas():
     assert dialog_item.blocks[0].data[1].score == 0.27
     assert dialog_item.blocks[1].data.text == "My name is John Doe"
     assert dialog_item.blocks[2].data.code == "import numpy"
+    assert dialog_item.blocks[3].data[-1].trend_percentage == 0.25
