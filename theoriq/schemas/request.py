@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 from pydantic import BaseModel, field_serializer, field_validator
-from theoriq.schemas.route import RouteItem, RoutesItemBlock
+from theoriq.schemas import ImageItemBlock
+from theoriq.schemas.code import CodeItemBlock
+from theoriq.schemas.router import RouteItem, RoutesItemBlock
 from theoriq.schemas.schemas import ItemBlock
 from theoriq.schemas.text import TextItemBlock
 
@@ -24,7 +26,7 @@ class DialogItem:
         items (list[ItemBlock]): A list of ItemBlock objects consisting of responses from the agent.
     """
 
-    def __init__(self, timestamp: str, source_type: str, source: str, blocks: List[ItemBlock[Any]]):
+    def __init__(self, timestamp: str, source_type: str, source: str, blocks: List[ItemBlock[Any]]) -> None:
         self.timestamp = timestamp
         self.source = source
         self.source_type = source_type
@@ -38,12 +40,16 @@ class DialogItem:
         blocks: List[ItemBlock[Any]] = []
         for item in values["blocks"]:
             block_type: str = item["type"]
-            if block_type.startswith("text"):
-                blocks.append(TextItemBlock.from_dict(item["data"]))
-            if block_type == "route":
-                blocks.append(RoutesItemBlock.from_dict(item["data"]))
-            if block_type == "image":
-                blocks.append(RoutesItemBlock.from_dict(item["data"]))
+            if TextItemBlock.is_valid(block_type):
+                blocks.append(TextItemBlock.from_dict(item["data"], block_type))
+            elif RoutesItemBlock.is_valid(block_type):
+                blocks.append(RoutesItemBlock.from_dict(item["data"], block_type))
+            elif ImageItemBlock.is_valid(block_type):
+                blocks.append(ImageItemBlock.from_dict(item["data"], block_type))
+            elif CodeItemBlock.is_valid(block_type):
+                blocks.append(CodeItemBlock.from_dict(item["data"], block_type))
+            else:
+                raise ValueError(f"invalid item type {block_type}")
 
         return cls(
             timestamp=values["timestamp"],
@@ -83,7 +89,18 @@ class DialogItem:
         )
 
 
+class Configuration(BaseModel):
+    """
+    Represents the expected payload for a configuration request.
+    """
+
+
 class ExecuteRequestBody(BaseModel):
+    configuration: Optional[Configuration] = None
+    dialog: Dialog
+
+
+class Dialog(BaseModel):
     """
     Represents the expected payload for an execute request.
 

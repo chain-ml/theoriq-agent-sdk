@@ -42,3 +42,13 @@ class ItemBlock(Generic[T_Data]):
         if self.reference is not None:
             result["ref"] = self.reference
         return result
+
+    @staticmethod
+    def raise_if_not_valid(*, block_type: str, expected: str) -> None:
+        if not block_type.startswith(expected):
+            raise ValueError(f"Data type must be subtype of {expected}, not {block_type}")
+
+    @staticmethod
+    def sub_type(bloc_type: str) -> str:
+        parts = bloc_type.split(":", 1)
+        return parts[1] if len(parts) > 1 else ""

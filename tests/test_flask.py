@@ -153,7 +153,7 @@ def test_send_chat_completion_request(theoriq_kp, agent_kp, agent_config: AgentC
 
 def echo_last_prompt(request: ExecuteRequest) -> ExecuteResponse:
     assert request.biscuit.request_facts.budget.amount == "10"
-    last_prompt = request.body.items[-1].blocks[0].data.text
+    last_prompt = request.body.dialog.items[-1].blocks[0].data.text
 
     if "should fail" in last_prompt:
         raise Exception("Execute function fails")
@@ -163,14 +163,15 @@ def echo_last_prompt(request: ExecuteRequest) -> ExecuteResponse:
 
 
 def _build_request_body(text: str, source: AgentAddress) -> dict:
-    request_body = {
-        "items": [
-            {
-                "timestamp": "123",
-                "sourceType": "user",
-                "source": str(source),
-                "blocks": [{"data": {"text": text}, "type": "text"}],
-            }
-        ]
+    return {
+        "dialog": {
+            "items": [
+                {
+                    "timestamp": "123",
+                    "sourceType": "user",
+                    "source": str(source),
+                    "blocks": [{"data": {"text": text}, "type": "text:markdown"}],
+                }
+            ]
+        }
     }
-    return request_body
