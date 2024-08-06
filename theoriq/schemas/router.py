@@ -23,14 +23,14 @@ class RouteItem(BaseData):
         return f"RouteItem(name={self.name}, score={self.score})"
 
 
-class RoutesItemBlock(ItemBlock[Sequence[RouteItem]]):
+class RouterItemBlock(ItemBlock[Sequence[RouteItem]]):
     """ """
 
     def __init__(self, routes: Sequence[RouteItem]) -> None:
-        super().__init__(bloc_type=RoutesItemBlock.block_type(), data=routes)
+        super().__init__(bloc_type=RouterItemBlock.block_type(), data=routes)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str) -> RoutesItemBlock:
+    def from_dict(cls, data: Dict[str, Any], block_type: str) -> RouterItemBlock:
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
         items = data.get("items", [])
         return cls(routes=[RouteItem.from_dict(route) for route in items])
@@ -44,4 +44,4 @@ class RoutesItemBlock(ItemBlock[Sequence[RouteItem]]):
 
     @staticmethod
     def is_valid(block_type: str) -> bool:
-        return block_type == RoutesItemBlock.block_type()
+        return block_type == RouterItemBlock.block_type()

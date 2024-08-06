@@ -36,9 +36,6 @@ class MetricsItemBlock(ItemBlock[Sequence[MetricItem]]):
         items = data.get("items", [])
         return cls(metrics=[MetricItem.from_dict(metric) for metric in items])
 
-    def best(self) -> MetricItem:
-        return max(self.data, key=lambda obj: obj.score)
-
     @staticmethod
     def block_type() -> str:
         return "metrics"

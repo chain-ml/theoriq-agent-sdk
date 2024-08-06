@@ -24,8 +24,8 @@ def test_schemas():
                                     {"name": "precision", "value": 0.85, "trendPercentage": 0.15},
                                     {"name": "recall", "value": 0.75, "trendPercentage": 0.25},
                                 ]
-                            }
-                        }
+                            },
+                        },
                     ],
                 }
             ]

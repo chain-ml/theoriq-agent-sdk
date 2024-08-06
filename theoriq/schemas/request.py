@@ -1,15 +1,27 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Type
 
 from pydantic import BaseModel, field_serializer, field_validator
-from .image import ImageItemBlock
+
 from .code import CodeItemBlock
+from .data import DataItemBlock
+from .image import ImageItemBlock
 from .metrics import MetricsItemBlock
-from .router import RouteItem, RoutesItemBlock
+from .router import RouteItem, RouterItemBlock
 from .schemas import ItemBlock
 from .text import TextItemBlock
+
+
+block_classes: Dict[str, Type[ItemBlock]] = {
+    "code": CodeItemBlock,
+    "data": DataItemBlock,
+    "image": ImageItemBlock,
+    "metrics": MetricsItemBlock,
+    "router": RouterItemBlock,
+    "text": TextItemBlock,
+}
 
 
 class DialogItem:
@@ -41,16 +53,9 @@ class DialogItem:
         blocks: List[ItemBlock[Any]] = []
         for item in values["blocks"]:
             block_type: str = item["type"]
-            if TextItemBlock.is_valid(block_type):
-                blocks.append(TextItemBlock.from_dict(item["data"], block_type))
-            elif RoutesItemBlock.is_valid(block_type):
-                blocks.append(RoutesItemBlock.from_dict(item["data"], block_type))
-            elif ImageItemBlock.is_valid(block_type):
-                blocks.append(ImageItemBlock.from_dict(item["data"], block_type))
-            elif CodeItemBlock.is_valid(block_type):
-                blocks.append(CodeItemBlock.from_dict(item["data"], block_type))
-            elif MetricsItemBlock.is_valid(block_type):
-                blocks.append(MetricsItemBlock.from_dict(item["data"], block_type))
+            c = block_classes.get(ItemBlock.root_type(block_type))
+            if c is not None:
+                blocks.append(c.from_dict(item["data"], block_type))
             else:
                 raise ValueError(f"invalid item type {block_type}")
 
@@ -88,7 +93,7 @@ class DialogItem:
             timestamp=datetime.now(timezone.utc).isoformat(),
             source_type="Agent",
             source=source,
-            blocks=[RoutesItemBlock([RouteItem(route, score)])],
+            blocks=[RouterItemBlock([RouteItem(route, score)])],
         )
 
 

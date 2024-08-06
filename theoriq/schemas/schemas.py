@@ -43,6 +43,10 @@ class ItemBlock(Generic[T_Data]):
             result["ref"] = self.reference
         return result
 
+    @classmethod
+    def from_dict(cls, data: dict, block_type: str):
+        raise NotImplementedError
+
     @staticmethod
     def raise_if_not_valid(*, block_type: str, expected: str) -> None:
         if not block_type.startswith(expected):
@@ -52,3 +56,7 @@ class ItemBlock(Generic[T_Data]):
     def sub_type(bloc_type: str) -> str:
         parts = bloc_type.split(":", 1)
         return parts[1] if len(parts) > 1 else ""
+
+    @staticmethod
+    def root_type(bloc_type: str) -> str:
+        return bloc_type.split(":", 1)[0]
