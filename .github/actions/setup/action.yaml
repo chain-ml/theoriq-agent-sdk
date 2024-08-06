@@ -4,6 +4,9 @@ inputs:
   python-version:
     description: Python version to use
     required: true
+  rust-version:
+    description: Rust version to use
+    required: true
 runs:
   using: composite
   steps:
@@ -12,6 +15,11 @@ runs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: "pip"
+
+    - name: Setup Rust ${{ inputs.rust-version }}
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: ${{ inputs.rust-version }}
 
     - name: Install dependencies
       shell: bash

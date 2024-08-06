@@ -26,6 +26,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           python-version: ${{ matrix.python-version }}
+          rust-version: "1.79.0"
 
       - name: Run linter
         run: make lint
