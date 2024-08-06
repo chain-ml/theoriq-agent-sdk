@@ -16,7 +16,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           python-version: "3.12"
-          rust-version: "1.79.0"
+          rust-version: "1.80.0"
 
       - name: Run linter
         run: make lint

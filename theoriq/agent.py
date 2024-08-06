@@ -60,7 +60,7 @@ class Agent:
         """
         biscuit = self._parse_biscuit_from_base64(token)
         request_biscuit = RequestBiscuit(biscuit)
-        self._verify_biscuit(request_biscuit, body)
+        self._verify_request_biscuit(request_biscuit, body)
         return request_biscuit
 
     def attenuate_biscuit_for_response(
@@ -75,12 +75,12 @@ class Agent:
         except biscuit_auth.BiscuitValidationError as validation_err:
             raise ParseBiscuitError(f"fail to parse token {token[:3]}...") from validation_err
 
-    def _verify_biscuit(self, req_biscuit: RequestBiscuit, body: bytes) -> None:
+    def _verify_request_biscuit(self, req_biscuit: RequestBiscuit, body: bytes) -> None:
         self._authorize_biscuit(req_biscuit._biscuit)
         self._verify_biscuit_facts(req_biscuit.request_facts, body)
 
     def _authorize_biscuit(self, biscuit: Biscuit):
-        """Authorize the given biscuit."""
+        """Runs the authorization checks and policies on the given biscuit."""
         authorizer = self.config.agent_address.default_authorizer()
         authorizer.add_token(biscuit)
         try:
@@ -89,15 +89,12 @@ class Agent:
             raise AuthorizationError(f"biscuit is not authorized. {auth_err}") from auth_err
 
     def _verify_biscuit_facts(self, facts: RequestFacts, body: bytes) -> None:
-        if not self._verify_target_address(facts):
+        """Verify Facts on the given biscuit."""
+        target_address = AgentAddress(facts.request.to_addr)
+        if target_address != self.config.agent_address:
             raise VerificationError("biscuit's target address does not match our agent's address")
         if not self._verify_request_body(facts, body):
             raise VerificationError("biscuit's request body does not match the received body")
-
-    def _verify_target_address(self, req_facts: RequestFacts) -> bool:
-        """Verify the request facts target our agent"""
-        target_address = AgentAddress(req_facts.request.to_addr)
-        return target_address == self.config.agent_address
 
     def sign_challenge(self, challenge: bytes) -> bytes:
         """Sign the given challenge with the Agent's private key"""
