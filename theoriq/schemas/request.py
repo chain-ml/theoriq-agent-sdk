@@ -42,6 +42,8 @@ class DialogItem:
                 blocks.append(TextItemBlock.from_dict(item["data"]))
             if block_type == "route":
                 blocks.append(RoutesItemBlock.from_dict(item["data"]))
+            if block_type == "image":
+                blocks.append(RoutesItemBlock.from_dict(item["data"]))
 
         return cls(
             timestamp=values["timestamp"],
