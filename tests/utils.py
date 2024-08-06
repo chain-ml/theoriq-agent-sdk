@@ -9,16 +9,16 @@ from theoriq.types.currency import Currency
 from theoriq.utils import hash_body
 
 
-def new_req_facts(body: bytes, from_addr: str, to_addr: AgentAddress, amount: int) -> RequestFacts:
+def new_req_facts(body: bytes, from_addr: AgentAddress, to_addr: AgentAddress, amount: int) -> RequestFacts:
     """Creates a new request facts for testing purposes"""
-    theoriq_request = TheoriqRequest(body_hash=hash_body(body), from_addr=from_addr, to_addr=str(to_addr))
+    theoriq_request = TheoriqRequest(body_hash=hash_body(body), from_addr=str(from_addr), to_addr=str(to_addr))
     theoriq_budget = TheoriqBudget.from_amount(amount=str(amount), currency=Currency.USDC)
     return RequestFacts(uuid.uuid4(), theoriq_request, theoriq_budget)
 
 
-def new_response_facts(req_id: uuid.UUID, body: bytes, to_addr: str, amount: int) -> ResponseFacts:
+def new_response_facts(req_id: uuid.UUID, body: bytes, to_addr: AgentAddress, amount: int) -> ResponseFacts:
     """Creates a new response facts for testing purposes"""
-    theoriq_response = TheoriqResponse.from_body(body=body, to_addr=to_addr)
+    theoriq_response = TheoriqResponse.from_body(body=body, to_addr=str(to_addr))
     theoriq_cost = TheoriqCost(amount=amount, currency=Currency.USDC)
     return ResponseFacts(req_id, theoriq_response, theoriq_cost)
 

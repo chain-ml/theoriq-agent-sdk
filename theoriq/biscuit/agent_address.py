@@ -82,3 +82,16 @@ class AgentAddress:
         authorizer.add_token(biscuit)
         facts = authorizer.query(rule)
         return cls(facts[0].terms[0])
+
+    @classmethod
+    def from_int(cls, num: int) -> AgentAddress:
+        value = f"{num}"
+        return cls(value.rjust(64, "0"))
+
+    @classmethod
+    def one(cls) -> AgentAddress:
+        return cls.from_int(1)
+
+    @classmethod
+    def null(cls) -> AgentAddress:
+        return cls.from_int(0)

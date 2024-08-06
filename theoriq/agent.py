@@ -8,12 +8,12 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from theoriq.biscuit import (
     AgentAddress,
     AuthorizationError,
-    ParseBiscuitError,
     RequestBiscuit,
     RequestFacts,
     ResponseBiscuit,
     TheoriqCost,
     VerificationError,
+    from_base64_token,
 )
 from theoriq.utils import hash_body
 
@@ -58,7 +58,7 @@ class Agent:
         :raises ParseBiscuitError: if the biscuit could not be parsed.
         :raises VerificationError: if the biscuit is not valid.
         """
-        biscuit = self._parse_biscuit_from_base64(token)
+        biscuit = from_base64_token(token, self.config.theoriq_public_key)
         request_biscuit = RequestBiscuit(biscuit)
         self._verify_request_biscuit(request_biscuit, body)
         return request_biscuit
@@ -69,14 +69,8 @@ class Agent:
         agent_kp = KeyPair.from_private_key(self.config.agent_private_key)
         return req_biscuit.attenuate_for_response(body, cost, agent_kp)
 
-    def _parse_biscuit_from_base64(self, token: str) -> Biscuit:
-        try:
-            return Biscuit.from_base64(token, self.config.theoriq_public_key)
-        except biscuit_auth.BiscuitValidationError as validation_err:
-            raise ParseBiscuitError(f"fail to parse token {token[:3]}...") from validation_err
-
     def _verify_request_biscuit(self, req_biscuit: RequestBiscuit, body: bytes) -> None:
-        self._authorize_biscuit(req_biscuit._biscuit)
+        self._authorize_biscuit(req_biscuit.biscuit)
         self._verify_biscuit_facts(req_biscuit.request_facts, body)
 
     def _authorize_biscuit(self, biscuit: Biscuit):
@@ -92,21 +86,16 @@ class Agent:
         """Verify Facts on the given biscuit."""
         target_address = AgentAddress(facts.request.to_addr)
         if target_address != self.config.agent_address:
-            raise VerificationError("biscuit's target address does not match our agent's address")
-        if not self._verify_request_body(facts, body):
-            raise VerificationError("biscuit's request body does not match the received body")
+            raise VerificationError(f"biscuit's target address '{target_address}' does not match our agent's address")
+        hashed_body = hash_body(body)
+        if hashed_body != facts.request.body_hash:
+            raise VerificationError(f"biscuit's request body hash does not match the received body '{hashed_body}'")
 
     def sign_challenge(self, challenge: bytes) -> bytes:
         """Sign the given challenge with the Agent's private key"""
         private_key_bytes = bytes(self.config.agent_private_key.to_bytes())
         private_key = Ed25519PrivateKey.from_private_bytes(private_key_bytes)
         return private_key.sign(challenge)
-
-    @staticmethod
-    def _verify_request_body(req_facts: RequestFacts, body: bytes) -> bool:
-        """Verify that the request facts match with the given body"""
-        hashed_received_body = hash_body(body)
-        return hashed_received_body == req_facts.request.body_hash
 
     @classmethod
     def from_env(cls) -> Agent:

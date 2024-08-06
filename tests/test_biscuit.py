@@ -7,17 +7,17 @@ import pytest
 from tests import utils
 from theoriq.biscuit import AgentAddress, RequestFacts, ResponseFacts
 
-ADDRESS_ONE: Final[str] = "0000000000000000000000000000000000000000000000000000000000000001"
-ADDRESS_TWO: Final[str] = "0000000000000000000000000000000000000000000000000000000000000002"
-ADDRESS_THREE: Final[str] = "0000000000000000000000000000000000000000000000000000000000000003"
+ADDRESS_ONE: Final[AgentAddress] = AgentAddress.one()
+ADDRESS_TWO: Final[AgentAddress] = AgentAddress.from_int(2)
+ADDRESS_THREE: Final[AgentAddress] = AgentAddress.from_int(3)
 
 
 @pytest.fixture
 def agent_biscuit(request, biscuit_facts) -> biscuit_auth.Biscuit:
-    def _biscuit_builder(subject_addr: str, exp: Optional[datetime] = None) -> biscuit_auth.Biscuit:
+    def _biscuit_builder(subject_addr: AgentAddress, exp: Optional[datetime] = None) -> biscuit_auth.Biscuit:
         root_kp = biscuit_auth.KeyPair()
         expires_at = exp or datetime.now(tz=timezone.utc) + timedelta(hours=1)
-        authority = AgentAddress(address=subject_addr).new_authority_builder(expires_at=expires_at)
+        authority = subject_addr.new_authority_builder(expires_at=expires_at)
         authority.merge(biscuit_facts)
         return authority.build(root_kp.private_key)
 
@@ -33,9 +33,7 @@ def biscuit_facts(request_facts: RequestFacts, response_facts: ResponseFacts) ->
 @pytest.fixture
 def request_facts(request) -> RequestFacts:
     if getattr(request, "param", None) is None:
-        default_from_address = ADDRESS_ONE
-        default_agent_address = AgentAddress(ADDRESS_TWO)
-        return utils.new_req_facts(b"Hello World", default_from_address, default_agent_address, 10)
+        return utils.new_req_facts(b"Hello World", ADDRESS_ONE, ADDRESS_TWO, 10)
     else:
         (body, from_addr, to_addr, amount) = request.param
         return utils.new_req_facts(body, from_addr, to_addr, amount)
@@ -56,14 +54,14 @@ def one_hour_ago() -> datetime:
 
 @pytest.mark.parametrize("agent_biscuit", [ADDRESS_TWO], indirect=True)
 def test_authorization(agent_biscuit):
-    authorizer = AgentAddress(ADDRESS_TWO).default_authorizer()
+    authorizer = ADDRESS_TWO.default_authorizer()
     authorizer.add_token(agent_biscuit)
     authorizer.authorize()
 
 
 @pytest.mark.parametrize("agent_biscuit", [ADDRESS_TWO], indirect=True)
 def test_authorization_wrong_subject_address_raises_authorization_error(agent_biscuit):
-    wrong_subject_address = AgentAddress("0000000000000000000000000000000000000000000000000000000000000042")
+    wrong_subject_address = AgentAddress.from_int(42)
     authorizer = wrong_subject_address.default_authorizer()
     authorizer.add_token(agent_biscuit)
 
@@ -73,7 +71,7 @@ def test_authorization_wrong_subject_address_raises_authorization_error(agent_bi
 
 @pytest.mark.parametrize("agent_biscuit", [{"subject_addr": ADDRESS_TWO, "exp": one_hour_ago()}], indirect=True)
 def test_authorization_expired_raises_authorization_error(agent_biscuit: biscuit_auth.Biscuit):
-    authorizer = AgentAddress(ADDRESS_TWO).default_authorizer()
+    authorizer = ADDRESS_TWO.default_authorizer()
     authorizer.add_token(agent_biscuit)
 
     with pytest.raises(biscuit_auth.AuthorizationError):
@@ -85,8 +83,8 @@ def test_authorization_expired_raises_authorization_error(agent_biscuit: biscuit
     [
         (
             b"hello",
-            ADDRESS_ONE,
-            ADDRESS_TWO,
+            str(ADDRESS_ONE),
+            str(ADDRESS_TWO),
             10,
         )
     ],
@@ -108,8 +106,7 @@ def test_read_response_facts(agent_biscuit, response_facts):
 @pytest.mark.parametrize("agent_biscuit", [ADDRESS_TWO], indirect=True)
 def test_append_request_facts(agent_biscuit: biscuit_auth.Biscuit):
     agent_kp = biscuit_auth.KeyPair()
-    target_address = AgentAddress(ADDRESS_THREE)
-    req_facts = utils.new_req_facts(b"help", ADDRESS_TWO, target_address, 5)
+    req_facts = utils.new_req_facts(b"help", ADDRESS_TWO, ADDRESS_THREE, 5)
     agent_biscuit = agent_biscuit.append_third_party_block(agent_kp, req_facts.to_block_builder())  # type: ignore
 
     assert agent_biscuit.block_count() == 2
@@ -120,8 +117,8 @@ def test_append_request_facts(agent_biscuit: biscuit_auth.Biscuit):
     [
         (
             b"hello",
-            ADDRESS_ONE,
-            ADDRESS_TWO,
+            str(ADDRESS_ONE),
+            str(ADDRESS_TWO),
             10,
         )
     ],
