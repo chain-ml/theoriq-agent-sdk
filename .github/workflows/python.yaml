@@ -7,6 +7,12 @@ on:
   pull_request:
 
 jobs:
+  check-rust:
+    runs-on: ubuntu-latest
+    steps:
+      - run: "rustc --version"
+        name: "Rust Version"
+
   lint:
     runs-on: ubuntu-latest
     strategy:
