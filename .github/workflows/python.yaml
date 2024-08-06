@@ -7,12 +7,6 @@ on:
   pull_request:
 
 jobs:
-  check-rust:
-    runs-on: ubuntu-latest
-    steps:
-      - run: "rustc --version"
-        name: "Rust Version"
-
   lint:
     runs-on: ubuntu-latest
     strategy:
@@ -44,6 +38,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           python-version: ${{ matrix.python-version }}
+          rust-version: "1.79.0"
 
       - name: Run testing
         run: pytest
