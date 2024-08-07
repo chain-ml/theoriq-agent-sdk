@@ -3,12 +3,13 @@
 import flask
 import pydantic
 from flask import Blueprint, Request, Response, jsonify, request
-from theoriq.agent import Agent, AgentConfig
-from theoriq.biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBiscuitError, TheoriqCost
-from theoriq.execute import ExecuteRequest, ExecuteRequestFn
-from theoriq.extra.globals import agent_var
-from theoriq.schemas import ChallengeRequestBody, ExecuteRequestBody
-from theoriq.types.currency import Currency
+
+from ..agent import Agent, AgentConfig
+from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBiscuitError, TheoriqCost
+from ..execute import ExecuteRequest, ExecuteRequestFn
+from ..extra.globals import agent_var
+from ..schemas import ChallengeRequestBody, ExecuteRequestBody
+from ..types.currency import Currency
 
 
 def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn) -> Blueprint:

@@ -4,7 +4,8 @@ import os
 
 from biscuit_auth import Biscuit, KeyPair, PrivateKey, PublicKey  # pylint: disable=E0611
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from theoriq.biscuit import (
+
+from .biscuit import (
     AgentAddress,
     AuthorizationError,
     RequestBiscuit,
@@ -14,7 +15,7 @@ from theoriq.biscuit import (
     VerificationError,
     from_base64_token,
 )
-from theoriq.utils import hash_body
+from .utils import hash_body
 
 
 class AgentConfig:
