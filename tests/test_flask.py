@@ -167,7 +167,7 @@ def _build_request_body(text: str, source: AgentAddress) -> dict:
         "dialog": {
             "items": [
                 {
-                    "timestamp": "2024-08-07T00:00:00.0+00:00",
+                    "timestamp": "2024-08-07T00:00:00.000000+00:00",
                     "sourceType": "user",
                     "source": str(source),
                     "blocks": [{"data": {"text": text}, "type": "text:markdown"}],
