@@ -8,10 +8,9 @@ from __future__ import annotations
 
 from typing import Callable, Sequence
 
-from theoriq.biscuit import RequestBiscuit, TheoriqCost
-from theoriq.schemas import DialogItem, ExecuteRequestBody
-from theoriq.schemas.schemas import ItemBlock
-from theoriq.types.currency import Currency
+from .biscuit import RequestBiscuit, TheoriqCost
+from .schemas import DialogItem, ExecuteRequestBody, ItemBlock
+from .types import Currency
 
 
 class ExecuteRequest:
