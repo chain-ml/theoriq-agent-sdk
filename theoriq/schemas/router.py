@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 from .schemas import BaseData, ItemBlock
 
@@ -8,16 +8,20 @@ from .schemas import BaseData, ItemBlock
 class RouteItem(BaseData):
     """ """
 
-    def __init__(self, name: str, score: float) -> None:
+    def __init__(self, name: str, score: float, reason: Optional[str] = None) -> None:
         self.name = name
         self.score = score
+        self.reason = reason
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"name": self.name, "score": self.score}
+        result = {"name": self.name, "score": self.score}
+        if self.reason is not None:
+            result["reason"] = self.reason
+        return result
 
     @classmethod
     def from_dict(cls, values: Dict[str, Any]) -> RouteItem:
-        return cls(name=values["name"], score=values["score"])
+        return cls(name=values["name"], score=values["score"], reason=values.get("reason"))
 
     def __str__(self):
         return f"RouteItem(name={self.name}, score={self.score})"
@@ -42,6 +46,6 @@ class RouterItemBlock(ItemBlock[Sequence[RouteItem]]):
     def block_type() -> str:
         return "router"
 
-    @staticmethod
-    def is_valid(block_type: str) -> bool:
+    @classmethod
+    def is_valid(cls, block_type: str) -> bool:
         return block_type == RouterItemBlock.block_type()

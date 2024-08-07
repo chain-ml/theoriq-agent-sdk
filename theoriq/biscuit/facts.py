@@ -8,14 +8,14 @@ import abc
 from typing import Optional
 from uuid import UUID
 
-from biscuit_auth import Fact
+from biscuit_auth import Fact  # pylint: disable=E0611
 from theoriq.types.currency import Currency
 from theoriq.utils import hash_body, verify_address
 
 
 class FactConvertibleBase(abc.ABC):
     @abc.abstractmethod
-    def to_fact(self, req_id: str) -> Fact:
+    def to_fact(self, request_id: str) -> Fact:
         pass
 
 
@@ -32,12 +32,12 @@ class TheoriqRequest(FactConvertibleBase):
             return self.__dict__ == other.__dict__
         return False
 
-    def to_fact(self, req_id: str) -> Fact:
+    def to_fact(self, request_id: str) -> Fact:
         """Convert to a biscuit fact"""
         return Fact(
             "theoriq:request({req_id}, {body_hash}, {from_addr}, {to_addr})",
             {
-                "req_id": req_id,
+                "req_id": request_id,
                 "body_hash": self.body_hash,
                 "from_addr": self.from_addr,
                 "to_addr": self.to_addr,
@@ -49,6 +49,9 @@ class TheoriqRequest(FactConvertibleBase):
         """Create a response fact from a response body"""
         body_hash = hash_body(body)
         return cls(body_hash=body_hash, from_addr=from_addr, to_addr=to_addr)
+
+    def __str__(self):
+        return f"TheoriqRequest(body_hash={self.body_hash}, from_addr={self.from_addr}, to_addr={self.to_addr})"
 
 
 class TheoriqBudget(FactConvertibleBase):
@@ -67,15 +70,18 @@ class TheoriqBudget(FactConvertibleBase):
         return False
 
     def __str__(self):
+        if len(self.voucher) == 0:
+            return f"TheoriqBudget(amount={self.amount}, currency={self.currency})"
+
         currency = self.currency.value if self.currency else None
         return f"TheoriqBudget(amount={self.amount}, currency={currency}, voucher={self.voucher})"
 
-    def to_fact(self, req_id: str) -> Fact:
+    def to_fact(self, request_id: str) -> Fact:
         """Convert to a biscuit fact"""
         return Fact(
             "theoriq:budget({req_id}, {amount}, {currency}, {voucher})",
             {
-                "req_id": req_id,
+                "req_id": request_id,
                 "amount": self.amount,
                 "currency": self.currency.value if self.currency else "",
                 "voucher": self.voucher,
@@ -107,11 +113,11 @@ class TheoriqResponse(FactConvertibleBase):
             return self.__dict__ == other.__dict__
         return False
 
-    def to_fact(self, req_id: str | UUID) -> Fact:
+    def to_fact(self, request_id: str | UUID) -> Fact:
         """Convert to a biscuit fact"""
         return Fact(
             "theoriq:response({req_id}, {body_hash}, {to_addr})",
-            {"req_id": str(req_id), "body_hash": self.body_hash, "to_addr": self.to_addr},
+            {"req_id": str(request_id), "body_hash": self.body_hash, "to_addr": self.to_addr},
         )
 
     def __str__(self):

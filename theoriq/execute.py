@@ -4,10 +4,13 @@ execute.py
 Types and functions used by an Agent when executing a theoriq request
 """
 
-from typing import Callable
+from __future__ import annotations
+
+from typing import Callable, Sequence
 
 from theoriq.biscuit import RequestBiscuit, TheoriqCost
 from theoriq.schemas import DialogItem, ExecuteRequestBody
+from theoriq.schemas.schemas import ItemBlock
 from theoriq.types.currency import Currency
 
 
@@ -23,6 +26,25 @@ class ExecuteRequest:
     def __init__(self, body: ExecuteRequestBody, biscuit: RequestBiscuit) -> None:
         self.body = body
         self.biscuit = biscuit
+
+    @property
+    def dialog_items(self) -> Sequence[DialogItem]:
+        """
+        Returns the dialog items contained in the request.
+        """
+        return self.body.dialog.items
+
+    @property
+    def last_item(self) -> DialogItem:
+        """
+        Returns the last dialog item contained in the request based on timestamp.
+        """
+
+        return max(self.body.dialog.items, key=lambda obj: obj.timestamp)
+
+    @property
+    def request_id(self) -> str:
+        return str(self.biscuit.request_facts.req_id)
 
 
 class ExecuteResponse:
@@ -41,6 +63,11 @@ class ExecuteResponse:
         self.body = body
         self.theoriq_cost = cost
         self.status_code = status_code
+
+    @classmethod
+    def cost_free(cls, source: str, blocks: Sequence[ItemBlock]) -> ExecuteResponse:
+        """Creates a new `ExecuteResponse` with default values"""
+        return ExecuteResponse(body=DialogItem.new(source=source, blocks=blocks))
 
 
 ExecuteRequestFn = Callable[[ExecuteRequest], ExecuteResponse]

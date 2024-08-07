@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import os
 
-import biscuit_auth
-from biscuit_auth import Biscuit, KeyPair, PrivateKey, PublicKey
+from biscuit_auth import Biscuit, KeyPair, PrivateKey, PublicKey  # pylint: disable=E0611
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from theoriq.biscuit import (
     AgentAddress,
@@ -24,7 +23,6 @@ class AgentConfig:
     def __init__(self, theoriq_public_key: PublicKey, agent_kp: KeyPair) -> None:
         self.theoriq_public_key: PublicKey = theoriq_public_key
         self.agent_private_key: PrivateKey = agent_kp.private_key
-        # TODO: Rename to AgentId
         self.agent_address = AgentAddress.from_public_key(agent_kp.public_key)
 
     @classmethod
@@ -79,7 +77,7 @@ class Agent:
         authorizer.add_token(biscuit)
         try:
             authorizer.authorize()
-        except biscuit_auth.AuthorizationError as auth_err:
+        except AuthorizationError as auth_err:
             raise AuthorizationError(f"biscuit is not authorized. {auth_err}") from auth_err
 
     def _verify_biscuit_facts(self, facts: RequestFacts, body: bytes) -> None:

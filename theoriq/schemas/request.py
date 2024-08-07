@@ -38,8 +38,8 @@ class DialogItem:
         items (list[ItemBlock]): A list of ItemBlock objects consisting of responses from the agent.
     """
 
-    def __init__(self, timestamp: str, source_type: str, source: str, blocks: List[ItemBlock[Any]]) -> None:
-        self.timestamp = timestamp
+    def __init__(self, timestamp: str, source_type: str, source: str, blocks: Sequence[ItemBlock[Any]]) -> None:
+        self.timestamp: datetime = datetime.fromisoformat(timestamp)
         self.source = source
         self.source_type = source_type
         self.blocks = blocks
@@ -52,9 +52,9 @@ class DialogItem:
         blocks: List[ItemBlock[Any]] = []
         for item in values["blocks"]:
             block_type: str = item["type"]
-            c = block_classes.get(ItemBlock.root_type(block_type))
-            if c is not None:
-                blocks.append(c.from_dict(item["data"], block_type))
+            bloc_class = block_classes.get(ItemBlock.root_type(block_type))
+            if bloc_class is not None:
+                blocks.append(bloc_class.from_dict(item["data"], block_type))
             else:
                 raise ValueError(f"invalid item type {block_type}")
 
@@ -67,15 +67,15 @@ class DialogItem:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "timestamp": self.timestamp,
+            "timestamp": self.timestamp.isoformat(),
             "sourceType": self.source_type,
             "source": self.source,
             "blocks": [block.to_dict() for block in self.blocks],
         }
 
     @classmethod
-    def new(cls, source: str, items: List[ItemBlock[Any]]) -> DialogItem:
-        return cls(timestamp=datetime.now(timezone.utc).isoformat(), source_type="Agent", source=source, blocks=items)
+    def new(cls, source: str, blocks: Sequence[ItemBlock[Any]]) -> DialogItem:
+        return cls(timestamp=datetime.now(timezone.utc).isoformat(), source_type="Agent", source=source, blocks=blocks)
 
     @classmethod
     def new_text(cls, source: str, text: str) -> DialogItem:

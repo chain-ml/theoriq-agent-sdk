@@ -31,6 +31,6 @@ class TextItemBlock(ItemBlock[TextItem]):
     def block_type() -> str:
         return "text"
 
-    @staticmethod
-    def is_valid(block_type: str) -> bool:
+    @classmethod
+    def is_valid(cls, block_type: str) -> bool:
         return block_type.startswith(TextItemBlock.block_type())

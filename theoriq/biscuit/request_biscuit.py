@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from uuid import UUID
 
-from biscuit_auth import Authorizer, Biscuit, BlockBuilder, KeyPair, Rule
+from biscuit_auth import Authorizer, Biscuit, BlockBuilder, KeyPair, Rule  # pylint: disable=E0611
 
 from ..types.currency import Currency
 from . import ResponseFacts, TheoriqBudget

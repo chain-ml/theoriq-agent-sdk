@@ -5,12 +5,11 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from biscuit_auth import Authorizer, Biscuit, BiscuitBuilder, Check, Policy, PublicKey, Rule
+from biscuit_auth import Authorizer, Biscuit, BiscuitBuilder, Check, Policy, PublicKey, Rule  # pylint: disable=E0611
 from sha3 import keccak_256  # type: ignore
 from theoriq.utils import verify_address
 
 
-# TODO: Rename this class to AgentId
 class AgentAddress:
     """
     Address of an agent registered on the `theoriq` protocol

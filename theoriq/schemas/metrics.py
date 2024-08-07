@@ -40,6 +40,6 @@ class MetricsItemBlock(ItemBlock[Sequence[MetricItem]]):
     def block_type() -> str:
         return "metrics"
 
-    @staticmethod
-    def is_valid(block_type: str) -> bool:
+    @classmethod
+    def is_valid(cls, block_type: str) -> bool:
         return block_type == MetricsItemBlock.block_type()

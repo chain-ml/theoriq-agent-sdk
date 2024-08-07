@@ -1,4 +1,4 @@
-from biscuit_auth import Biscuit, BiscuitValidationError, PublicKey
+from biscuit_auth import Biscuit, BiscuitValidationError, PublicKey  # pylint: disable=E0611
 
 from .error import ParseBiscuitError
 
