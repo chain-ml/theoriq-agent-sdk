@@ -152,7 +152,7 @@ def test_send_chat_completion_request(theoriq_kp, agent_kp, agent_config: AgentC
 
 
 def echo_last_prompt(request: ExecuteRequest) -> ExecuteResponse:
-    assert request.biscuit.request_facts.budget.amount == "10"
+    assert request.budget.amount == "10"
     last_prompt = request.body.dialog.items[-1].blocks[0].data.text
 
     if "should fail" in last_prompt:

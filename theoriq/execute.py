@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Callable, Sequence
 
-from .biscuit import RequestBiscuit, TheoriqCost
+from .biscuit import RequestBiscuit, TheoriqCost, TheoriqBudget
 from .schemas import DialogItem, ExecuteRequestBody, ItemBlock
 from .types import Currency
 
@@ -24,7 +24,7 @@ class ExecuteRequest:
 
     def __init__(self, body: ExecuteRequestBody, biscuit: RequestBiscuit) -> None:
         self.body = body
-        self.biscuit = biscuit
+        self._biscuit = biscuit
 
     @property
     def dialog_items(self) -> Sequence[DialogItem]:
@@ -43,7 +43,11 @@ class ExecuteRequest:
 
     @property
     def request_id(self) -> str:
-        return str(self.biscuit.request_facts.req_id)
+        return str(self._biscuit.request_facts.req_id)
+
+    @property
+    def budget(self) -> TheoriqBudget:
+        return self._biscuit.request_facts.budget
 
 
 class ExecuteResponse:
