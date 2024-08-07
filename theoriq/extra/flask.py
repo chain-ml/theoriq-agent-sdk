@@ -2,14 +2,14 @@
 
 import flask
 import pydantic
-from flask import Blueprint, Response, jsonify, request
-from theoriq.agent import Agent, AgentConfig
-from theoriq.error import AuthorizationError, ParseBiscuitError, VerificationError
-from theoriq.execute import ExecuteRequest, ExecuteRequestFn
-from theoriq.extra.globals import agent_var
-from theoriq.facts import Currency, TheoriqCost
-from theoriq.schemas import ChallengeRequestBody, ExecuteRequestBody
-from theoriq.types import RequestBiscuit, ResponseBiscuit
+from flask import Blueprint, Request, Response, jsonify, request
+
+from ..agent import Agent, AgentConfig
+from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBiscuitError, TheoriqCost
+from ..execute import ExecuteRequest, ExecuteRequestFn
+from ..extra.globals import agent_var
+from ..schemas import ChallengeRequestBody, ExecuteRequestBody
+from ..types.currency import Currency
 
 
 def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn) -> Blueprint:
@@ -20,22 +20,20 @@ def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn) -
 
     main_blueprint = Blueprint("main_blueprint", __name__)
 
-    backward_compatible_blueprint = Blueprint("old_theoriq", __name__, url_prefix="/api/v1alpha1")
-    backward_compatible_blueprint.add_url_rule(
-        "/behaviors/chat-completion", view_func=lambda: execute(execute_fn), methods=["POST"]
-    )
-    main_blueprint.register_blueprint(backward_compatible_blueprint)
-
-    theoriq_blueprint = Blueprint("theoriq", __name__, url_prefix="/theoriq/api/v1alpha1")
-
     @main_blueprint.before_request
     def set_context():
         agent_var.set(Agent(agent_config))
 
-    theoriq_blueprint.register_blueprint(theoriq_system_blueprint())
-    theoriq_blueprint.add_url_rule("/execute", view_func=lambda: execute(execute_fn), methods=["POST"])
-    main_blueprint.register_blueprint(theoriq_blueprint)
+    v1alpha1_blue_print = Blueprint("v1alpha1", __name__, url_prefix="/api/v1alpha1")
+    v1alpha1_blue_print.add_url_rule("/execute", view_func=lambda: execute(execute_fn), methods=["POST"])
+    v1alpha1_blue_print.register_blueprint(theoriq_system_blueprint())
+    main_blueprint.register_blueprint(v1alpha1_blue_print)
 
+    v1alpha2_blueprint = Blueprint("v1alpha2", __name__, url_prefix="/api/v1alpha2")
+    v1alpha2_blueprint.add_url_rule("/execute", view_func=lambda: execute(execute_fn), methods=["POST"])
+    v1alpha2_blueprint.register_blueprint(theoriq_system_blueprint())
+
+    main_blueprint.register_blueprint(v1alpha2_blueprint)
     return main_blueprint
 
 
@@ -78,7 +76,7 @@ def execute(execute_request_function: ExecuteRequestFn) -> Response:
     return response
 
 
-def process_biscuit_request(agent: Agent, request: flask.Request) -> RequestBiscuit:
+def process_biscuit_request(agent: Agent, req: Request) -> RequestBiscuit:
     """
     Retrieve and process the request biscuit
 
@@ -88,18 +86,17 @@ def process_biscuit_request(agent: Agent, request: flask.Request) -> RequestBisc
     :raises: If the biscuit could not be processed, a flask response is returned with the 401 status code.
     """
     try:
-        bearer_token = get_bearer_token(request)
-        request_body = request.data
-        return agent.parse_and_verify_biscuit(bearer_token, request_body)
-    except (ParseBiscuitError, VerificationError, AuthorizationError) as err:
-        raise flask.abort(401, err)
+        bearer_token = get_bearer_token(req)
+        return agent.parse_and_verify_biscuit(bearer_token, req.data)
+    except TheoriqBiscuitError as err:
+        flask.abort(401, err)
 
 
-def get_bearer_token(request: flask.Request) -> str:
+def get_bearer_token(req: Request) -> str:
     """Get the bearer token from the request"""
-    authorization = request.headers.get("Authorization")
+    authorization = req.headers.get("Authorization")
     if not authorization:
-        raise VerificationError("Authorization header is missing")
+        raise TheoriqBiscuitError("Authorization header is missing")
     else:
         return authorization[len("bearer ") :]
 
