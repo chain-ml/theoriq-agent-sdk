@@ -1,5 +1,4 @@
 from biscuit_auth import PublicKey
-
 from theoriq.biscuit import AgentAddress
 
 
