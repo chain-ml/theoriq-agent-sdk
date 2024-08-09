@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Sequence, Type
 
 from pydantic import BaseModel, field_serializer, field_validator
 
+from ..types import SourceType
 from .code import CodeItemBlock
 from .data import DataItemBlock
 from .image import ImageItemBlock
@@ -41,7 +42,7 @@ class DialogItem:
     def __init__(self, timestamp: str, source_type: str, source: str, blocks: Sequence[ItemBlock[Any]]) -> None:
         self.timestamp: datetime = datetime.fromisoformat(timestamp)
         self.source = source
-        self.source_type = source_type
+        self.source_type = SourceType.from_value(source_type)
         self.blocks = blocks
 
     @classmethod
@@ -68,20 +69,25 @@ class DialogItem:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "timestamp": self.timestamp.isoformat(),
-            "sourceType": self.source_type,
+            "sourceType": self.source_type.value,
             "source": self.source,
             "blocks": [block.to_dict() for block in self.blocks],
         }
 
     @classmethod
     def new(cls, source: str, blocks: Sequence[ItemBlock[Any]]) -> DialogItem:
-        return cls(timestamp=datetime.now(timezone.utc).isoformat(), source_type="Agent", source=source, blocks=blocks)
+        return cls(
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            source_type=SourceType.Agent.value,
+            source=source,
+            blocks=blocks,
+        )
 
     @classmethod
     def new_text(cls, source: str, text: str) -> DialogItem:
         return cls(
             timestamp=datetime.now(timezone.utc).isoformat(),
-            source_type="Agent",
+            source_type=SourceType.Agent.value,
             source=source,
             blocks=[TextItemBlock(text)],
         )
@@ -90,7 +96,7 @@ class DialogItem:
     def new_route(cls, source: str, route: str, score) -> DialogItem:
         return cls(
             timestamp=datetime.now(timezone.utc).isoformat(),
-            source_type="Agent",
+            source_type=SourceType.Agent.value,
             source=source,
             blocks=[RouterItemBlock([RouteItem(route, score)])],
         )

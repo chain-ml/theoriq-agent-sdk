@@ -6,11 +6,12 @@ Types and functions used by an Agent when executing a theoriq request
 
 from __future__ import annotations
 
-from typing import Callable, Sequence
+from typing import Callable, Optional, Sequence
 
 from .biscuit import RequestBiscuit, TheoriqBudget, TheoriqCost
 from .schemas import DialogItem, ExecuteRequestBody, ItemBlock
 from .types import Currency
+from .types.source_type import SourceType
 
 
 class ExecuteRequest:
@@ -22,9 +23,9 @@ class ExecuteRequest:
         biscuit (RequestBiscuit): Holds the authentication information sent to the 'execute' endpoint.
     """
 
-    def __init__(self, body: ExecuteRequestBody, biscuit: RequestBiscuit) -> None:
+    def __init__(self, body: ExecuteRequestBody, request_biscuit: RequestBiscuit) -> None:
         self.body = body
-        self._biscuit = biscuit
+        self._biscuit = request_biscuit
 
     @property
     def dialog_items(self) -> Sequence[DialogItem]:
@@ -34,12 +35,20 @@ class ExecuteRequest:
         return self.body.dialog.items
 
     @property
-    def last_item(self) -> DialogItem:
+    def last_item(self) -> Optional[DialogItem]:
         """
         Returns the last dialog item contained in the request based on timestamp.
         """
-
+        if len(self.body.dialog.items) == 0:
+            return None
         return max(self.body.dialog.items, key=lambda obj: obj.timestamp)
+
+    def last_item_from(self, source_type: SourceType) -> Optional[DialogItem]:
+        """
+        Returns the last dialog item contained in the request based on timestamp.
+        """
+        items = (item for item in self.body.dialog.items if item.source_type == source_type)
+        return max(items, key=lambda obj: obj.timestamp) if items else None
 
     @property
     def request_id(self) -> str:
