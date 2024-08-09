@@ -6,8 +6,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from biscuit_auth import Authorizer, Biscuit, BiscuitBuilder, Check, Policy, PublicKey, Rule  # pylint: disable=E0611
-from sha3 import keccak_256  # type: ignore
 from theoriq.utils import verify_address
+
+from .utils import hash_public_key
 
 
 class AgentAddress:
@@ -66,8 +67,7 @@ class AgentAddress:
         :param key: public key
         :return: agent address
         """
-        key_hash = keccak_256(bytes(key.to_bytes())).hexdigest()
-        return cls(key_hash)
+        return cls(hash_public_key(key))
 
     @classmethod
     def from_biscuit(cls, biscuit: Biscuit) -> AgentAddress:

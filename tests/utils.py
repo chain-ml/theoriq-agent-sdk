@@ -9,22 +9,22 @@ from theoriq.types.currency import Currency
 from theoriq.utils import hash_body
 
 
-def new_req_facts(body: bytes, from_addr: AgentAddress, to_addr: AgentAddress, amount: int) -> RequestFacts:
+def new_request_facts(body: bytes, from_addr: AgentAddress, to_addr: AgentAddress, amount: int) -> RequestFacts:
     """Creates a new request facts for testing purposes"""
     theoriq_request = TheoriqRequest(body_hash=hash_body(body), from_addr=str(from_addr), to_addr=str(to_addr))
     theoriq_budget = TheoriqBudget.from_amount(amount=str(amount), currency=Currency.USDC)
     return RequestFacts(uuid.uuid4(), theoriq_request, theoriq_budget)
 
 
-def new_response_facts(req_id: uuid.UUID, body: bytes, to_addr: AgentAddress, amount: int) -> ResponseFacts:
+def new_response_facts(request_id: uuid.UUID, body: bytes, to_addr: AgentAddress, amount: int) -> ResponseFacts:
     """Creates a new response facts for testing purposes"""
     theoriq_response = TheoriqResponse.from_body(body=body, to_addr=str(to_addr))
     theoriq_cost = TheoriqCost(amount=amount, currency=Currency.USDC)
-    return ResponseFacts(req_id, theoriq_response, theoriq_cost)
+    return ResponseFacts(request_id, theoriq_response, theoriq_cost)
 
 
-def new_request_biscuit(req_facts: RequestFacts, keypair: KeyPair) -> Biscuit:
+def new_biscuit_for_request(request_facts: RequestFacts, keypair: KeyPair) -> Biscuit:
     """Creates a new request biscuit for testing purposes"""
-    authority = AgentAddress(req_facts.request.to_addr).new_authority_builder()
-    authority.merge(req_facts.to_block_builder())
+    authority = AgentAddress(request_facts.request.to_addr).new_authority_builder()
+    authority.merge(request_facts.to_block_builder())
     return authority.build(keypair.private_key)

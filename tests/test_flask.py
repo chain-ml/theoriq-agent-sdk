@@ -11,9 +11,9 @@ from theoriq.biscuit import AgentAddress, TheoriqCost
 from theoriq.execute import ExecuteRequest, ExecuteResponse
 from theoriq.extra.flask import theoriq_blueprint
 from theoriq.schemas import ChallengeResponseBody, DialogItem
-from theoriq.types.currency import Currency
+from theoriq.types import Currency, SourceType
 
-from .utils import new_req_facts, new_request_biscuit
+from .utils import new_biscuit_for_request, new_request_facts
 
 
 @pytest.fixture
@@ -57,8 +57,8 @@ def test_send_execute_request(theoriq_kp, agent_kp, agent_config: AgentConfig, c
 
     req_body_str = json.dumps(request_body)
     req_body_bytes = req_body_str.encode("utf-8")
-    request_facts = new_req_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
-    req_biscuit = new_request_biscuit(request_facts, theoriq_kp)
+    request_facts = new_request_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
+    req_biscuit = new_biscuit_for_request(request_facts, theoriq_kp)
 
     headers = {
         "Content-Type": "application/json",
@@ -96,8 +96,8 @@ def test_send_execute_request_with_ill_formatted_body_returns_400(
     # Generate a request biscuit
     req_body_str = json.dumps(request_body)
     req_body_bytes = req_body_str.encode("utf-8")
-    request_facts = new_req_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
-    req_biscuit = new_request_biscuit(request_facts, theoriq_kp)
+    request_facts = new_request_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
+    req_biscuit = new_biscuit_for_request(request_facts, theoriq_kp)
 
     headers = {
         "Content-Type": "application/json",
@@ -117,8 +117,8 @@ def test_send_execute_request_when_execute_fn_fails_returns_500(
     # Generate a request biscuit
     req_body_str = json.dumps(request_body)
     req_body_bytes = req_body_str.encode("utf-8")
-    request_facts = new_req_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
-    req_biscuit = new_request_biscuit(request_facts, theoriq_kp)
+    request_facts = new_request_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
+    req_biscuit = new_biscuit_for_request(request_facts, theoriq_kp)
 
     headers = {
         "Content-Type": "application/json",
@@ -136,8 +136,8 @@ def test_send_chat_completion_request(theoriq_kp, agent_kp, agent_config: AgentC
 
     req_body_str = json.dumps(request_body)
     req_body_bytes = req_body_str.encode("utf-8")
-    request_facts = new_req_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
-    req_biscuit = new_request_biscuit(request_facts, theoriq_kp)
+    request_facts = new_request_facts(req_body_bytes, from_address, agent_config.agent_address, 10)
+    req_biscuit = new_biscuit_for_request(request_facts, theoriq_kp)
 
     headers = {
         "Content-Type": "application/json",
@@ -156,7 +156,7 @@ def echo_last_prompt(request: ExecuteRequest) -> ExecuteResponse:
     last_prompt = request.body.dialog.items[-1].blocks[0].data.text
 
     if "should fail" in last_prompt:
-        raise Exception("Execute function fails")
+        raise RuntimeError("Execute function fails")
 
     response_body = DialogItem.new_text(source="My Test Agent", text=last_prompt)
     return ExecuteResponse(response_body, TheoriqCost(amount="5", currency=Currency.USDC))
@@ -168,7 +168,7 @@ def _build_request_body(text: str, source: AgentAddress) -> dict:
             "items": [
                 {
                     "timestamp": "2024-08-07T00:00:00.000000+00:00",
-                    "sourceType": "user",
+                    "sourceType": SourceType.User.value,
                     "source": str(source),
                     "blocks": [{"data": {"text": text}, "type": "text:markdown"}],
                 }

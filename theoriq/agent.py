@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 
+import biscuit_auth
 from biscuit_auth import Biscuit, KeyPair, PrivateKey, PublicKey  # pylint: disable=E0611
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
@@ -25,6 +26,7 @@ class AgentConfig:
         self.theoriq_public_key: PublicKey = theoriq_public_key
         self.agent_private_key: PrivateKey = agent_kp.private_key
         self.agent_address = AgentAddress.from_public_key(agent_kp.public_key)
+        self.agent_public_key = agent_kp.public_key
 
     @classmethod
     def from_env(cls) -> AgentConfig:
@@ -33,6 +35,9 @@ class AgentConfig:
         agent_kp = KeyPair.from_private_key(agent_private_key)
 
         return cls(theoriq_public_key, agent_kp)
+
+    def __str__(self):
+        return f"Address: {self.agent_address}, Public key:{self.agent_public_key.to_hex()}"
 
 
 class Agent:
@@ -78,7 +83,7 @@ class Agent:
         authorizer.add_token(biscuit)
         try:
             authorizer.authorize()
-        except AuthorizationError as auth_err:
+        except biscuit_auth.AuthorizationError as auth_err:
             raise AuthorizationError(f"biscuit is not authorized. {auth_err}") from auth_err
 
     def _verify_biscuit_facts(self, facts: RequestFacts, body: bytes) -> None:
@@ -95,6 +100,10 @@ class Agent:
         private_key_bytes = bytes(self.config.agent_private_key.to_bytes())
         private_key = Ed25519PrivateKey.from_private_bytes(private_key_bytes)
         return private_key.sign(challenge)
+
+    @property
+    def public_key(self) -> str:
+        return self.config.agent_public_key.to_hex()
 
     @classmethod
     def from_env(cls) -> Agent:

@@ -40,8 +40,16 @@ def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn) -
 def theoriq_system_blueprint() -> Blueprint:
     blueprint = Blueprint("theoriq_system", __name__, url_prefix="/system")
     blueprint.add_url_rule("/challenge", view_func=sign_challenge, methods=["POST"])
+    blueprint.add_url_rule("/public-key", view_func=public_key, methods=["GET"])
 
     return blueprint
+
+
+def public_key() -> Response:
+    """Public key endpoint"""
+    agent = agent_var.get()
+    public_key = agent.public_key
+    return jsonify({"publicKey": public_key, "keyType": "ed25519", "keccak256Hash": str(agent.config.agent_address)})
 
 
 def sign_challenge() -> Response:

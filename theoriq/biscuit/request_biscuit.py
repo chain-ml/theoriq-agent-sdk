@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any, Dict
 from uuid import UUID
 
 from biscuit_auth import Authorizer, Biscuit, BlockBuilder, KeyPair, Rule  # pylint: disable=E0611
 
 from ..types.currency import Currency
-from . import ResponseFacts, TheoriqBudget
-from .facts import TheoriqCost, TheoriqRequest, TheoriqResponse
-from .response_biscuit import ResponseBiscuit
+from .facts import TheoriqBudget, TheoriqCost, TheoriqRequest, TheoriqResponse
+from .response_biscuit import ResponseBiscuit, ResponseFacts
 
 
 class RequestFacts:
@@ -75,3 +75,15 @@ class RequestBiscuit:
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, response_facts.to_block_builder())  # type: ignore
 
         return ResponseBiscuit(attenuated_biscuit, response_facts)
+
+    def to_base64(self) -> str:
+        return self.biscuit.to_base64()
+
+    def to_headers(self) -> Dict[str, Any]:
+        return {
+            "Content-Type": "application/json",
+            "Authorization": "bearer " + self.biscuit.to_base64(),
+        }
+
+    def __str__(self):
+        return f"RequestBiscuit(biscuit={self.biscuit}, request_facts={self.request_facts})"
