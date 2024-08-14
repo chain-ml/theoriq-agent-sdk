@@ -36,7 +36,7 @@ class ProtocolClient:
 
     def get_public_key(self) -> PublicKeyResponse:
         with httpx.Client(timeout=self._timeout) as client:
-            response = client.get(url=f"{self._uri}/auth/biscuits/publicKey")
+            response = client.get(url=f"{self._uri}/auth/biscuits/public-key")
             response.raise_for_status()
             data = response.json()
             return PublicKeyResponse(**data)
