@@ -6,12 +6,41 @@ Types and functions used by an Agent when executing a theoriq request
 
 from __future__ import annotations
 
-from typing import Callable, Optional, Sequence
+from typing import Callable, Sequence
 
-from .biscuit import RequestBiscuit, TheoriqBudget, TheoriqCost
+from .agent import Agent
+from .biscuit import RequestBiscuit, TheoriqBudget, TheoriqCost, ResponseBiscuit
+from .protocol.protocol_client import ProtocolClient
 from .schemas import DialogItem, ExecuteRequestBody, ItemBlock
 from .types import Currency
-from .types.source_type import SourceType
+
+
+class ExecuteContext:
+    """ """
+
+    def __init__(self, agent: Agent, protocol_client: ProtocolClient, request_biscuit: RequestBiscuit) -> None:
+        self._protocol_client = protocol_client
+        self._agent = agent
+        self._request_biscuit = request_biscuit
+
+    def send_event(self, message: str) -> None:
+        self._protocol_client.post_event(request_biscuit=self._request_biscuit, message=message)
+
+    def new_response_biscuit(self, body: bytes, cost: TheoriqCost) -> ResponseBiscuit:
+        """Build a biscuit for the response to an 'execute' request."""
+        return self._agent.attenuate_biscuit_for_response(self._request_biscuit, body, cost)
+
+    def new_error_response_biscuit(self, body: bytes) -> ResponseBiscuit:
+        """Build a biscuit for the response to an 'execute' request."""
+        return self._agent.attenuate_biscuit_for_response(self._request_biscuit, body, TheoriqCost.zero(Currency.USDC))
+
+    @property
+    def request_id(self) -> str:
+        return str(self._request_biscuit.request_facts.req_id)
+
+    @property
+    def budget(self) -> TheoriqBudget:
+        return self._request_biscuit.request_facts.budget
 
 
 class ExecuteRequest:
@@ -33,30 +62,6 @@ class ExecuteRequest:
         Returns the dialog items contained in the request.
         """
         return self.body.dialog.items
-
-    @property
-    def last_item(self) -> Optional[DialogItem]:
-        """
-        Returns the last dialog item contained in the request based on timestamp.
-        """
-        if len(self.body.dialog.items) == 0:
-            return None
-        return max(self.body.dialog.items, key=lambda obj: obj.timestamp)
-
-    def last_item_from(self, source_type: SourceType) -> Optional[DialogItem]:
-        """
-        Returns the last dialog item contained in the request based on timestamp.
-        """
-        items = (item for item in self.body.dialog.items if item.source_type == source_type)
-        return max(items, key=lambda obj: obj.timestamp) if items else None
-
-    @property
-    def request_id(self) -> str:
-        return str(self._biscuit.request_facts.req_id)
-
-    @property
-    def budget(self) -> TheoriqBudget:
-        return self._biscuit.request_facts.budget
 
 
 class ExecuteResponse:
@@ -82,4 +87,4 @@ class ExecuteResponse:
         return ExecuteResponse(body=DialogItem.new(source=source, blocks=blocks))
 
 
-ExecuteRequestFn = Callable[[ExecuteRequest], ExecuteResponse]
+ExecuteRequestFn = Callable[[ExecuteContext, ExecuteRequestBody], ExecuteResponse]
