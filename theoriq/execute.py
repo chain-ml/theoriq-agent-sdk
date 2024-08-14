@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Callable, Sequence
 
 from .agent import Agent
-from .biscuit import RequestBiscuit, TheoriqBudget, TheoriqCost, ResponseBiscuit
+from .biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
 from .protocol.protocol_client import ProtocolClient
 from .schemas import DialogItem, ExecuteRequestBody, ItemBlock
 from .types import Currency

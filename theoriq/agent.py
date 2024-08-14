@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 import biscuit_auth
-from biscuit_auth import Biscuit, KeyPair, PrivateKey, PublicKey  # pylint: disable=E0611
+from biscuit_auth import Biscuit, KeyPair, PrivateKey  # pylint: disable=E0611
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from .biscuit import (

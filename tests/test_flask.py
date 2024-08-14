@@ -4,14 +4,12 @@ import uuid
 import pytest
 from biscuit_auth import PrivateKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-
 from flask import Flask
 from flask.testing import FlaskClient
-
 from tests.fixtures import *  # noqa: F403
 from theoriq.agent import AgentConfig
 from theoriq.biscuit import AgentAddress, TheoriqCost
-from theoriq.execute import ExecuteResponse, ExecuteContext
+from theoriq.execute import ExecuteContext, ExecuteResponse
 from theoriq.extra.flask import theoriq_blueprint
 from theoriq.schemas import ChallengeResponseBody, DialogItem, ExecuteRequestBody
 from theoriq.types import Currency, SourceType

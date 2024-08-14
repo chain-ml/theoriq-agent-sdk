@@ -5,12 +5,12 @@ from typing import Any, Dict
 from uuid import UUID
 
 from biscuit_auth import Authorizer, Biscuit, BlockBuilder, KeyPair, Rule  # pylint: disable=E0611
-from biscuit_auth.biscuit_auth import PublicKey, PrivateKey  # type: ignore
+from biscuit_auth.biscuit_auth import PrivateKey, PublicKey  # type: ignore
 
-from .utils import from_base64_token
 from ..types.currency import Currency
 from .facts import TheoriqBudget, TheoriqCost, TheoriqRequest, TheoriqResponse
 from .response_biscuit import ResponseBiscuit, ResponseFacts
+from .utils import from_base64_token
 
 
 class RequestFacts:
