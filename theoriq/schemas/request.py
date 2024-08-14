@@ -36,7 +36,7 @@ class DialogItem:
         timestamp (str): The creation time of the dialog item.
         source (str): The creator of the dialog item. In the agent context, this is the agent's ID in the Theoriq protocol.
         source_type (str): The type of the source that creates the dialog item. Can be either 'user' or 'agent'.
-        items (list[ItemBlock]): A list of ItemBlock objects consisting of responses from the agent.
+        blocks (list[ItemBlock]): A list of ItemBlock objects consisting of responses from the agent.
     """
 
     def __init__(self, timestamp: str, source_type: str, source: str, blocks: Sequence[ItemBlock[Any]]) -> None:
@@ -111,6 +111,22 @@ class Configuration(BaseModel):
 class ExecuteRequestBody(BaseModel):
     configuration: Optional[Configuration] = None
     dialog: Dialog
+
+    @property
+    def last_item(self) -> Optional[DialogItem]:
+        """
+        Returns the last dialog item contained in the request based on timestamp.
+        """
+        if len(self.dialog.items) == 0:
+            return None
+        return max(self.dialog.items, key=lambda obj: obj.timestamp)
+
+    def last_item_from(self, source_type: SourceType) -> Optional[DialogItem]:
+        """
+        Returns the last dialog item contained in the request based on timestamp.
+        """
+        items = (item for item in self.dialog.items if item.source_type == source_type)
+        return max(items, key=lambda obj: obj.timestamp) if items else None
 
 
 class Dialog(BaseModel):
