@@ -2,10 +2,12 @@ import json
 import uuid
 
 import pytest
-from biscuit_auth.biscuit_auth import PrivateKey
+from biscuit_auth import PrivateKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
 from flask import Flask
 from flask.testing import FlaskClient
+
 from tests.fixtures import *  # noqa: F403
 from theoriq.agent import AgentConfig
 from theoriq.biscuit import AgentAddress, TheoriqCost
@@ -51,7 +53,9 @@ def test_send_sign_challenge(client: FlaskClient, agent_public_key: Ed25519Publi
     assert challenge_response.nonce == nonce
 
 
-def test_send_execute_request(theoriq_private_key: PrivateKey, agent_kp, agent_config: AgentConfig, client: FlaskClient):
+def test_send_execute_request(
+    theoriq_private_key: PrivateKey, agent_kp, agent_config: AgentConfig, client: FlaskClient
+):
 
     from_address = AgentAddress("0x012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01")
     request_body = _build_request_body("My name is John Doe", from_address)

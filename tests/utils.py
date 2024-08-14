@@ -2,8 +2,7 @@
 
 import uuid
 
-from biscuit_auth import Biscuit, KeyPair
-from biscuit_auth.biscuit_auth import PrivateKey
+from biscuit_auth import Biscuit, PrivateKey
 
 from theoriq.biscuit import AgentAddress, RequestFacts, ResponseFacts, TheoriqCost
 from theoriq.biscuit.facts import TheoriqBudget, TheoriqRequest, TheoriqResponse

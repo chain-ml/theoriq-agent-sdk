@@ -57,8 +57,8 @@ class ProtocolClient:
         event_request = EventRequest(message=message, request_id=str(request_biscuit.request_facts.req_id))
         while retry_count <= self._max_retries:
             try:
-
                 self._send_event(event_request, headers=headers)
+                return
             except (httpx.TransportError, httpx.HTTPStatusError) as e:
                 if retry_count == self._max_retries:
                     return
@@ -69,12 +69,11 @@ class ProtocolClient:
                         "datetime": datetime.now(timezone.utc).isoformat(),
                     }
                 )
-
-                retry_count += 1
                 retry_delay *= 2
+                retry_count += 1
 
     def _send_event(self, request: EventRequest, headers: Dict[str, str]) -> None:
-        url = f"{self._uri}/requests/events/execute-{request.request_id}/events"
+        url = f"{self._uri}/requests/execute-{request.request_id.replace('-', '')}/events"
         with httpx.Client(timeout=self._timeout) as client:
             client.post(url=url, json=request.to_dict(), headers=headers)
 
