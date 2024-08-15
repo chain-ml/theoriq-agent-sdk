@@ -6,7 +6,7 @@ from biscuit_auth import PrivateKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from flask import Flask
 from flask.testing import FlaskClient
-from tests.fixtures import *  # noqa: F403
+from tests.unit.fixtures import *  # noqa: F403
 from theoriq.agent import AgentConfig
 from theoriq.biscuit import AgentAddress, TheoriqCost
 from theoriq.execute import ExecuteContext, ExecuteResponse

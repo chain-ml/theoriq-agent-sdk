@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import biscuit_auth
 import pytest
-from tests import utils
+from tests.unit import utils
 from theoriq.biscuit import AgentAddress, RequestFacts, ResponseFacts
 
 ADDRESS_ONE: Final[AgentAddress] = AgentAddress.one()
