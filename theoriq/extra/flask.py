@@ -1,8 +1,10 @@
 """Helpers to write agent using a flask web app."""
+import os
 
 import flask
 import pydantic
 from flask import Blueprint, Request, Response, jsonify, request
+from theoriq.types import AgentDataObject
 
 from ..agent import Agent, AgentConfig
 from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBiscuitError
@@ -40,6 +42,7 @@ def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn) -
 def theoriq_system_blueprint() -> Blueprint:
     blueprint = Blueprint("theoriq_system", __name__, url_prefix="/system")
     blueprint.add_url_rule("/challenge", view_func=sign_challenge, methods=["POST"])
+    blueprint.add_url_rule("/agent", view_func=agent_data, methods=["GET"])
     blueprint.add_url_rule("/public-key", view_func=public_key, methods=["GET"])
     return blueprint
 
@@ -56,6 +59,19 @@ def sign_challenge() -> Response:
     nonce_bytes = bytes.fromhex(challenge_body.nonce)
     signature = agent_var.get().sign_challenge(nonce_bytes)
     return jsonify({"signature": signature.hex(), "nonce": challenge_body.nonce})
+
+
+def agent_data() -> Response:
+    """Agent data endpoint"""
+    try:
+        agent = agent_var.get()
+        path = os.getenv("AGENT_YAML_PATH")
+        agent_data = AgentDataObject.from_yaml(path)
+        resp = agent_data.to_dict()
+        resp = {"name" : agent_data.metadata.name } | {**resp["spec"] } | {"publicKey": agent.public_key}
+        return jsonify(resp)
+    except Exception as e:
+        return Response(status=501)
 
 
 def execute(execute_request_function: ExecuteRequestFn) -> Response:
