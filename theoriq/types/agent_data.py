@@ -4,13 +4,14 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence
 import yaml
 from .data_object import DataObjectSpecBase, DataObject
 
+
 class AgentUrls:
     def __init__(self, *, end_point: str, icon: str) -> None:
         self.end_point = end_point
         self.icon = icon
 
     @classmethod
-    def from_dict(cls, values: Mapping[str, Any]) -> AgentDesciptions:
+    def from_dict(cls, values: Mapping[str, Any]) -> AgentUrls:
         end_point = values.get("endPoint", "")
         icon = values.get("icon", end_point + "system/icon.png" if end_point else "")
         return cls(end_point=end_point, icon=icon)
@@ -34,14 +35,21 @@ class AgentDesciptions:
         return cls(short=short, long=long)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"short": self.short, "long": self.long}
+        return {"shortDesciption": self.short, "longDesciption": self.long}
 
     def __str__(self):
         return f"{self.short} - {self.long}"
 
 
 class AgentSpec(DataObjectSpecBase):
-    def __init__(self, urls: AgentUrls, descriptions: AgentDesciptions, tags: Sequence[str], examples: Sequence[str], cost_card: str) -> None:
+    def __init__(
+        self,
+        urls: AgentUrls,
+        descriptions: AgentDesciptions,
+        tags: Sequence[str],
+        examples: Sequence[str],
+        cost_card: str,
+    ) -> None:
         self.urls = urls
         self.descriptions = descriptions
         self.tags = tags
@@ -59,17 +67,19 @@ class AgentSpec(DataObjectSpecBase):
         return AgentSpec(urls, descriptions, tags, examples, cost_card)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
-            "urls": self.urls.to_dict(),
-            "descriptions": self.descriptions.to_dict(),
+        result = {
             "tags": self.tags,
             "examplePrompts": self.examples,
-            "costCard": self.cost_card
+            "costCard": self.cost_card,
         }
+        result |= {**self.descriptions.to_dict()}
+        result |= {"imageUrl": self.urls.icon}
+        return result
 
 
 class AgentDataObject(DataObject[AgentSpec]):
     """ """
+
     @classmethod
     def from_dict(cls, values: Dict[str, Any]) -> AgentDataObject:
         return super()._from_dict(AgentSpec, values)

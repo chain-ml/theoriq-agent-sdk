@@ -1,4 +1,5 @@
 """Helpers to write agent using a flask web app."""
+
 import os
 
 import flask
@@ -63,13 +64,18 @@ def sign_challenge() -> Response:
 
 def agent_data() -> Response:
     """Agent data endpoint"""
+    path = os.getenv("AGENT_YAML_PATH")
     try:
         agent = agent_var.get()
-        path = os.getenv("AGENT_YAML_PATH")
-        agent_data = AgentDataObject.from_yaml(path)
-        resp = agent_data.to_dict()
-        resp = {"name" : agent_data.metadata.name } | {**resp["spec"] } | {"publicKey": agent.public_key}
-        return jsonify(resp)
+        result: Dict[str, Any] = {"publicKey": agent.public_key}
+        metadata = {}
+        if path:
+            agent_data = AgentDataObject.from_yaml(path)
+            data = agent_data.to_dict()
+            result |= {"name": agent_data.metadata.name}
+            metadata = data["spec"]
+        result = {"system": result} | {"metadata": metadata}
+        return jsonify(result)
     except Exception as e:
         return Response(status=501)
 
