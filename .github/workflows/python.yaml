@@ -37,4 +37,4 @@ jobs:
           rust-version: "1.80.0"
 
       - name: Run testing
-        run: pytest
+        run: pytest tests/unit

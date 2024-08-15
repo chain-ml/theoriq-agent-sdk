@@ -5,10 +5,12 @@ from typing import Any, Dict
 from uuid import UUID
 
 from biscuit_auth import Authorizer, Biscuit, BlockBuilder, KeyPair, Rule  # pylint: disable=E0611
+from biscuit_auth.biscuit_auth import PrivateKey, PublicKey  # type: ignore
 
 from ..types.currency import Currency
 from .facts import TheoriqBudget, TheoriqCost, TheoriqRequest, TheoriqResponse
 from .response_biscuit import ResponseBiscuit, ResponseFacts
+from .utils import from_base64_token
 
 
 class RequestFacts:
@@ -66,12 +68,13 @@ class RequestBiscuit:
     """Request biscuit used by the `theoriq` protocol"""
 
     def __init__(self, biscuit: Biscuit) -> None:
-        self.biscuit = biscuit
+        self.biscuit: Biscuit = biscuit
         self.request_facts = RequestFacts.from_biscuit(biscuit)
 
-    def attenuate_for_response(self, body: bytes, cost: TheoriqCost, agent_kp: KeyPair) -> ResponseBiscuit:
+    def attenuate_for_response(self, body: bytes, cost: TheoriqCost, agent_private_key: PrivateKey) -> ResponseBiscuit:
         theoriq_response = TheoriqResponse.from_body(body, to_addr=self.request_facts.request.from_addr)
         response_facts = ResponseFacts(self.request_facts.req_id, theoriq_response, cost)
+        agent_kp = KeyPair.from_private_key(agent_private_key)
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, response_facts.to_block_builder())  # type: ignore
 
         return ResponseBiscuit(attenuated_biscuit, response_facts)
@@ -87,3 +90,8 @@ class RequestBiscuit:
 
     def __str__(self):
         return f"RequestBiscuit(biscuit={self.biscuit}, request_facts={self.request_facts})"
+
+    @classmethod
+    def from_token(cls, *, token: str, public_key: str) -> RequestBiscuit:
+        biscuit = from_base64_token(token, PublicKey.from_hex(public_key))
+        return cls(biscuit)

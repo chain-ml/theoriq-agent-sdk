@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 import biscuit_auth
-from biscuit_auth import Biscuit, KeyPair, PrivateKey, PublicKey  # pylint: disable=E0611
+from biscuit_auth import Biscuit, KeyPair, PrivateKey  # pylint: disable=E0611
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from .biscuit import (
@@ -14,7 +14,6 @@ from .biscuit import (
     ResponseBiscuit,
     TheoriqCost,
     VerificationError,
-    from_base64_token,
 )
 from .utils import hash_body
 
@@ -22,22 +21,19 @@ from .utils import hash_body
 class AgentConfig:
     """Expected configuration for a 'Theoriq' agent."""
 
-    def __init__(self, theoriq_public_key: PublicKey, agent_kp: KeyPair) -> None:
-        self.theoriq_public_key: PublicKey = theoriq_public_key
-        self.agent_private_key: PrivateKey = agent_kp.private_key
-        self.agent_address = AgentAddress.from_public_key(agent_kp.public_key)
-        self.agent_public_key = agent_kp.public_key
+    def __init__(self, private_key: PrivateKey) -> None:
+        agent_kp = KeyPair.from_private_key(private_key)
+        self.private_key: PrivateKey = private_key
+        self.address = AgentAddress.from_public_key(agent_kp.public_key)
+        self.public_key = agent_kp.public_key
 
     @classmethod
     def from_env(cls) -> AgentConfig:
-        theoriq_public_key = PublicKey.from_hex(os.environ["THEORIQ_PUBLIC_KEY"])
         agent_private_key = PrivateKey.from_hex(os.environ["AGENT_PRIVATE_KEY"])
-        agent_kp = KeyPair.from_private_key(agent_private_key)
-
-        return cls(theoriq_public_key, agent_kp)
+        return cls(agent_private_key)
 
     def __str__(self):
-        return f"Address: {self.agent_address}, Public key:{self.agent_public_key.to_hex()}"
+        return f"Address: {self.address}, Public key:{self.public_key.to_hex()}"
 
 
 class Agent:
@@ -53,33 +49,25 @@ class Agent:
     def __init__(self, config: AgentConfig) -> None:
         self.config = config
 
-    def parse_and_verify_biscuit(self, token: str, body: bytes) -> RequestBiscuit:
+    def verify_biscuit(self, request_biscuit: RequestBiscuit, body: bytes) -> None:
         """
-        Parse the biscuit from the given token and verify it.
+        Verify the biscuit.
 
-        :param token: the biscuit base64 encoded
         :param body: the body of the request
         :raises ParseBiscuitError: if the biscuit could not be parsed.
         :raises VerificationError: if the biscuit is not valid.
         """
-        biscuit = from_base64_token(token, self.config.theoriq_public_key)
-        request_biscuit = RequestBiscuit(biscuit)
-        self._verify_request_biscuit(request_biscuit, body)
-        return request_biscuit
+        self._authorize_biscuit(request_biscuit.biscuit)
+        self._verify_biscuit_facts(request_biscuit.request_facts, body)
 
     def attenuate_biscuit_for_response(
         self, req_biscuit: RequestBiscuit, body: bytes, cost: TheoriqCost
     ) -> ResponseBiscuit:
-        agent_kp = KeyPair.from_private_key(self.config.agent_private_key)
-        return req_biscuit.attenuate_for_response(body, cost, agent_kp)
-
-    def _verify_request_biscuit(self, req_biscuit: RequestBiscuit, body: bytes) -> None:
-        self._authorize_biscuit(req_biscuit.biscuit)
-        self._verify_biscuit_facts(req_biscuit.request_facts, body)
+        return req_biscuit.attenuate_for_response(body, cost, self.config.private_key)
 
     def _authorize_biscuit(self, biscuit: Biscuit):
         """Runs the authorization checks and policies on the given biscuit."""
-        authorizer = self.config.agent_address.default_authorizer()
+        authorizer = self.config.address.default_authorizer()
         authorizer.add_token(biscuit)
         try:
             authorizer.authorize()
@@ -89,7 +77,7 @@ class Agent:
     def _verify_biscuit_facts(self, facts: RequestFacts, body: bytes) -> None:
         """Verify Facts on the given biscuit."""
         target_address = AgentAddress(facts.request.to_addr)
-        if target_address != self.config.agent_address:
+        if target_address != self.config.address:
             raise VerificationError(f"biscuit's target address '{target_address}' does not match our agent's address")
         hashed_body = hash_body(body)
         if hashed_body != facts.request.body_hash:
@@ -97,13 +85,13 @@ class Agent:
 
     def sign_challenge(self, challenge: bytes) -> bytes:
         """Sign the given challenge with the Agent's private key"""
-        private_key_bytes = bytes(self.config.agent_private_key.to_bytes())
+        private_key_bytes = bytes(self.config.private_key.to_bytes())
         private_key = Ed25519PrivateKey.from_private_bytes(private_key_bytes)
         return private_key.sign(challenge)
 
     @property
     def public_key(self) -> str:
-        return self.config.agent_public_key.to_hex()
+        return self.config.public_key.to_hex()
 
     @classmethod
     def from_env(cls) -> Agent:
