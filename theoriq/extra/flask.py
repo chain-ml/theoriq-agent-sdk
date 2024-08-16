@@ -1,8 +1,12 @@
 """Helpers to write agent using a flask web app."""
 
+import os
+from typing import Any, Dict
+
 import flask
 import pydantic
 from flask import Blueprint, Request, Response, jsonify, request
+from theoriq.types import AgentDataObject
 
 from ..agent import Agent, AgentConfig
 from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBiscuitError
@@ -40,6 +44,7 @@ def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn) -
 def theoriq_system_blueprint() -> Blueprint:
     blueprint = Blueprint("theoriq_system", __name__, url_prefix="/system")
     blueprint.add_url_rule("/challenge", view_func=sign_challenge, methods=["POST"])
+    blueprint.add_url_rule("/agent", view_func=agent_data, methods=["GET"])
     blueprint.add_url_rule("/public-key", view_func=public_key, methods=["GET"])
     return blueprint
 
@@ -56,6 +61,23 @@ def sign_challenge() -> Response:
     nonce_bytes = bytes.fromhex(challenge_body.nonce)
     signature = agent_var.get().sign_challenge(nonce_bytes)
     return jsonify({"signature": signature.hex(), "nonce": challenge_body.nonce})
+
+
+def agent_data() -> Response:
+    """Agent data endpoint"""
+    path = os.getenv("AGENT_YAML_PATH")
+    try:
+        agent = agent_var.get()
+        result: Dict[str, Any] = {"publicKey": agent.public_key}
+        metadata = {}
+        if path:
+            agent_data = AgentDataObject.from_yaml(path)
+            data = agent_data.to_dict()
+            metadata = data["spec"] | {"name": agent_data.metadata.name}
+        result = {"system": result} | {"metadata": metadata}
+        return jsonify(result)
+    except Exception:
+        return Response(status=501)
 
 
 def execute(execute_request_function: ExecuteRequestFn) -> Response:

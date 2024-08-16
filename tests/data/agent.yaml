@@ -1,0 +1,19 @@
+kind: TheoriqAgent
+version: 0.1
+metadata:
+  name: AwesumSum
+  labels:
+    author: ChainML Labs
+spec:
+    urls:
+      endPoint: http://127.0.0.1:8000/
+      icon: http://127.0.0.1:8000/icon
+    descriptions:
+      short: A simple agent that compute a Sum
+      long: An awsome Agent that compute a Sum
+    tags:
+      - math
+    examplePrompts:
+      - "1 + 1"
+      - "4 + 2"
+    costCard: "Not expansive"
