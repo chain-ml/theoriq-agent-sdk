@@ -37,7 +37,7 @@ class AgentDesciptions:
         return cls(short=short, long=long)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"shortDesciption": self.short, "longDesciption": self.long}
+        return {"shortDescription": self.short, "longDescription": self.long}
 
     def __str__(self):
         return f"{self.short} - {self.long}"
