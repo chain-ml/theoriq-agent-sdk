@@ -1,6 +1,7 @@
 """Helpers to write agent using a flask web app."""
 
 import os
+from typing import Any, Dict
 
 import flask
 import pydantic
@@ -75,7 +76,7 @@ def agent_data() -> Response:
             metadata = data["spec"] | {"name": agent_data.metadata.name}
         result = {"system": result} | {"metadata": metadata}
         return jsonify(result)
-    except Exception as e:
+    except Exception:
         return Response(status=501)
 
 
