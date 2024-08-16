@@ -91,7 +91,8 @@ class Agent:
 
     @property
     def public_key(self) -> str:
-        return self.config.public_key.to_hex()
+        pk = self.config.public_key.to_hex()
+        return f"0x{pk}"
 
     @classmethod
     def from_env(cls) -> Agent:

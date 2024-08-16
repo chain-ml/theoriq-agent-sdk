@@ -35,33 +35,16 @@ class ExecuteContext:
         return self._agent.attenuate_biscuit_for_response(self._request_biscuit, body, TheoriqCost.zero(Currency.USDC))
 
     @property
+    def agent_address(self) -> str:
+        return str(self._agent.config.address)
+
+    @property
     def request_id(self) -> str:
         return str(self._request_biscuit.request_facts.req_id)
 
     @property
     def budget(self) -> TheoriqBudget:
         return self._request_biscuit.request_facts.budget
-
-
-class ExecuteRequest:
-    """
-    This class encapsulates the necessary details retrieved from a request to the `execute` endpoint.
-
-    Attributes:
-        body (ExecuteRequestBody): Encapsulates the payload sent to the 'execute' endpoint.
-        biscuit (RequestBiscuit): Holds the authentication information sent to the 'execute' endpoint.
-    """
-
-    def __init__(self, body: ExecuteRequestBody, request_biscuit: RequestBiscuit) -> None:
-        self.body = body
-        self._biscuit = request_biscuit
-
-    @property
-    def dialog_items(self) -> Sequence[DialogItem]:
-        """
-        Returns the dialog items contained in the request.
-        """
-        return self.body.dialog.items
 
 
 class ExecuteResponse:

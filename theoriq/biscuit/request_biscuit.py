@@ -93,5 +93,6 @@ class RequestBiscuit:
 
     @classmethod
     def from_token(cls, *, token: str, public_key: str) -> RequestBiscuit:
+        public_key = public_key.removeprefix("0x")
         biscuit = from_base64_token(token, PublicKey.from_hex(public_key))
         return cls(biscuit)
