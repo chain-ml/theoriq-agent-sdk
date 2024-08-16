@@ -60,24 +60,26 @@ def sign_challenge() -> Response:
     challenge_body = ChallengeRequestBody.model_validate(request.json)
     nonce_bytes = bytes.fromhex(challenge_body.nonce)
     signature = agent_var.get().sign_challenge(nonce_bytes)
-    return jsonify({"signature": signature.hex(), "nonce": challenge_body.nonce})
+    return jsonify({"signature": f"0x{signature.hex()}", "nonce": challenge_body.nonce})
 
 
 def agent_data() -> Response:
     """Agent data endpoint"""
     path = os.getenv("AGENT_YAML_PATH")
-    try:
-        agent = agent_var.get()
-        result: Dict[str, Any] = {"publicKey": agent.public_key}
-        metadata = {}
-        if path:
+    agent = agent_var.get()
+    result: Dict[str, Any] = {"publicKey": agent.public_key}
+    metadata = {}
+
+    if path:
+        try:
             agent_data = AgentDataObject.from_yaml(path)
             data = agent_data.to_dict()
             metadata = data["spec"] | {"name": agent_data.metadata.name}
-        result = {"system": result} | {"metadata": metadata}
-        return jsonify(result)
-    except Exception:
-        return Response(status=501)
+        except Exception:
+            pass
+
+    result = {"system": result} | {"metadata": metadata}
+    return jsonify(result)
 
 
 def execute(execute_request_function: ExecuteRequestFn) -> Response:

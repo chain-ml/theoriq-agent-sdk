@@ -8,6 +8,7 @@ from biscuit_auth import Authorizer, Biscuit, BlockBuilder, KeyPair, Rule  # pyl
 from biscuit_auth.biscuit_auth import PrivateKey, PublicKey  # type: ignore
 
 from ..types.currency import Currency
+from . import AgentAddress
 from .facts import TheoriqBudget, TheoriqCost, TheoriqRequest, TheoriqResponse
 from .response_biscuit import ResponseBiscuit, ResponseFacts
 from .utils import from_base64_token
@@ -45,6 +46,15 @@ class RequestFacts:
         theoriq_budget = TheoriqBudget(amount=amount, currency=Currency.from_value(currency), voucher=voucher)
 
         return RequestFacts(req_id, theoriq_request, theoriq_budget)
+
+    @staticmethod
+    def generate_new_biscuit(body: bytes, from_addr: str, to_addr: str, private_key: PrivateKey) -> Biscuit:
+        subject_address = AgentAddress(to_addr)
+        request_facts = RequestFacts.default(body=body, from_addr=from_addr, to_addr=to_addr)
+
+        authority_block_builder = subject_address.new_authority_builder()
+        authority_block_builder.merge(request_facts.to_block_builder())
+        return authority_block_builder.build(private_key)
 
     def to_block_builder(self) -> BlockBuilder:
         """Construct a biscuit block builder using the facts"""
@@ -93,5 +103,6 @@ class RequestBiscuit:
 
     @classmethod
     def from_token(cls, *, token: str, public_key: str) -> RequestBiscuit:
+        public_key = public_key.removeprefix("0x")
         biscuit = from_base64_token(token, PublicKey.from_hex(public_key))
         return cls(biscuit)

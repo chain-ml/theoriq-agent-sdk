@@ -21,7 +21,7 @@ class AgentAddress:
         self.address = verify_address(address)
 
     def __str__(self) -> str:
-        return self.address
+        return self.address if self.address.startswith("0x") else f"0x{self.address}"
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, AgentAddress):

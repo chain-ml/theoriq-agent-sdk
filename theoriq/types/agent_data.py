@@ -15,7 +15,7 @@ class AgentUrls:
     @classmethod
     def from_dict(cls, values: Mapping[str, Any]) -> AgentUrls:
         end_point = values.get("endPoint", "")
-        icon = values.get("icon", end_point + "system/icon.png" if end_point else "")
+        icon = values.get("icon", "")
         return cls(end_point=end_point, icon=icon)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -25,13 +25,13 @@ class AgentUrls:
         return f"EndPoint: {self.end_point} - Icon: {self.icon}"
 
 
-class AgentDesciptions:
+class AgentDescriptions:
     def __init__(self, *, short: str, long: str) -> None:
         self.short = short
         self.long = long
 
     @classmethod
-    def from_dict(cls, values: Mapping[str, Any]) -> AgentDesciptions:
+    def from_dict(cls, values: Mapping[str, Any]) -> AgentDescriptions:
         short = values.get("short", "")
         long = values.get("long", "")
         return cls(short=short, long=long)
@@ -47,7 +47,7 @@ class AgentSpec(DataObjectSpecBase):
     def __init__(
         self,
         urls: AgentUrls,
-        descriptions: AgentDesciptions,
+        descriptions: AgentDescriptions,
         tags: Sequence[str],
         examples: Sequence[str],
         cost_card: str,
@@ -62,7 +62,7 @@ class AgentSpec(DataObjectSpecBase):
     def from_dict(cls, values: Mapping[str, Any]) -> AgentSpec:
         urls = AgentUrls.from_dict(values.get("urls", {}))
         tags = [value for value in values.get("tags", [])]
-        descriptions = AgentDesciptions.from_dict(values.get("descriptions", {}))
+        descriptions = AgentDescriptions.from_dict(values.get("descriptions", {}))
         examples = [value for value in values.get("examplePrompts", [])]
         cost_card = values.get("costCard", "")
 

@@ -34,6 +34,16 @@ class ExecuteContext:
         """Build a biscuit for the response to an 'execute' request."""
         return self._agent.attenuate_biscuit_for_response(self._request_biscuit, body, TheoriqCost.zero(Currency.USDC))
 
+    def new_free_response(self, blocks=Sequence[ItemBlock]) -> ExecuteResponse:
+        return self.new_response(blocks=blocks, cost=TheoriqCost.zero(Currency.USDC))
+
+    def new_response(self, blocks: Sequence[ItemBlock], cost: TheoriqCost) -> ExecuteResponse:
+        return ExecuteResponse(dialog_item=DialogItem.new(source=self.agent_address, blocks=blocks), cost=cost)
+
+    @property
+    def agent_address(self) -> str:
+        return str(self._agent.config.address)
+
     @property
     def request_id(self) -> str:
         return str(self._request_biscuit.request_facts.req_id)
@@ -41,27 +51,6 @@ class ExecuteContext:
     @property
     def budget(self) -> TheoriqBudget:
         return self._request_biscuit.request_facts.budget
-
-
-class ExecuteRequest:
-    """
-    This class encapsulates the necessary details retrieved from a request to the `execute` endpoint.
-
-    Attributes:
-        body (ExecuteRequestBody): Encapsulates the payload sent to the 'execute' endpoint.
-        biscuit (RequestBiscuit): Holds the authentication information sent to the 'execute' endpoint.
-    """
-
-    def __init__(self, body: ExecuteRequestBody, request_biscuit: RequestBiscuit) -> None:
-        self.body = body
-        self._biscuit = request_biscuit
-
-    @property
-    def dialog_items(self) -> Sequence[DialogItem]:
-        """
-        Returns the dialog items contained in the request.
-        """
-        return self.body.dialog.items
 
 
 class ExecuteResponse:
@@ -75,16 +64,11 @@ class ExecuteResponse:
     """
 
     def __init__(
-        self, body: DialogItem, cost: TheoriqCost = TheoriqCost.zero(Currency.USDC), status_code: int = 200
+        self, dialog_item: DialogItem, cost: TheoriqCost = TheoriqCost.zero(Currency.USDC), status_code: int = 200
     ) -> None:
-        self.body = body
+        self.body = dialog_item
         self.theoriq_cost = cost
         self.status_code = status_code
-
-    @classmethod
-    def cost_free(cls, source: str, blocks: Sequence[ItemBlock]) -> ExecuteResponse:
-        """Creates a new `ExecuteResponse` with default values"""
-        return ExecuteResponse(body=DialogItem.new(source=source, blocks=blocks))
 
 
 ExecuteRequestFn = Callable[[ExecuteContext, ExecuteRequestBody], ExecuteResponse]
