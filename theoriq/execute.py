@@ -34,7 +34,7 @@ class ExecuteContext:
         """Build a biscuit for the response to an 'execute' request."""
         return self._agent.attenuate_biscuit_for_response(self._request_biscuit, body, TheoriqCost.zero(Currency.USDC))
 
-    def new_free_response(self, blocks= Sequence[ItemBlock]) -> ExecuteResponse:
+    def new_free_response(self, blocks=Sequence[ItemBlock]) -> ExecuteResponse:
         return self.new_response(blocks=blocks, cost=TheoriqCost.zero(Currency.USDC))
 
     def new_response(self, blocks: Sequence[ItemBlock], cost: TheoriqCost) -> ExecuteResponse:
