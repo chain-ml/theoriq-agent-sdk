@@ -29,7 +29,8 @@ class AgentConfig:
 
     @classmethod
     def from_env(cls) -> AgentConfig:
-        agent_private_key = PrivateKey.from_hex(os.environ["AGENT_PRIVATE_KEY"])
+        private_key = os.environ["AGENT_PRIVATE_KEY"]
+        agent_private_key = PrivateKey.from_hex(private_key.removeprefix("0x"))
         return cls(agent_private_key)
 
     def __str__(self):

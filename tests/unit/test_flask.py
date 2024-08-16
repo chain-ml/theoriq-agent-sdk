@@ -45,7 +45,7 @@ def test_send_sign_challenge(client: FlaskClient, agent_public_key: Ed25519Publi
     assert response.status_code == 200
 
     challenge_response = ChallengeResponseBody.model_validate(response.json)
-    signature = bytes.fromhex(challenge_response.signature)
+    signature = bytes.fromhex(challenge_response.signature.removeprefix("0x"))
     response_nonce = bytes.fromhex(challenge_response.nonce)
     agent_public_key.verify(signature, response_nonce)
     assert challenge_response.nonce == nonce

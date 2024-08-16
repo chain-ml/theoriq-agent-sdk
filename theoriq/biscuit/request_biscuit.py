@@ -7,6 +7,7 @@ from uuid import UUID
 from biscuit_auth import Authorizer, Biscuit, BlockBuilder, KeyPair, Rule  # pylint: disable=E0611
 from biscuit_auth.biscuit_auth import PrivateKey, PublicKey  # type: ignore
 
+from . import AgentAddress
 from ..types.currency import Currency
 from .facts import TheoriqBudget, TheoriqCost, TheoriqRequest, TheoriqResponse
 from .response_biscuit import ResponseBiscuit, ResponseFacts
@@ -45,6 +46,15 @@ class RequestFacts:
         theoriq_budget = TheoriqBudget(amount=amount, currency=Currency.from_value(currency), voucher=voucher)
 
         return RequestFacts(req_id, theoriq_request, theoriq_budget)
+
+    @staticmethod
+    def generate_new_biscuit(body: bytes, from_addr: str, to_addr: str, private_key: PrivateKey) -> Biscuit:
+        subject_address = AgentAddress(to_addr)
+        request_facts = RequestFacts.default(body=body, from_addr=from_addr, to_addr=to_addr)
+
+        authority_block_builder = subject_address.new_authority_builder()
+        authority_block_builder.merge(request_facts.to_block_builder())
+        return authority_block_builder.build(private_key)
 
     def to_block_builder(self) -> BlockBuilder:
         """Construct a biscuit block builder using the facts"""
