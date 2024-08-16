@@ -72,8 +72,7 @@ def agent_data() -> Response:
         if path:
             agent_data = AgentDataObject.from_yaml(path)
             data = agent_data.to_dict()
-            result |= {"name": agent_data.metadata.name}
-            metadata = data["spec"]
+            metadata = data["spec"] | {"name": agent_data.metadata.name}
         result = {"system": result} | {"metadata": metadata}
         return jsonify(result)
     except Exception as e:
