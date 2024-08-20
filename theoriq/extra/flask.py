@@ -9,7 +9,7 @@ from flask import Blueprint, Request, Response, jsonify, request
 from theoriq.types import AgentDataObject
 
 from ..agent import Agent, AgentConfig
-from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBiscuitError, RequestFacts
+from ..biscuit import RequestBiscuit, RequestFacts, ResponseBiscuit, TheoriqBiscuitError
 from ..execute import ExecuteContext, ExecuteRequestFn
 from ..extra.globals import agent_var
 from ..protocol import ProtocolClient

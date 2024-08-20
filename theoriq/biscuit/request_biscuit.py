@@ -53,7 +53,7 @@ class RequestFacts:
         subject_address = AgentAddress(to_addr)
         request_facts = RequestFacts.default(body=body, from_addr=from_addr, to_addr=to_addr)
 
-        tq_private_key = os.environ.get("THEORIQ_PRIVATE_KEY")
+        tq_private_key = os.getenv("THEORIQ_PRIVATE_KEY", "")
         private_key = PrivateKey.from_hex(tq_private_key.removeprefix("0x"))
 
         authority_block_builder = subject_address.new_authority_builder()
