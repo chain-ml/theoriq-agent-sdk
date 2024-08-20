@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import uuid
 from typing import Any, Dict
 from uuid import UUID
@@ -48,9 +49,12 @@ class RequestFacts:
         return RequestFacts(req_id, theoriq_request, theoriq_budget)
 
     @staticmethod
-    def generate_new_biscuit(body: bytes, from_addr: str, to_addr: str, private_key: PrivateKey) -> Biscuit:
+    def generate_new_biscuit(body: bytes, *, from_addr: str, to_addr: str) -> Biscuit:
         subject_address = AgentAddress(to_addr)
         request_facts = RequestFacts.default(body=body, from_addr=from_addr, to_addr=to_addr)
+
+        tq_private_key = os.environ.get("THEORIQ_PRIVATE_KEY")
+        private_key = PrivateKey.from_hex(tq_private_key.removeprefix("0x"))
 
         authority_block_builder = subject_address.new_authority_builder()
         authority_block_builder.merge(request_facts.to_block_builder())

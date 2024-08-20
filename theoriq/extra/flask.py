@@ -9,7 +9,7 @@ from flask import Blueprint, Request, Response, jsonify, request
 from theoriq.types import AgentDataObject
 
 from ..agent import Agent, AgentConfig
-from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBiscuitError
+from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBiscuitError, RequestFacts
 from ..execute import ExecuteContext, ExecuteRequestFn
 from ..extra.globals import agent_var
 from ..protocol import ProtocolClient
@@ -106,7 +106,6 @@ def execute(execute_request_function: ExecuteRequestFn) -> Response:
 
     return response
 
-
 def process_biscuit_request(agent: Agent, protocol_public_key: str, req: Request) -> RequestBiscuit:
     """
     Retrieve and process the request biscuit
@@ -117,9 +116,15 @@ def process_biscuit_request(agent: Agent, protocol_public_key: str, req: Request
     :raises: If the biscuit could not be processed, a flask response is returned with the 401 status code.
     """
     try:
-        bearer_token = get_bearer_token(req)
-        request_biscuit = RequestBiscuit.from_token(token=bearer_token, public_key=protocol_public_key)
-        agent.verify_biscuit(request_biscuit, req.data)
+        secured = os.getenv("THEORIQ_SECURED", "true").lower() == "true"
+        if secured:
+            token = get_bearer_token(req)
+            request_biscuit = RequestBiscuit.from_token(token=token, public_key=protocol_public_key)
+            agent.verify_biscuit(request_biscuit, req.data)
+        else:
+            address = str(agent.config.address)
+            biscuit = RequestFacts.generate_new_biscuit(req.data, from_addr=address, to_addr=address)
+            request_biscuit = RequestBiscuit(biscuit)
         return request_biscuit
     except TheoriqBiscuitError as err:
         flask.abort(401, err)
