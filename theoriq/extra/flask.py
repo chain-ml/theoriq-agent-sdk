@@ -106,6 +106,7 @@ def execute(execute_request_function: ExecuteRequestFn) -> Response:
 
     return response
 
+
 def process_biscuit_request(agent: Agent, protocol_public_key: str, req: Request) -> RequestBiscuit:
     """
     Retrieve and process the request biscuit
