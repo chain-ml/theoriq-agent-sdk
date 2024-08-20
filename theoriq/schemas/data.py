@@ -31,6 +31,6 @@ class DataItemBlock(ItemBlock[DataItem]):
     def block_type() -> str:
         return "data"
 
-    @staticmethod
-    def is_valid(block_type: str) -> bool:
+    @classmethod
+    def is_valid(cls, block_type: str) -> bool:
         return block_type.startswith(DataItemBlock.block_type())
