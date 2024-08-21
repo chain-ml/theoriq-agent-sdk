@@ -11,14 +11,18 @@ from ..schemas.api import AgentResponse, PublicKeyResponse
 
 
 class EventRequest:
-    def __init__(self, *, message: str, request_id: str) -> None:
+    def __init__(self, *, message: str, request_id: str, obj: Optional[ItemBlock] = None) -> None:
         self.message = message
         self.request_id = request_id
+        self.obj = obj
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        result: Dict[str, Any] = {
             "message": self.message,
         }
+        if self.obj is not None:
+            result["object"] = self.obj.to_dict()
+        return result
 
 
 class ProtocolClient:
