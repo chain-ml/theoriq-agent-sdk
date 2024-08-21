@@ -6,7 +6,7 @@ Types and functions used by an Agent when executing a theoriq request
 
 from __future__ import annotations
 
-from typing import Callable, Sequence
+from typing import Any, Callable, Dict, Sequence
 
 from .agent import Agent
 from .biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
@@ -69,6 +69,18 @@ class ExecuteResponse:
         self.body = dialog_item
         self.theoriq_cost = cost
         self.status_code = status_code
+
+    def __str__(self):
+        return f"ExecuteResponse(body={self.body}, cost={self.theoriq_cost}, status_code={self.status_code})"
+
+    @classmethod
+    def from_protocol_response(cls, data: Dict[str, Any], status_code: int) -> ExecuteResponse:
+        dialog_item = DialogItem.from_dict(data["dialog_item"])
+        return cls(
+            dialog_item=dialog_item,
+            cost=TheoriqCost.zero(Currency.USDC),
+            status_code=status_code,
+        )
 
 
 ExecuteRequestFn = Callable[[ExecuteContext, ExecuteRequestBody], ExecuteResponse]
