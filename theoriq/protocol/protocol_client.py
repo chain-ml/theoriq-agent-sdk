@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Sequence
 import httpx
 
 from ..biscuit import RequestBiscuit
+from ..schemas import ItemBlock
 from ..schemas.api import AgentResponse, PublicKeyResponse
 
 
