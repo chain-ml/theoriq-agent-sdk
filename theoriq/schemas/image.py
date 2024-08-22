@@ -37,8 +37,8 @@ class ImageItemBlock(ItemBlock[ImageItem]):
         with open(path, "rb") as f:
             return cls(image_base64=base64.b64encode(f.read()).decode("utf-8"), sub_type=sub_type)
 
-    @staticmethod
-    def block_type() -> str:
+    @classmethod
+    def block_type(cls) -> str:
         return "image"
 
     @classmethod

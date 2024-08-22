@@ -7,7 +7,7 @@ This module contains the schemas used by the Theoriq endpoint.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, Optional, Sequence, TypeVar, Union
+from typing import Any, Dict, Generic, Optional, Sequence, TypeVar, Union, Type
 
 
 class BaseData(ABC):
@@ -51,6 +51,10 @@ class ItemBlock(Generic[T_Data]):
     def from_dict(cls, data: dict, block_type: str):
         raise NotImplementedError
 
+    @classmethod
+    def block_type(cls) -> str:
+        raise NotImplementedError
+
     @staticmethod
     def raise_if_not_valid(*, block_type: str, expected: str) -> None:
         if not block_type.startswith(expected):
@@ -64,3 +68,8 @@ class ItemBlock(Generic[T_Data]):
     @staticmethod
     def root_type(bloc_type: str) -> str:
         return bloc_type.split(":", 1)[0]
+
+
+
+def filter_blocks(blocks:Sequence[ItemBlock], block_type: Type[ItemBlock]) -> Sequence[ItemBlock]:
+    return list(filter(lambda x: block_type.is_valid(x.block_type()) , blocks))

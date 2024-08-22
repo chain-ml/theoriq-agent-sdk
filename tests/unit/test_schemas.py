@@ -1,5 +1,5 @@
-from theoriq.schemas import DialogItem, ExecuteRequestBody, TextItemBlock
-from theoriq.schemas.request import Dialog
+from theoriq.schemas import Dialog, DialogItem, ExecuteRequestBody, TextItemBlock
+from theoriq.schemas.schemas import filter_blocks
 
 
 def test_schemas():
@@ -32,6 +32,7 @@ def test_schemas():
                                 ]
                             },
                         },
+                        {"data": {"text": "My name is Jane Doe"}, "type": "text"},
                     ],
                 }
             ]
@@ -49,6 +50,10 @@ def test_schemas():
     assert dialog_item.blocks[2].data.code == "import numpy"
 
     assert dialog_item.blocks[3].data[-1].trend_percentage == 0.25
+
+    text_blocks = filter_blocks(dialog_item.blocks, TextItemBlock)
+    assert text_blocks[0].data.text == "My name is John Doe"
+    assert text_blocks[1].data.text == "My name is Jane Doe"
 
 
 def test_serialization():

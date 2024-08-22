@@ -1,6 +1,7 @@
 """Helpers to write agent using a flask web app."""
 
 import os
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 import flask
@@ -99,6 +100,8 @@ def execute(execute_request_function: ExecuteRequestFn) -> Response:
         response = jsonify(execute_response.body.to_dict())
         response_biscuit = execute_context.new_response_biscuit(response.get_data(), execute_response.theoriq_cost)
         response = add_biscuit_to_response(response, response_biscuit)
+    except TheoriqBiscuitError as err:
+        response = _build_error_payload(context=execute_context, err=str(err), status_code=401), 401
     except pydantic.ValidationError as err:
         response = new_error_response(execute_context, 400, err)
     except Exception as err:
@@ -116,19 +119,16 @@ def process_biscuit_request(agent: Agent, protocol_public_key: str, req: Request
     :return: RequestBiscuit
     :raises: If the biscuit could not be processed, a flask response is returned with the 401 status code.
     """
-    try:
-        secured = os.getenv("THEORIQ_SECURED", "true").lower() == "true"
-        if secured:
-            token = get_bearer_token(req)
-            request_biscuit = RequestBiscuit.from_token(token=token, public_key=protocol_public_key)
-            agent.verify_biscuit(request_biscuit, req.data)
-        else:
-            address = str(agent.config.address)
-            biscuit = RequestFacts.generate_new_biscuit(req.data, from_addr=address, to_addr=address)
-            request_biscuit = RequestBiscuit(biscuit)
-        return request_biscuit
-    except TheoriqBiscuitError as err:
-        flask.abort(401, err)
+    secured = os.getenv("THEORIQ_SECURED", "true").lower() == "true"
+    if secured:
+        token = get_bearer_token(req)
+        request_biscuit = RequestBiscuit.from_token(token=token, public_key=protocol_public_key)
+        agent.verify_biscuit(request_biscuit, req.data)
+    else:
+        address = str(agent.config.address)
+        biscuit = RequestFacts.generate_new_biscuit(req.data, from_addr=address, to_addr=address)
+        request_biscuit = RequestBiscuit(biscuit)
+    return request_biscuit
 
 
 def get_bearer_token(req: Request) -> str:
@@ -145,8 +145,20 @@ def add_biscuit_to_response(response: flask.Response, resp_biscuit: ResponseBisc
     return response
 
 
-def new_error_response(execute_context: ExecuteContext, status_code: int, body: Exception) -> flask.Response:
-    error_response = jsonify({"error": str(body)})
-    response_biscuit = execute_context.new_error_response_biscuit(error_response.get_data())
+def new_error_response(context: ExecuteContext, status_code: int, body: Exception) -> flask.Response:
+    error_response = _build_error_payload(context, str(body), status_code)
+    response_biscuit = context.new_error_response_biscuit(error_response.get_data())
     error_response.status = str(status_code)
     return add_biscuit_to_response(error_response, response_biscuit)
+
+
+def _build_error_payload(context: ExecuteContext, err: str, status_code: int):
+    return jsonify(
+        {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "error": err,
+            "source": context.agent_address,
+            "requestId": context.request_id,
+            "status": str(status_code),
+        }
+    )
