@@ -47,7 +47,7 @@ class TheoriqRequest(FactConvertibleBase):
         )
 
     @classmethod
-    def from_body(cls, body: bytes, from_addr: str, to_addr: str) -> TheoriqRequest:
+    def from_body(cls, body: bytes, from_addr: str | AgentAddress, to_addr: str) -> TheoriqRequest:
         """Create a response fact from a response body"""
         body_hash = hash_body(body)
         return cls(body_hash=body_hash, from_addr=from_addr, to_addr=to_addr)

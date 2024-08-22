@@ -158,7 +158,7 @@ class Dialog(BaseModel):
         return items
 
     @field_serializer("items")
-    def serialize_items(cls, value):
+    def serialize_items(self, value: Sequence[DialogItem]):
         return [item.to_dict() for item in value]
 
     class Config:

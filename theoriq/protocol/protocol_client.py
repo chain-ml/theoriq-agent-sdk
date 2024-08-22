@@ -53,6 +53,14 @@ class ProtocolClient:
             data = response.json()
             return [AgentResponse(**item) for item in data["items"]]
 
+    def post_request(self, request_biscuit: RequestBiscuit, content: bytes, to_addr: str):
+        url = f'{self._uri}/agents/{to_addr.removeprefix("0x")}/execute'
+        headers = request_biscuit.to_headers()
+        headers = headers | {"X-AP-AGENT-REQUEST-PATH": "/api/v1alpha1/execute", "X-AP-AGENT-REQUEST-METHOD": "POST"}
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, content=content, headers=headers)
+            return response.json()
+
     def post_event(self, request_biscuit: RequestBiscuit, message: str) -> None:
         retry_delay = 1
         retry_count = 0

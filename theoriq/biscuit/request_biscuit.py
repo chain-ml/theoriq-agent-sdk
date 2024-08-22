@@ -98,7 +98,7 @@ class RequestBiscuit:
     ) -> RequestBiscuit:
         agent_kp = KeyPair.from_private_key(agent_private_key)
         request_facts = RequestFacts(uuid.uuid4(), request, budget)
-        attenuated_biscuit = self._request_biscuit.append_third_party_block(agent_kp, request_facts.to_block_builder())  # type: ignore
+        attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, request_facts.to_block_builder())  # type: ignore
         return RequestBiscuit(attenuated_biscuit)
 
     def to_base64(self) -> str:

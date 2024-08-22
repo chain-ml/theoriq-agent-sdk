@@ -10,8 +10,10 @@ from typing import Any, Callable, Dict, Sequence
 
 from .agent import Agent
 from .biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
+from .biscuit.facts import TheoriqRequest
 from .protocol.protocol_client import ProtocolClient
 from .schemas import DialogItem, ExecuteRequestBody, ItemBlock
+from .schemas.request import Dialog
 from .types import Currency
 
 
@@ -39,6 +41,17 @@ class ExecuteContext:
 
     def new_response(self, blocks: Sequence[ItemBlock], cost: TheoriqCost) -> ExecuteResponse:
         return ExecuteResponse(dialog_item=DialogItem.new(source=self.agent_address, blocks=blocks), cost=cost)
+
+    def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
+        config = self._agent.config
+        execute_request_body = ExecuteRequestBody(
+            dialog=Dialog(items=[DialogItem.new(source=self.agent_address, blocks=blocks)])
+        )
+        body = execute_request_body.model_dump_json().encode("utf-8")
+        theoriq_request = TheoriqRequest.from_body(body=body, from_addr=config.address, to_addr=to_addr)
+        request_biscuit = self._request_biscuit.attenuate_for_request(theoriq_request, budget, config.private_key)
+        response = self._protocol_client.post_request(request_biscuit=request_biscuit, content=body, to_addr=to_addr)
+        return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
 
     @property
     def agent_address(self) -> str:
