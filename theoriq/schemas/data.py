@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Sequence, Type
+from typing import Any, Dict, Optional
 
 from .schemas import BaseData, ItemBlock
 

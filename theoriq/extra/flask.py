@@ -101,7 +101,7 @@ def execute(execute_request_function: ExecuteRequestFn) -> Response:
         response_biscuit = execute_context.new_response_biscuit(response.get_data(), execute_response.theoriq_cost)
         response = add_biscuit_to_response(response, response_biscuit)
     except TheoriqBiscuitError as err:
-        response = _build_error_payload(context=execute_context, err=str(err), status_code=401), 401
+        response = _build_error_payload(context=execute_context, err=str(err), status_code=401)
     except pydantic.ValidationError as err:
         response = new_error_response(execute_context, 400, err)
     except Exception as err:
@@ -148,12 +148,11 @@ def add_biscuit_to_response(response: flask.Response, resp_biscuit: ResponseBisc
 def new_error_response(context: ExecuteContext, status_code: int, body: Exception) -> flask.Response:
     error_response = _build_error_payload(context, str(body), status_code)
     response_biscuit = context.new_error_response_biscuit(error_response.get_data())
-    error_response.status = str(status_code)
     return add_biscuit_to_response(error_response, response_biscuit)
 
 
-def _build_error_payload(context: ExecuteContext, err: str, status_code: int):
-    return jsonify(
+def _build_error_payload(context: ExecuteContext, err: str, status_code: int) -> flask.Response:
+    error_response = jsonify(
         {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "error": err,
@@ -162,3 +161,5 @@ def _build_error_payload(context: ExecuteContext, err: str, status_code: int):
             "status": str(status_code),
         }
     )
+    error_response.status = str(status_code)
+    return error_response

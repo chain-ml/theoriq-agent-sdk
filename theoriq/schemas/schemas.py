@@ -7,7 +7,7 @@ This module contains the schemas used by the Theoriq endpoint.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, Optional, Sequence, TypeVar, Union, Type
+from typing import Any, Dict, Generic, Optional, Sequence, Type, TypeVar, Union
 
 
 class BaseData(ABC):
@@ -70,6 +70,5 @@ class ItemBlock(Generic[T_Data]):
         return bloc_type.split(":", 1)[0]
 
 
-
-def filter_blocks(blocks:Sequence[ItemBlock], block_type: Type[ItemBlock]) -> Sequence[ItemBlock]:
-    return list(filter(lambda x: block_type.is_valid(x.block_type()) , blocks))
+def filter_blocks(blocks: Sequence[ItemBlock], block_type: Type[ItemBlock]) -> Sequence[ItemBlock]:
+    return list(filter(lambda x: block_type.is_valid(x.block_type()), blocks))
