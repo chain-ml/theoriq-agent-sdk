@@ -12,6 +12,8 @@ from biscuit_auth import Fact  # pylint: disable=E0611
 from theoriq.types.currency import Currency
 from theoriq.utils import hash_body, verify_address
 
+from .agent_address import AgentAddress
+
 
 class FactConvertibleBase(abc.ABC):
     @abc.abstractmethod
@@ -22,9 +24,9 @@ class FactConvertibleBase(abc.ABC):
 class TheoriqRequest(FactConvertibleBase):
     """`theoriq:request` fact"""
 
-    def __init__(self, *, body_hash: str, from_addr: str, to_addr: str) -> None:
+    def __init__(self, *, body_hash: str, from_addr: str | AgentAddress, to_addr: str) -> None:
         self.body_hash = body_hash
-        self.from_addr = from_addr
+        self.from_addr = from_addr if isinstance(from_addr, str) else from_addr.address
         self.to_addr = verify_address(to_addr)
 
     def __eq__(self, other: object) -> bool:
@@ -45,7 +47,7 @@ class TheoriqRequest(FactConvertibleBase):
         )
 
     @classmethod
-    def from_body(cls, body: bytes, from_addr: str, to_addr: str) -> TheoriqRequest:
+    def from_body(cls, body: bytes, from_addr: str | AgentAddress, to_addr: str) -> TheoriqRequest:
         """Create a response fact from a response body"""
         body_hash = hash_body(body)
         return cls(body_hash=body_hash, from_addr=from_addr, to_addr=to_addr)

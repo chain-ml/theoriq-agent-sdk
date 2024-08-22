@@ -1,4 +1,5 @@
-from theoriq.schemas import ExecuteRequestBody
+from theoriq.schemas import DialogItem, ExecuteRequestBody, TextItemBlock
+from theoriq.schemas.request import Dialog
 
 
 def test_schemas():
@@ -48,3 +49,17 @@ def test_schemas():
     assert dialog_item.blocks[2].data.code == "import numpy"
 
     assert dialog_item.blocks[3].data[-1].trend_percentage == 0.25
+
+
+def test_serialization():
+    dialog = Dialog(
+        items=[
+            DialogItem.new(
+                source="0x012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01234567",
+                blocks=[TextItemBlock(text="Hello World")],
+            )
+        ]
+    )
+
+    dump = dialog.model_dump_json()
+    assert dump.startswith('{"items"')

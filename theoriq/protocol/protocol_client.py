@@ -7,18 +7,23 @@ from typing import Any, Dict, List, Optional, Sequence
 import httpx
 
 from ..biscuit import RequestBiscuit
+from ..schemas import ItemBlock
 from ..schemas.api import AgentResponse, PublicKeyResponse
 
 
 class EventRequest:
-    def __init__(self, *, message: str, request_id: str) -> None:
+    def __init__(self, *, message: str, request_id: str, obj: Optional[ItemBlock] = None) -> None:
         self.message = message
         self.request_id = request_id
+        self.obj = obj
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        result: Dict[str, Any] = {
             "message": self.message,
         }
+        if self.obj is not None:
+            result["object"] = self.obj.to_dict()
+        return result
 
 
 class ProtocolClient:
@@ -47,6 +52,14 @@ class ProtocolClient:
             response.raise_for_status()
             data = response.json()
             return [AgentResponse(**item) for item in data["items"]]
+
+    def post_request(self, request_biscuit: RequestBiscuit, content: bytes, to_addr: str):
+        url = f'{self._uri}/agents/{to_addr.removeprefix("0x")}/execute'
+        headers = request_biscuit.to_headers()
+        headers = headers | {"X-AP-AGENT-REQUEST-PATH": "/api/v1alpha1/execute", "X-AP-AGENT-REQUEST-METHOD": "POST"}
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, content=content, headers=headers)
+            return response.json()
 
     def post_event(self, request_biscuit: RequestBiscuit, message: str) -> None:
         retry_delay = 1
