@@ -88,9 +88,14 @@ def execute(execute_request_function: ExecuteRequestFn) -> Response:
     agent = agent_var.get()
     protocol_client = ProtocolClient.from_env()
 
-    # Process the request biscuit. If not present, return a 401 error
-    request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
-    execute_context = ExecuteContext(agent, protocol_client, request_biscuit)
+    try:
+        # Process the request biscuit. If not present, return a 401 error
+        request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
+        execute_context = ExecuteContext(agent, protocol_client, request_biscuit)
+    except TheoriqBiscuitError as err:
+        return _build_error_payload(
+            agent_address=str(agent.config.address), request_id="", err=str(err), status_code=401
+        )
 
     try:
         # Execute user's function
@@ -100,12 +105,10 @@ def execute(execute_request_function: ExecuteRequestFn) -> Response:
         response = jsonify(execute_response.body.to_dict())
         response_biscuit = execute_context.new_response_biscuit(response.get_data(), execute_response.theoriq_cost)
         response = add_biscuit_to_response(response, response_biscuit)
-    except TheoriqBiscuitError as err:
-        response = _build_error_payload(context=execute_context, err=str(err), status_code=401)
     except pydantic.ValidationError as err:
-        response = new_error_response(execute_context, 400, err)
+        response = new_error_response(execute_context, err, 400)
     except Exception as err:
-        response = new_error_response(execute_context, 500, err)
+        response = new_error_response(execute_context, err, 500)
 
     return response
 
@@ -115,6 +118,7 @@ def process_biscuit_request(agent: Agent, protocol_public_key: str, req: Request
     Retrieve and process the request biscuit
 
     :param agent: Agent processing the biscuit
+    :param protocol_public_key: Public key of the protocol
     :param req: http request received by the agent
     :return: RequestBiscuit
     :raises: If the biscuit could not be processed, a flask response is returned with the 401 status code.
@@ -145,21 +149,23 @@ def add_biscuit_to_response(response: flask.Response, resp_biscuit: ResponseBisc
     return response
 
 
-def new_error_response(context: ExecuteContext, status_code: int, body: Exception) -> flask.Response:
-    error_response = _build_error_payload(context, str(body), status_code)
+def new_error_response(context: ExecuteContext, body: Exception, status_code: int) -> flask.Response:
+    error_response = _build_error_payload(
+        agent_address=context.agent_address, request_id=context.request_id, err=str(body), status_code=status_code
+    )
     response_biscuit = context.new_error_response_biscuit(error_response.get_data())
     return add_biscuit_to_response(error_response, response_biscuit)
 
 
-def _build_error_payload(context: ExecuteContext, err: str, status_code: int) -> flask.Response:
-    error_response = jsonify(
-        {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "error": err,
-            "source": context.agent_address,
-            "requestId": context.request_id,
-            "status": str(status_code),
-        }
-    )
+def _build_error_payload(*, agent_address: str, request_id: str, err: str, status_code: int) -> flask.Response:
+    payload = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "error": err,
+        "source": agent_address,
+        "status": str(status_code),
+    }
+    if request_id:
+        payload["requestId"] = request_id
+    error_response = jsonify(payload)
     error_response.status = str(status_code)
     return error_response
