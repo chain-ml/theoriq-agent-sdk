@@ -7,15 +7,14 @@ from typing import Any, Dict
 import flask
 import pydantic
 from flask import Blueprint, Request, Response, jsonify, request
-from theoriq.types import AgentDataObject, Currency
+from theoriq.types import AgentDataObject
 
 from ..agent import Agent, AgentConfig
-from ..biscuit import RequestBiscuit, RequestFacts, ResponseBiscuit, TheoriqBiscuitError, TheoriqCost
+from ..biscuit import RequestBiscuit, RequestFacts, ResponseBiscuit, TheoriqBiscuitError
 from ..execute import ExecuteContext, ExecuteRequestFn, ExecuteRuntimeError
 from ..extra.globals import agent_var
 from ..protocol import ProtocolClient
 from ..schemas import ChallengeRequestBody, ExecuteRequestBody
-from ..schemas.runtime_error import ErrorItemBlock
 
 
 def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn) -> Blueprint:
