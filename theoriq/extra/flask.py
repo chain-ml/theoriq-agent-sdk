@@ -15,6 +15,7 @@ from ..execute import ExecuteContext, ExecuteRequestFn, ExecuteRuntimeError
 from ..extra.globals import agent_var
 from ..protocol import ProtocolClient
 from ..schemas import ChallengeRequestBody, ExecuteRequestBody
+from . import start_time
 
 
 def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn) -> Blueprint:
@@ -47,7 +48,12 @@ def theoriq_system_blueprint() -> Blueprint:
     blueprint.add_url_rule("/challenge", view_func=sign_challenge, methods=["POST"])
     blueprint.add_url_rule("/agent", view_func=agent_data, methods=["GET"])
     blueprint.add_url_rule("/public-key", view_func=public_key, methods=["GET"])
+    blueprint.add_url_rule("/livez", view_func=livez, methods=["GET"])
     return blueprint
+
+
+def livez() -> Response:
+    return jsonify({"startTime": start_time})
 
 
 def public_key() -> Response:
@@ -90,7 +96,7 @@ def execute(execute_request_function: ExecuteRequestFn) -> Response:
 
     try:
         # Process the request biscuit. If not present, return a 401 error
-        request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
+        request_biscuit = _process_biscuit_request(agent, protocol_client.public_key, request)
         execute_context = ExecuteContext(agent, protocol_client, request_biscuit)
     except TheoriqBiscuitError as err:
         return _build_error_payload(
@@ -116,7 +122,7 @@ def execute(execute_request_function: ExecuteRequestFn) -> Response:
     return response
 
 
-def process_biscuit_request(agent: Agent, protocol_public_key: str, req: Request) -> RequestBiscuit:
+def _process_biscuit_request(agent: Agent, protocol_public_key: str, req: Request) -> RequestBiscuit:
     """
     Retrieve and process the request biscuit
 
@@ -128,7 +134,7 @@ def process_biscuit_request(agent: Agent, protocol_public_key: str, req: Request
     """
     secured = os.getenv("THEORIQ_SECURED", "true").lower() == "true"
     if secured:
-        token = get_bearer_token(req)
+        token = _get_bearer_token(req)
         request_biscuit = RequestBiscuit.from_token(token=token, public_key=protocol_public_key)
         agent.verify_biscuit(request_biscuit, req.data)
     else:
@@ -138,7 +144,7 @@ def process_biscuit_request(agent: Agent, protocol_public_key: str, req: Request
     return request_biscuit
 
 
-def get_bearer_token(req: Request) -> str:
+def _get_bearer_token(req: Request) -> str:
     """Get the bearer token from the request"""
     authorization = req.headers.get("Authorization")
     if not authorization:
