@@ -6,15 +6,22 @@ Types and functions used by an Agent when executing a theoriq request
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Sequence
+from typing import Any, Callable, Dict, Optional, Sequence
 
 from .agent import Agent
 from .biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
 from .biscuit.facts import TheoriqRequest
 from .protocol.protocol_client import ProtocolClient
-from .schemas import DialogItem, ExecuteRequestBody, ItemBlock
+from .schemas import DialogItem, ErrorItemBlock, ExecuteRequestBody, ItemBlock
 from .schemas.request import Dialog
 from .types import Currency
+
+
+class ExecuteRuntimeError(RuntimeError):
+    def __init__(self, err: str, message: Optional[str] = None) -> None:
+        super().__init__(err if message is None else f"{err}, {message}")
+        self.err = err
+        self.message = message
 
 
 class ExecuteContext:
@@ -41,6 +48,9 @@ class ExecuteContext:
 
     def new_response(self, blocks: Sequence[ItemBlock], cost: TheoriqCost) -> ExecuteResponse:
         return ExecuteResponse(dialog_item=DialogItem.new(source=self.agent_address, blocks=blocks), cost=cost)
+
+    def runtime_error_response(self, err: ExecuteRuntimeError) -> ExecuteResponse:
+        return self.new_free_response(blocks=[ErrorItemBlock.new(err=err.err, message=err.message)])
 
     def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
         config = self._agent.config

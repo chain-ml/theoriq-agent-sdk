@@ -7,14 +7,15 @@ from typing import Any, Dict
 import flask
 import pydantic
 from flask import Blueprint, Request, Response, jsonify, request
-from theoriq.types import AgentDataObject
+from theoriq.types import AgentDataObject, Currency
 
 from ..agent import Agent, AgentConfig
-from ..biscuit import RequestBiscuit, RequestFacts, ResponseBiscuit, TheoriqBiscuitError
-from ..execute import ExecuteContext, ExecuteRequestFn
+from ..biscuit import RequestBiscuit, RequestFacts, ResponseBiscuit, TheoriqBiscuitError, TheoriqCost
+from ..execute import ExecuteContext, ExecuteRequestFn, ExecuteRuntimeError
 from ..extra.globals import agent_var
 from ..protocol import ProtocolClient
 from ..schemas import ChallengeRequestBody, ExecuteRequestBody
+from ..schemas.runtime_error import ErrorItemBlock
 
 
 def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn) -> Blueprint:
@@ -100,7 +101,10 @@ def execute(execute_request_function: ExecuteRequestFn) -> Response:
     try:
         # Execute user's function
         execute_request_body = ExecuteRequestBody.model_validate(request.json)
-        execute_response = execute_request_function(execute_context, execute_request_body)
+        try:
+            execute_response = execute_request_function(execute_context, execute_request_body)
+        except ExecuteRuntimeError as err:
+            execute_response = execute_context.runtime_error_response(err)
 
         response = jsonify(execute_response.body.to_dict())
         response_biscuit = execute_context.new_response_biscuit(response.get_data(), execute_response.theoriq_cost)
