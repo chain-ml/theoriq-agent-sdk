@@ -42,8 +42,8 @@ class RouterItemBlock(ItemBlock[Sequence[RouteItem]]):
     def best(self) -> RouteItem:
         return max(self.data, key=lambda obj: obj.score)
 
-    @staticmethod
-    def block_type() -> str:
+    @classmethod
+    def block_type(cls) -> str:
         return "router"
 
     @classmethod

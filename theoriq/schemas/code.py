@@ -27,8 +27,8 @@ class CodeItemBlock(ItemBlock[CodeItem]):
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
         return cls(code=data["code"], language=cls.sub_type(block_type))
 
-    @staticmethod
-    def block_type() -> str:
+    @classmethod
+    def block_type(cls) -> str:
         return "code"
 
     @staticmethod

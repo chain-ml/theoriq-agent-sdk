@@ -36,8 +36,8 @@ class MetricsItemBlock(ItemBlock[Sequence[MetricItem]]):
         items = data.get("items", [])
         return cls(metrics=[MetricItem.from_dict(metric) for metric in items])
 
-    @staticmethod
-    def block_type() -> str:
+    @classmethod
+    def block_type(cls) -> str:
         return "metrics"
 
     @classmethod
