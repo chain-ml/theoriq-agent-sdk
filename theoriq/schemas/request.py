@@ -11,12 +11,14 @@ from .data import DataItemBlock
 from .image import ImageItemBlock
 from .metrics import MetricsItemBlock
 from .router import RouteItem, RouterItemBlock
+from .runtime_error import ErrorItemBlock
 from .schemas import ItemBlock
 from .text import TextItemBlock
 
 block_classes: Dict[str, Type[ItemBlock]] = {
     "code": CodeItemBlock,
     "data": DataItemBlock,
+    "error": ErrorItemBlock,
     "image": ImageItemBlock,
     "metrics": MetricsItemBlock,
     "router": RouterItemBlock,
@@ -109,24 +111,41 @@ class Configuration(BaseModel):
 
 
 class ExecuteRequestBody(BaseModel):
+    """
+    A class representing the body of an execute request. Inherits from BaseModel.
+    """
+
     configuration: Optional[Configuration] = None
     dialog: Dialog
 
     @property
     def last_item(self) -> Optional[DialogItem]:
         """
-        Returns the last dialog item contained in the request based on timestamp.
+        Returns the last dialog item contained in the request based on the timestamp.
+
+        Returns:
+            Optional[DialogItem]: The dialog item with the most recent timestamp, or None if there are no items.
         """
         if len(self.dialog.items) == 0:
             return None
+        # Finds and returns the dialog item with the latest timestamp.
         return max(self.dialog.items, key=lambda obj: obj.timestamp)
 
     def last_item_from(self, source_type: SourceType) -> Optional[DialogItem]:
         """
-        Returns the last dialog item contained in the request based on timestamp.
+        Returns the last dialog item from a specific source type based on the timestamp.
+
+        Args:
+            source_type (SourceType): The source type to filter the dialog items.
+
+        Returns:
+            Optional[DialogItem]: The dialog item with the most recent timestamp from the specified source type,
+                                  or None if no items match the source type.
         """
+        # Filters items by source type and finds the one with the latest timestamp.
         items = (item for item in self.dialog.items if item.source_type == source_type)
         return max(items, key=lambda obj: obj.timestamp) if items else None
+
 
 
 class Dialog(BaseModel):
