@@ -69,9 +69,49 @@ ExecuteRuntimeError is a custom exception class that represents runtime errors d
 The constructor allows for both an error code and an additional message, which are combined into a single error message if both are provided.
 
 
+# Installation
+
+```shell
+pip install -r requirements.txt
+```
+
+
 # Example
 
-Writing the core function of an HeloWorld Agent
+## HelloWorld Agent
+
+Build a very simple HelloWorld Agent
+
+## Creating the Private Key
+
+To ensure the security of the protocol interacting with the Agent, all responses must be signed using a private key. This private key is critical for validating and authenticating the responses.
+
+### Steps to Generate the Private Key
+
+1. **Run the Script**:
+   - Navigate to the `script` folder in your project directory.
+   - Execute the `generate_private_key` script to generate the private key.
+
+2. **Expected Output**:
+   - Upon successful execution, the output should resemble the following:
+     ```text
+     AGENT_PRIVATE_KEY = 0x5f83410.....................05eb..........................2da3fe0
+     Corresponding public key: `0x8b75889be1559d86e47f033624881fcd055deacad13807a202f23685c77f172c`
+     ```
+     
+Keep the public key for the Agent registration within the Infinity Hub.
+
+### Important Notes
+
+- **Confidentiality**: This private key is extremely sensitive and should be stored securely. Under no circumstances should this key be shared with anyone, including any members of Theoriq.
+- **Security**: Ensure that the key is kept in a secure environment to prevent unauthorized access.
+- **Uniqueness**: En new private key should be generated for each agent.
+
+By following these steps and precautions, you will maintain the integrity and security of the protocol interactions with the Agent.
+
+## Core of the Agent
+
+Writing the core function of an `HeloWorld` Agent
 
 ```python
 def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse:
@@ -81,19 +121,56 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
     last_block = req.last_item.blocks[0]
     text_value = last_block.data.text
 
-    tokens = text_value.split(" ", 1)
-    if tokens[0].startswith("error"):
-        raise ExecuteRuntimeError(f"This is an error: {tokens[-1]}", message="Occurs because the prompt starts with error")
-
     # Core implementation of the Agent
-    agent_result = f"Hello {text_value} from a Theoriq simple Agent!"
+    agent_result = f"Hello {text_value} from a Theoriq  Agent!"
     
     # Wrapping the result into an `ExecuteResponse` with some helper functions on the Context
     return context.new_response(
         blocks=[
             TextItemBlock(text=agent_result),
         ],
-        cost=TheoriqCost(amount=0.01, currency=Currency.USDC),
+        cost=TheoriqCost(amount=1, currency=Currency.USDC),
     )
-
 ```
+
+## Exposing the Agent's Endpoint
+
+Let's expose the Agent endpoint with a Flask server.
+You can define a `requirements.txt` like:
+```text
+python-dotenv==1.0.*
+flask==3.0.*
+
+git+ssh://git@github.com/chain-ml/theoriq-agent-sdk.git#egg=theoriq[flask]
+```
+
+Code of your `main.py`. 
+
+```python
+if __name__ == "__main__":
+    app = Flask(__name__)
+
+    # Load agent configuration from env
+    dotenv.load_dotenv()
+    agent_config = AgentConfig.from_env()
+
+    # Create and register theoriq blueprint
+    blueprint = theoriq_blueprint(agent_config, execute)
+    app.register_blueprint(blueprint)
+    app.run(host="0.0.0.0", port=8000)
+```
+
+## Deploy and Start your Agent
+
+For the deployment process ensure to define those 2 environment variables:
+- `AGENT_PRIVATE_KEY` with the value created during the first step.
+- `THEORIQ_URI` with the following value `https://theoriq-backend.chainml.net`
+
+
+## Register the Agent in the Infinity Hub
+
+Go and register your agent [here](https://infinity.theoriq.ai/hub/agent-register).
+
+## Result
+
+![Result in Infinity Studio](./doc/HellowWorld%20Session.png)

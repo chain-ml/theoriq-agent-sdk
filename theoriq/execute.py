@@ -42,8 +42,8 @@ class ExecuteRuntimeError(RuntimeError):
 
 class ExecuteContext:
     """
-     Represents the context for executing a request, managing interactions with the agent and protocol client.
-     """
+    Represents the context for executing a request, managing interactions with the agent and protocol client.
+    """
 
     def __init__(self, agent: Agent, protocol_client: ProtocolClient, request_biscuit: RequestBiscuit) -> None:
         """

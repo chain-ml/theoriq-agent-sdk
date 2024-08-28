@@ -147,7 +147,6 @@ class ExecuteRequestBody(BaseModel):
         return max(items, key=lambda obj: obj.timestamp) if items else None
 
 
-
 class Dialog(BaseModel):
     """
     Represents the expected payload for an execute request.
