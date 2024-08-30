@@ -32,7 +32,7 @@ log_cli_date_format = "%Y-%m-%d %H:%M:%S%z"
 line-length = 120
 
 [tool.mypy]
-exclude = "(?x)(venv|docs|tmp)"
+exclude = "(?x)(venv|docs|tmp|examples)"
 mypy_path = "./stubs"
 explicit_package_bases = "true"
 
@@ -46,4 +46,4 @@ line_length = 120
 py_version=39
 src_paths = ["src"]
 skip = ["__init__.py"]
-skip_glob = ["**/venv/*", "**/docs/*", "**/stubs/*"]
+skip_glob = ["**/.venv/*", "**/venv/*", "**/docs/*", "**/stubs/*"]
