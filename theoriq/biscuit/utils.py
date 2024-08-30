@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from biscuit_auth import Biscuit, BiscuitValidationError, PublicKey, KeyPair  # pylint: disable=E0611
+from biscuit_auth import Biscuit, BiscuitValidationError, KeyPair, PublicKey  # pylint: disable=E0611
 from sha3 import keccak_256  # type: ignore
 
 from .error import ParseBiscuitError
