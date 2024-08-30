@@ -46,4 +46,4 @@ line_length = 120
 py_version=39
 src_paths = ["src"]
 skip = ["__init__.py"]
-skip_glob = ["**/venv/*", "**/docs/*", "**/stubs/*"]
+skip_glob = ["**/.venv/*", "**/venv/*", "**/docs/*", "**/stubs/*"]

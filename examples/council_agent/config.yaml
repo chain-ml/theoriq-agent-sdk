@@ -1,0 +1,18 @@
+kind: LLMConfig
+version: 0.1
+metadata:
+  name: an-anthropic-model-for-llm-function
+  labels:
+    provider: Anthropic
+spec:
+  description: "Model used to do Dad Jokes"
+  provider:
+    name: CML-Anthropic
+    anthropicSpec:
+      model: claude-3-haiku-20240307
+      timeout: 60
+      maxTokens: 4096
+      apiKey:
+        fromEnvVar: ANTHROPIC_API_KEY
+  parameters:
+    temperature: 0.5

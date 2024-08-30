@@ -19,7 +19,7 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
     text_value = last_block.data.text
 
     # Core implementation of the Agent
-    agent_result = f"Hello {text_value} from a Theoriq  Agent!"
+    agent_result = f"Hello {text_value} from a Theoriq Agent!"
 
     # Wrapping the result into an `ExecuteResponse` with some helper functions on the Context
     return context.new_response(
