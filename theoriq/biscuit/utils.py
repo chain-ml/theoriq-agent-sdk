@@ -12,4 +12,4 @@ def from_base64_token(token: str, public_key: PublicKey) -> Biscuit:
 
 
 def hash_public_key(key: PublicKey) -> str:
-    return keccak_256(key.to_hex().encode("utf-8")).hexdigest()
+    return keccak_256(bytes.fromhex(key.to_hex())).hexdigest()
