@@ -111,7 +111,7 @@ By following these steps and precautions, you will maintain the integrity and se
 
 ## Core of the Agent
 
-Writing the core function of an `HeloWorld` Agent
+Writing the core function of an `HelloWorld` Agent
 
 ```python
 def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse:
