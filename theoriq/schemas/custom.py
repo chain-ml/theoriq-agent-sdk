@@ -21,6 +21,10 @@ class CustomData(BaseData, ABC):
     def type() -> str:
         pass
 
+    @abc.abstractmethod
+    def to_dict(self) -> Dict[str, Any]:
+        pass
+
 
 class CustomItemBlock(ItemBlock[CustomData]):
     """ """
