@@ -25,13 +25,11 @@ class CustomData(BaseData, ABC):
 class CustomItemBlock(ItemBlock[CustomData]):
     """ """
 
-    def __init__(
-        self, custom_type: str, data: CustomData, key: Optional[str] = None, reference: Optional[str] = None
-    ) -> None:
+    def __init__(self, data: CustomData, key: Optional[str] = None, reference: Optional[str] = None) -> None:
         """
         Initializes a CustomItemBlock instance.
         """
-        block_type = f"{CustomItemBlock.block_type()}:{custom_type}"
+        block_type = f"custom:{data.type()}"
         super().__init__(bloc_type=block_type, data=data, key=key, reference=reference)
 
     @classmethod
@@ -47,7 +45,7 @@ class CustomItemBlock(ItemBlock[CustomData]):
             CustomItemBlock: A new instance of CustomItemBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        return cls(data=CustomData.from_dict(data), custom_type=CustomData.type())
+        return cls(data=CustomData.from_dict(data))
 
     @staticmethod
     def block_type() -> str:
@@ -59,8 +57,8 @@ class CustomItemBlock(ItemBlock[CustomData]):
         """
         return "custom"
 
-    @classmethod
-    def is_valid(cls, block_type: str) -> bool:
+    @staticmethod
+    def is_valid(block_type: str) -> bool:
         """
         Checks if the provided block type is valid for a CustomItemBlock.
 
@@ -70,4 +68,4 @@ class CustomItemBlock(ItemBlock[CustomData]):
         Returns:
             bool: True if the block type is valid, False otherwise.
         """
-        return block_type.startswith(CustomItemBlock.block_type())
+        return block_type.startswith("custom:")
