@@ -16,15 +16,23 @@ class CustomData(BaseData, ABC):
     def from_dict(values: Dict[str, Any]) -> CustomData:
         pass
 
+    @staticmethod
+    @abc.abstractmethod
+    def type() -> str:
+        pass
+
 
 class CustomItemBlock(ItemBlock[CustomData]):
     """ """
 
-    def __init__(self, data: CustomData, key: Optional[str] = None, reference: Optional[str] = None) -> None:
+    def __init__(
+        self, custom_type: str, data: CustomData, key: Optional[str] = None, reference: Optional[str] = None
+    ) -> None:
         """
         Initializes a CustomItemBlock instance.
         """
-        super().__init__(bloc_type=CustomItemBlock.block_type(), data=data, key=key, reference=reference)
+        block_type = f"{CustomItemBlock.block_type()}:{custom_type}"
+        super().__init__(bloc_type=block_type, data=data, key=key, reference=reference)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], block_type: str) -> CustomItemBlock:
@@ -39,7 +47,7 @@ class CustomItemBlock(ItemBlock[CustomData]):
             CustomItemBlock: A new instance of CustomItemBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        return cls(data=CustomData.from_dict(data))
+        return cls(data=CustomData.from_dict(data), custom_type=CustomData.type())
 
     @staticmethod
     def block_type() -> str:
