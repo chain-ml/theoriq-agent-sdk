@@ -34,7 +34,7 @@ class CodeItemBlock(ItemBlock[CodeItem]):
     A class representing a block of code items. Inherits from ItemBlock with CodeItem as the generic type.
     """
 
-    def __init__(self, *, code: str, language: Optional[str] = None) -> None:
+    def __init__(self, *, code: str, language: Optional[str] = None, **kwargs) -> None:
         """
         Initializes a CodeItemBlock instance.
 
@@ -45,7 +45,7 @@ class CodeItemBlock(ItemBlock[CodeItem]):
         # Determines the subtype based on the language provided, if any.
         sub_type = f":{language}" if language is not None else ""
         # Calls the parent class constructor with the composed block type and a CodeItem instance.
-        super().__init__(bloc_type=f"{CodeItemBlock.block_type()}{sub_type}", data=CodeItem(code=code))
+        super().__init__(bloc_type=f"{CodeItemBlock.block_type()}{sub_type}", data=CodeItem(code=code), **kwargs)
 
     @classmethod
     def from_dict(cls, data: Any, block_type: str) -> CodeItemBlock:
