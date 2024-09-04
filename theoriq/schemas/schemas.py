@@ -15,6 +15,9 @@ class BaseData(ABC):
     def to_dict(self) -> Dict[str, Any]:
         pass
 
+    def __str__(self) -> str:
+        return str(self.to_dict())
+
 
 T_Data = TypeVar("T_Data", bound=Union[BaseData, Sequence[BaseData]])
 
@@ -68,6 +71,9 @@ class ItemBlock(Generic[T_Data]):
     @staticmethod
     def root_type(bloc_type: str) -> str:
         return bloc_type.split(":", 1)[0]
+
+    def __str__(self) -> str:
+        return f"{self.bloc_type}: {self.data}"
 
 
 def filter_blocks(blocks: Sequence[ItemBlock], block_type: Type[ItemBlock]) -> Sequence[ItemBlock]:
