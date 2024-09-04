@@ -1,7 +1,8 @@
 from .text import TextItem, TextItemBlock
-from .image import ImageItemBlock
-from .router import RouterItemBlock, RouteItem
-from .data import DataItemBlock
+from .image import ImageItem, ImageItemBlock
+from .router import RouteItem, RouterItemBlock
+from .data import DataItem, DataItemBlock
+from .code import CodeItem, CodeItemBlock
 from .metrics import MetricItem, MetricsItemBlock
 from .runtime_error import ErrorItem, ErrorItemBlock
 
