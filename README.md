@@ -12,11 +12,11 @@ The `Dialog` class represents the expected payload for an execution request. It 
 
 ***Attributes:***
 
-`items`: A sequence of `DialogItem` objects, where each item represents a interactions from the user and agents.
+`items`: A sequence of `DialogItem` objects, where each item represents interactions from the user and agents.
 
 ## ExecuteRequestBody
 
-The `ExecuteRequestBody`  class represents the body of an execution request. It contains the Dialog object and an optional Configuration object.
+The `ExecuteRequestBody` class represents the body of an execution request. It contains the `Dialog` object and an optional `Configuration` object.
 
 ***Attributes:***
 
@@ -25,21 +25,21 @@ The `ExecuteRequestBody`  class represents the body of an execution request. It 
 ***Methods:***
 
 - `last_item`: Returns the last `DialogItem` based on the timestamp.
-- `last_item_from`: Filters and returns the last DialogItem from a specific source type either the `user` or an `agent`.
+- `last_item_from`: Filters and returns the last `DialogItem` from a specific source type: either the `user` or an `agent`.
 
 ## ExecuteResponse
 
-The ExecuteResponse class represents the result of an execution request. It encapsulates the response data, including the DialogItem, the cost of processing, and the status code.
+The `ExecuteResponse` class represents the result of an execution request. It encapsulates the response data, including the `DialogItem`, the cost of processing, and the status code.
 
 ***Attributes:***
 
-- `body`: The DialogItem representing the body of the response.
-- `theoriq_cost`: The cost associated with processing the request, represented by a TheoriqCost object.
+- `body`: The `DialogItem` representing the body of the response.
+- `theoriq_cost`: The cost associated with processing the request, represented by a `TheoriqCost` object.
 - `status_code`: The status code of the response (e.g., 200 for success).
 
 ## ExecuteContext
 
-The ExecuteContext class is central to managing the execution process. It holds the context for the execution, including the agent, protocol client, and request biscuit.
+The `ExecuteContext` class is central to managing the execution process. It holds the context for the execution, including the agent, protocol client, and request biscuit.
 
 ***Methods:***
 
@@ -57,14 +57,14 @@ The ExecuteContext class is central to managing the execution process. It holds 
 
 ## ExecuteRuntimeError
 
-ExecuteRuntimeError is a custom exception class that represents runtime errors during the execution of a request.
+`ExecuteRuntimeError` is a custom exception class that represents runtime errors during the execution of a request.
 
 ***Attributes:***
 
 - `err`: The error code or message.
 - `message`: An optional message providing additional context for the error.
 
-### Initialization:
+### Initialization
 
 The constructor allows for both an error code and an additional message, which are combined into a single error message if both are provided.
 
@@ -105,7 +105,7 @@ Keep the public key for the Agent registration within the Infinity Hub.
 
 - **Confidentiality**: This private key is extremely sensitive and should be stored securely. Under no circumstances should this key be shared with anyone, including any members of Theoriq.
 - **Security**: Ensure that the key is kept in a secure environment to prevent unauthorized access.
-- **Uniqueness**: En new private key should be generated for each agent.
+- **Uniqueness**: A new private key should be generated for each agent.
 
 By following these steps and precautions, you will maintain the integrity and security of the protocol interactions with the Agent.
 
@@ -122,7 +122,7 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
     text_value = last_block.data.text
 
     # Core implementation of the Agent
-    agent_result = f"Hello {text_value} from a Theoriq  Agent!"
+    agent_result = f"Hello {text_value} from a Theoriq Agent!"
     
     # Wrapping the result into an `ExecuteResponse` with some helper functions on the Context
     return context.new_response(
