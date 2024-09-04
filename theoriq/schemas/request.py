@@ -7,6 +7,7 @@ from pydantic import BaseModel, field_serializer, field_validator
 
 from ..types import SourceType
 from .code import CodeItemBlock
+from .custom import CustomItemBlock
 from .data import DataItemBlock
 from .image import ImageItemBlock
 from .metrics import MetricsItemBlock
@@ -17,6 +18,7 @@ from .text import TextItemBlock
 
 block_classes: Dict[str, Type[ItemBlock]] = {
     "code": CodeItemBlock,
+    "custom": CustomItemBlock,
     "data": DataItemBlock,
     "error": ErrorItemBlock,
     "image": ImageItemBlock,
