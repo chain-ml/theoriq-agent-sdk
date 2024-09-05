@@ -63,14 +63,14 @@ class RouterItemBlock(ItemBlock[Sequence[RouteItem]]):
     A class representing a block of route items. Inherits from ItemBlock with a sequence of RouteItem as the generic type.
     """
 
-    def __init__(self, routes: Sequence[RouteItem]) -> None:
+    def __init__(self, routes: Sequence[RouteItem], **kwargs) -> None:
         """
         Initializes a RouterItemBlock instance.
 
         Args:
             routes (Sequence[RouteItem]): A sequence of RouteItem instances to be stored in the block.
         """
-        super().__init__(bloc_type=RouterItemBlock.block_type(), data=routes)
+        super().__init__(bloc_type=RouterItemBlock.block_type(), data=routes, **kwargs)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], block_type: str) -> RouterItemBlock:

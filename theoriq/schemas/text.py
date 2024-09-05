@@ -28,13 +28,22 @@ class TextItem(BaseData):
         """
         return {"text": self.text}
 
+    def __str__(self):
+        """
+        Returns a string representation of the TextItem instance.
+
+        Returns:
+            str: A string representing the TextItem.
+        """
+        return f"TextItem(text={self.text})"
+
 
 class TextItemBlock(ItemBlock[TextItem]):
     """
     A class representing a block of text items. Inherits from ItemBlock with TextItem as the generic type.
     """
 
-    def __init__(self, text: str, sub_type: Optional[str] = None) -> None:
+    def __init__(self, text: str, sub_type: Optional[str] = None, **kwargs) -> None:
         """
         Initializes a TextItemBlock instance.
 
@@ -45,7 +54,7 @@ class TextItemBlock(ItemBlock[TextItem]):
         # Determines the subtype based on the provided sub_type, if any.
         sub_type = f":{sub_type}" if sub_type is not None else ""
         # Calls the parent class constructor with the composed block type and a TextItem instance.
-        super().__init__(bloc_type=f"{TextItemBlock.block_type()}{sub_type}", data=TextItem(text=text))
+        super().__init__(bloc_type=f"{TextItemBlock.block_type()}{sub_type}", data=TextItem(text=text), **kwargs)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], block_type: str) -> TextItemBlock:

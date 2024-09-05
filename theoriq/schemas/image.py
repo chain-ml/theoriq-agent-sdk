@@ -30,13 +30,23 @@ class ImageItem(BaseData):
         """
         return {"base64": self.base64}
 
+    def __str__(self):
+        """
+        Returns a string representation of the ImageItem instance.
+
+        Returns:
+            str: A string representing the ImageItem.
+        """
+        base64 = self.base64 if len(self.base64) < 50 else f"{self.base64[:50]}..."
+        return f"ImageItem(base64={base64})"
+
 
 class ImageItemBlock(ItemBlock[ImageItem]):
     """
     A class representing a block of image items. Inherits from ItemBlock with ImageItem as the generic type.
     """
 
-    def __init__(self, image_base64: str, sub_type: Optional[str] = None) -> None:
+    def __init__(self, image_base64: str, sub_type: Optional[str] = None, **kwargs) -> None:
         """
         Initializes an ImageItemBlock instance.
 
@@ -47,7 +57,9 @@ class ImageItemBlock(ItemBlock[ImageItem]):
         # Determines the subtype based on the provided sub_type, if any.
         sub_type = f":{sub_type}" if sub_type is not None else ""
         # Calls the parent class constructor with the composed block type and an ImageItem instance.
-        super().__init__(bloc_type=f"{ImageItemBlock.block_type()}{sub_type}", data=ImageItem(image=image_base64))
+        super().__init__(
+            bloc_type=f"{ImageItemBlock.block_type()}{sub_type}", data=ImageItem(image=image_base64), **kwargs
+        )
 
     @classmethod
     def from_dict(cls, data: Any, block_type: str) -> ImageItemBlock:
