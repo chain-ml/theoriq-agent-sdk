@@ -7,21 +7,17 @@ from typing import Any, Dict, Optional
 from .schemas import BaseData, ItemBlock
 
 
-class CustomData(BaseData, ABC):
-    def __init__(self, data: Any) -> None:
+class CustomData(BaseData):
+
+    def __init__(self, data: Dict[str, Any], custom_type: str) -> None:
         self._data = data
+        self._custom_type = custom_type
 
-    @abc.abstractmethod
-    def from_dict(cls, values: Dict[str, Any]) -> CustomData:
-        pass
+    def custom_type(self) -> str:
+        return self._custom_type
 
-    @abc.abstractmethod
-    def type(self) -> str:
-        pass
-
-    @abc.abstractmethod
     def to_dict(self) -> Dict[str, Any]:
-        pass
+        return self._data
 
 
 class CustomItemBlock(ItemBlock[CustomData]):
@@ -31,7 +27,7 @@ class CustomItemBlock(ItemBlock[CustomData]):
         """
         Initializes a CustomItemBlock instance.
         """
-        block_type = f"custom:{data.type()}"
+        block_type = f"custom:{data.custom_type()}"
         super().__init__(bloc_type=block_type, data=data, key=key, reference=reference)
 
     @classmethod
@@ -47,7 +43,8 @@ class CustomItemBlock(ItemBlock[CustomData]):
             CustomItemBlock: A new instance of CustomItemBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        return cls(data=CustomData.from_dict(data))
+        custom_type = block_type.split(":", 1)[1]
+        return cls(data=CustomData(data, custom_type=custom_type))
 
     @staticmethod
     def block_type() -> str:
