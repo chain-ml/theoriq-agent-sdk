@@ -11,14 +11,12 @@ class CustomData(BaseData, ABC):
     def __init__(self, data: Any) -> None:
         self._data = data
 
-    @staticmethod
     @abc.abstractmethod
-    def from_dict(values: Dict[str, Any]) -> CustomData:
+    def from_dict(cls, values: Dict[str, Any]) -> CustomData:
         pass
 
-    @staticmethod
     @abc.abstractmethod
-    def type() -> str:
+    def type(self) -> str:
         pass
 
     @abc.abstractmethod
