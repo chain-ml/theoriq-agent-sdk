@@ -60,14 +60,14 @@ class MetricsItemBlock(ItemBlock[Sequence[MetricItem]]):
     A class representing a block of metric items. Inherits from ItemBlock with a sequence of MetricItem as the generic type.
     """
 
-    def __init__(self, metrics: Sequence[MetricItem]) -> None:
+    def __init__(self, metrics: Sequence[MetricItem], **kwargs) -> None:
         """
         Initializes a MetricsItemBlock instance.
 
         Args:
             metrics (Sequence[MetricItem]): A sequence of MetricItem instances to be stored in the block.
         """
-        super().__init__(bloc_type=MetricsItemBlock.block_type(), data=metrics)
+        super().__init__(bloc_type=MetricsItemBlock.block_type(), data=metrics, **kwargs)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], block_type: str) -> MetricsItemBlock:

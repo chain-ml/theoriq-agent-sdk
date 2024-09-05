@@ -28,13 +28,23 @@ class DataItem(BaseData):
         """
         return {"data": self.data}
 
+    def __str__(self):
+        """
+        Returns a string representation of the DataItem instance.
+
+        Returns:
+            str: A string representing the DataItem.
+        """
+        data = self.data if len(self.data) < 50 else f"{self.data[:50]}..."
+        return f"DataItem(data={data})"
+
 
 class DataItemBlock(ItemBlock[DataItem]):
     """
     A class representing a block of data items. Inherits from ItemBlock with DataItem as the generic type.
     """
 
-    def __init__(self, *, data: str, data_type: Optional[str] = None) -> None:
+    def __init__(self, *, data: str, data_type: Optional[str] = None, **kwargs) -> None:
         """
         Initializes a DataItemBlock instance.
 
@@ -45,7 +55,7 @@ class DataItemBlock(ItemBlock[DataItem]):
         # Determines the subtype based on the data_type provided, if any.
         sub_type = f":{data_type}" if data_type is not None else ""
         # Calls the parent class constructor with the composed block type and a DataItem instance.
-        super().__init__(bloc_type=f"{DataItemBlock.block_type()}{sub_type}", data=DataItem(data=data))
+        super().__init__(bloc_type=f"{DataItemBlock.block_type()}{sub_type}", data=DataItem(data=data), **kwargs)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], block_type: str) -> DataItemBlock:
