@@ -28,6 +28,15 @@ class CodeItem(BaseData):
         """
         return {"code": self.code}
 
+    def __str__(self):
+        """
+        Returns a string representation of the CodeItem instance.
+
+        Returns:
+            str: A string representing the CodeItem.
+        """
+        return f"CodeItem(code={self.code})"
+
 
 class CodeItemBlock(ItemBlock[CodeItem]):
     """

@@ -28,6 +28,16 @@ class DataItem(BaseData):
         """
         return {"data": self.data}
 
+    def __str__(self):
+        """
+        Returns a string representation of the DataItem instance.
+
+        Returns:
+            str: A string representing the DataItem.
+        """
+        data = self.data if len(self.data) < 50 else f"{self.data[:50]}..."
+        return f"DataItem(data={data})"
+
 
 class DataItemBlock(ItemBlock[DataItem]):
     """

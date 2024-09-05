@@ -28,6 +28,15 @@ class TextItem(BaseData):
         """
         return {"text": self.text}
 
+    def __str__(self):
+        """
+        Returns a string representation of the TextItem instance.
+
+        Returns:
+            str: A string representing the TextItem.
+        """
+        return f"TextItem(text={self.text})"
+
 
 class TextItemBlock(ItemBlock[TextItem]):
     """

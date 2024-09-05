@@ -16,7 +16,7 @@ class BaseData(ABC):
         pass
 
     def __str__(self) -> str:
-        return str(self.to_dict())
+        return str(self.to_dict())  # default str representation of BaseData, to be overwritten by subclasses
 
 
 T_Data = TypeVar("T_Data", bound=Union[BaseData, Sequence[BaseData]])
