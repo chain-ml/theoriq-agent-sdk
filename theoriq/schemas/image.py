@@ -97,8 +97,8 @@ class ImageItemBlock(ItemBlock[ImageItem]):
         with open(path, "rb") as f:
             return cls(image_base64=base64.b64encode(f.read()).decode("utf-8"), sub_type=sub_type)
 
-    @classmethod
-    def block_type(cls) -> str:
+    @staticmethod
+    def block_type() -> str:
         """
         Returns the block type for ImageItemBlock.
 
@@ -107,8 +107,8 @@ class ImageItemBlock(ItemBlock[ImageItem]):
         """
         return "image"
 
-    @classmethod
-    def is_valid(cls, block_type: str) -> bool:
+    @staticmethod
+    def is_valid(block_type: str) -> bool:
         """
         Checks if the provided block type is valid for an ImageItemBlock.
 

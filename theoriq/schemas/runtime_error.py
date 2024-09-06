@@ -88,8 +88,8 @@ class ErrorItemBlock(ItemBlock[ErrorItem]):
             raise ValueError("Missing 'error' key")
         return cls(err=ErrorItem.from_dict(values))
 
-    @classmethod
-    def block_type(cls) -> str:
+    @staticmethod
+    def block_type() -> str:
         """
         Returns the block type for ErrorItemBlock.
 
@@ -98,8 +98,8 @@ class ErrorItemBlock(ItemBlock[ErrorItem]):
         """
         return "error"
 
-    @classmethod
-    def is_valid(cls, block_type: str) -> bool:
+    @staticmethod
+    def is_valid(block_type: str) -> bool:
         """
         Checks if the provided block type is valid for an ErrorItemBlock.
 

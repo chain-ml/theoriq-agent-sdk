@@ -73,8 +73,8 @@ class CodeItemBlock(ItemBlock[CodeItem]):
         # Returns a new instance of CodeItemBlock using the code from the data dictionary.
         return cls(code=data["code"], language=cls.sub_type(block_type))
 
-    @classmethod
-    def block_type(cls) -> str:
+    @staticmethod
+    def block_type() -> str:
         """
         Returns the block type for CodeItemBlock.
 
@@ -83,8 +83,8 @@ class CodeItemBlock(ItemBlock[CodeItem]):
         """
         return "code"
 
-    @classmethod
-    def is_valid(cls, block_type: str) -> bool:
+    @staticmethod
+    def is_valid(block_type: str) -> bool:
         """
         Checks if the provided block type is valid for a CodeItemBlock.
 

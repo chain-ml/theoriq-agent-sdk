@@ -86,8 +86,8 @@ class MetricsItemBlock(ItemBlock[Sequence[MetricItem]]):
         # Converts each dictionary in 'items' into a MetricItem instance.
         return cls(metrics=[MetricItem.from_dict(metric) for metric in items])
 
-    @classmethod
-    def block_type(cls) -> str:
+    @staticmethod
+    def block_type() -> str:
         """
         Returns the block type for MetricsItemBlock.
 
@@ -96,8 +96,8 @@ class MetricsItemBlock(ItemBlock[Sequence[MetricItem]]):
         """
         return "metrics"
 
-    @classmethod
-    def is_valid(cls, block_type: str) -> bool:
+    @staticmethod
+    def is_valid(block_type: str) -> bool:
         """
         Checks if the provided block type is valid for a MetricsItemBlock.
 

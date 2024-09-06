@@ -98,8 +98,8 @@ class RouterItemBlock(ItemBlock[Sequence[RouteItem]]):
         """
         return max(self.data, key=lambda obj: obj.score)
 
-    @classmethod
-    def block_type(cls) -> str:
+    @staticmethod
+    def block_type() -> str:
         """
         Returns the block type for RouterItemBlock.
 
@@ -108,8 +108,8 @@ class RouterItemBlock(ItemBlock[Sequence[RouteItem]]):
         """
         return "router"
 
-    @classmethod
-    def is_valid(cls, block_type: str) -> bool:
+    @staticmethod
+    def is_valid(block_type: str) -> bool:
         """
         Checks if the provided block type is valid for a RouterItemBlock.
 

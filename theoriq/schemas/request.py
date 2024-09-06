@@ -7,6 +7,7 @@ from pydantic import BaseModel, field_serializer, field_validator
 
 from ..types import SourceType
 from .code import CodeItemBlock
+from .custom import CustomItemBlock
 from .data import DataItemBlock
 from .image import ImageItemBlock
 from .metrics import MetricsItemBlock
@@ -17,6 +18,7 @@ from .text import TextItemBlock
 
 block_classes: Dict[str, Type[ItemBlock]] = {
     "code": CodeItemBlock,
+    "custom": CustomItemBlock,
     "data": DataItemBlock,
     "error": ErrorItemBlock,
     "image": ImageItemBlock,
@@ -57,7 +59,8 @@ class DialogItem:
             block_type: str = item["type"]
             bloc_class = block_classes.get(ItemBlock.root_type(block_type))
             if bloc_class is not None:
-                blocks.append(bloc_class.from_dict(item["data"], block_type))
+                block_data = item["data"]
+                blocks.append(bloc_class.from_dict(block_data, block_type))
             else:
                 raise ValueError(f"invalid item type {block_type}")
 

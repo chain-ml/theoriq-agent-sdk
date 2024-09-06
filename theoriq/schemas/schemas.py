@@ -47,15 +47,15 @@ class ItemBlock(Generic[T_Data]):
         return result
 
     @classmethod
-    def is_valid(cls, block_type: str) -> bool:
-        raise NotImplementedError
-
-    @classmethod
     def from_dict(cls, data: dict, block_type: str):
         raise NotImplementedError
 
-    @classmethod
-    def block_type(cls) -> str:
+    @staticmethod
+    def is_valid(block_type: str) -> bool:
+        raise NotImplementedError
+
+    @staticmethod
+    def block_type() -> str:
         raise NotImplementedError
 
     @staticmethod
