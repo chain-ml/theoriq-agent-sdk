@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence, Type
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Type
 
 from pydantic import BaseModel, field_serializer, field_validator
 
@@ -78,6 +78,12 @@ class DialogItem:
             "source": self.source,
             "blocks": [block.to_dict() for block in self.blocks],
         }
+
+    def find_blocks_of_type(self, block_type: str) -> Iterable[ItemBlock[Any]]:
+        for block in self.blocks:
+            if block.block_type() == block_type:
+                yield block
+        return
 
     @classmethod
     def new(cls, source: str, blocks: Sequence[ItemBlock[Any]]) -> DialogItem:

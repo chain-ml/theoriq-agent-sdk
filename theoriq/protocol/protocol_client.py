@@ -92,10 +92,18 @@ class ProtocolClient:
 
     @classmethod
     def from_env(cls) -> ProtocolClient:
+        uri: str = os.getenv("THEORIQ_URI", "") if cls.is_secured() else "http://not_secured/test_only"
+        if not uri.startswith("http"):
+            raise ValueError(f"THEORIQ_URI `{uri}` is not a valid URI")
+
         result = cls(
-            uri=os.environ["THEORIQ_URI"],
-            timeout=int(os.getenv("THEORIQ_TIMEOUT", 120)),
+            uri=uri,
+            timeout=int(os.getenv("THEORIQ_TIMEOUT", "120")),
             max_retries=int(os.getenv("THEORIQ_MAX_RETRIES", "0")),
         )
         result._public_key = os.getenv("THEORIQ_PUBLIC_KEY")
         return result
+
+    @classmethod
+    def is_secured(cls) -> bool:
+        return os.getenv("THEORIQ_SECURED", "true").lower() == "true"

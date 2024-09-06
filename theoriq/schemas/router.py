@@ -63,14 +63,14 @@ class RouterItemBlock(ItemBlock[Sequence[RouteItem]]):
     A class representing a block of route items. Inherits from ItemBlock with a sequence of RouteItem as the generic type.
     """
 
-    def __init__(self, routes: Sequence[RouteItem], **kwargs) -> None:
+    def __init__(self, routes: Sequence[RouteItem], key: Optional[str] = None, reference: Optional[str] = None) -> None:
         """
         Initializes a RouterItemBlock instance.
 
         Args:
             routes (Sequence[RouteItem]): A sequence of RouteItem instances to be stored in the block.
         """
-        super().__init__(bloc_type=RouterItemBlock.block_type(), data=routes, **kwargs)
+        super().__init__(block_type=RouterItemBlock.block_type(), data=routes, key=key, reference=reference)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], block_type: str) -> RouterItemBlock:
@@ -86,7 +86,6 @@ class RouterItemBlock(ItemBlock[Sequence[RouteItem]]):
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
         items = data.get("items", [])
-        # Converts each dictionary in 'items' into a RouteItem instance.
         return cls(routes=[RouteItem.from_dict(route) for route in items])
 
     def best(self) -> RouteItem:

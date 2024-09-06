@@ -132,8 +132,7 @@ def _process_biscuit_request(agent: Agent, protocol_public_key: str, req: Reques
     :return: RequestBiscuit
     :raises: If the biscuit could not be processed, a flask response is returned with the 401 status code.
     """
-    secured = os.getenv("THEORIQ_SECURED", "true").lower() == "true"
-    if secured:
+    if ProtocolClient.is_secured():
         token = _get_bearer_token(req)
         request_biscuit = RequestBiscuit.from_token(token=token, public_key=protocol_public_key)
         agent.verify_biscuit(request_biscuit, req.data)
