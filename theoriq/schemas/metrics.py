@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 from .schemas import BaseData, ItemBlock
 
@@ -60,14 +60,16 @@ class MetricsItemBlock(ItemBlock[Sequence[MetricItem]]):
     A class representing a block of metric items. Inherits from ItemBlock with a sequence of MetricItem as the generic type.
     """
 
-    def __init__(self, metrics: Sequence[MetricItem], **kwargs) -> None:
+    def __init__(
+        self, metrics: Sequence[MetricItem], key: Optional[str] = None, reference: Optional[str] = None
+    ) -> None:
         """
         Initializes a MetricsItemBlock instance.
 
         Args:
             metrics (Sequence[MetricItem]): A sequence of MetricItem instances to be stored in the block.
         """
-        super().__init__(bloc_type=MetricsItemBlock.block_type(), data=metrics, **kwargs)
+        super().__init__(block_type=MetricsItemBlock.block_type(), data=metrics, key=key, reference=reference)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], block_type: str) -> MetricsItemBlock:
@@ -83,7 +85,6 @@ class MetricsItemBlock(ItemBlock[Sequence[MetricItem]]):
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
         items = data.get("items", [])
-        # Converts each dictionary in 'items' into a MetricItem instance.
         return cls(metrics=[MetricItem.from_dict(metric) for metric in items])
 
     @staticmethod

@@ -58,7 +58,7 @@ class CustomItemBlock(ItemBlock[CustomData]):
             reference (Optional[str]): An optional reference ID associated with the block.
         """
         block_type = f"custom:{data.custom_type()}"
-        super().__init__(bloc_type=block_type, data=data, key=key, reference=reference)
+        super().__init__(block_type=block_type, data=data, key=key, reference=reference)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], block_type: str) -> CustomItemBlock:

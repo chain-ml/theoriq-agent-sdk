@@ -61,14 +61,19 @@ class ErrorItemBlock(ItemBlock[ErrorItem]):
     A class representing a block of error items. Inherits from ItemBlock with ErrorItem as the generic type.
     """
 
-    def __init__(self, err: ErrorItem, **kwargs) -> None:
+    def __init__(
+        self,
+        err: ErrorItem,
+        key: Optional[str] = None,
+        reference: Optional[str] = None,
+    ) -> None:
         """
         Initializes an ErrorItemBlock instance.
 
         Args:
             err (ErrorItem): An instance of ErrorItem to be stored in the block.
         """
-        super().__init__(bloc_type=ErrorItemBlock.block_type(), data=err, **kwargs)
+        super().__init__(block_type=ErrorItemBlock.block_type(), data=err, key=key, reference=reference)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], block_type: str) -> ErrorItemBlock:

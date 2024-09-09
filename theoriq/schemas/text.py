@@ -43,7 +43,9 @@ class TextItemBlock(ItemBlock[TextItem]):
     A class representing a block of text items. Inherits from ItemBlock with TextItem as the generic type.
     """
 
-    def __init__(self, text: str, sub_type: Optional[str] = None, **kwargs) -> None:
+    def __init__(
+        self, text: str, sub_type: Optional[str] = None, key: Optional[str] = None, reference: Optional[str] = None
+    ) -> None:
         """
         Initializes a TextItemBlock instance.
 
@@ -51,10 +53,10 @@ class TextItemBlock(ItemBlock[TextItem]):
             text (str): The text content to be stored in the block.
             sub_type (Optional[str]): An optional subtype to categorize the text block. Defaults to None.
         """
-        # Determines the subtype based on the provided sub_type, if any.
+
         sub_type = f":{sub_type}" if sub_type is not None else ""
-        # Calls the parent class constructor with the composed block type and a TextItem instance.
-        super().__init__(bloc_type=f"{TextItemBlock.block_type()}{sub_type}", data=TextItem(text=text), **kwargs)
+        block_type = f"{TextItemBlock.block_type()}{sub_type}"
+        super().__init__(block_type=block_type, data=TextItem(text=text), key=key, reference=reference)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], block_type: str) -> TextItemBlock:
@@ -71,8 +73,8 @@ class TextItemBlock(ItemBlock[TextItem]):
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
         return cls(text=data["text"], sub_type=cls.sub_type(block_type))
 
-    @classmethod
-    def block_type(cls) -> str:
+    @staticmethod
+    def block_type() -> str:
         """
         Returns the block type for TextItemBlock.
 
@@ -81,8 +83,8 @@ class TextItemBlock(ItemBlock[TextItem]):
         """
         return "text"
 
-    @classmethod
-    def is_valid(cls, block_type: str) -> bool:
+    @staticmethod
+    def is_valid(block_type: str) -> bool:
         """
         Checks if the provided block type is valid for a TextItemBlock.
 

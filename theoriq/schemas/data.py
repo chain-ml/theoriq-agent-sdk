@@ -44,7 +44,9 @@ class DataItemBlock(ItemBlock[DataItem]):
     A class representing a block of data items. Inherits from ItemBlock with DataItem as the generic type.
     """
 
-    def __init__(self, *, data: str, data_type: Optional[str] = None, **kwargs) -> None:
+    def __init__(
+        self, *, data: str, data_type: Optional[str] = None, key: Optional[str] = None, reference: Optional[str] = None
+    ) -> None:
         """
         Initializes a DataItemBlock instance.
 
@@ -54,8 +56,8 @@ class DataItemBlock(ItemBlock[DataItem]):
         """
         # Determines the subtype based on the data_type provided, if any.
         sub_type = f":{data_type}" if data_type is not None else ""
-        # Calls the parent class constructor with the composed block type and a DataItem instance.
-        super().__init__(bloc_type=f"{DataItemBlock.block_type()}{sub_type}", data=DataItem(data=data), **kwargs)
+        block_type = f"{DataItemBlock.block_type()}{sub_type}"
+        super().__init__(block_type=block_type, data=DataItem(data=data), key=key, reference=reference)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], block_type: str) -> DataItemBlock:
@@ -69,9 +71,7 @@ class DataItemBlock(ItemBlock[DataItem]):
         Returns:
             DataItemBlock: A new instance of DataItemBlock initialized with the provided data.
         """
-        # Ensures the block type is valid before proceeding.
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        # Returns a new instance of DataItemBlock using the data from the dictionary.
         return cls(data=data["data"], data_type=cls.sub_type(block_type))
 
     @classmethod
@@ -95,5 +95,4 @@ class DataItemBlock(ItemBlock[DataItem]):
         Returns:
             bool: True if the block type is valid, False otherwise.
         """
-        # Validates that the block type starts with the expected 'data' block type.
         return block_type.startswith(DataItemBlock.block_type())
