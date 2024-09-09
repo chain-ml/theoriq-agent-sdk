@@ -8,7 +8,7 @@ from flask import Flask
 from flask.testing import FlaskClient
 from tests.unit.fixtures import *  # noqa: F403
 from theoriq.agent import AgentConfig
-from theoriq.biscuit import AgentAddress, RequestBiscuit, TheoriqCost
+from theoriq.biscuit import AgentAddress, TheoriqCost
 from theoriq.execute import ExecuteContext, ExecuteResponse
 from theoriq.extra.flask import theoriq_blueprint
 from theoriq.schemas import ChallengeResponseBody, DialogItem, ExecuteRequestBody
@@ -42,7 +42,6 @@ def test_send_sign_challenge(client: FlaskClient, agent_public_key: Ed25519Publi
     request_body = {"nonce": nonce}
 
     response = client.post("/api/v1alpha1/system/challenge", json=request_body)
-
     assert response.status_code == 200
 
     challenge_response = ChallengeResponseBody.model_validate(response.json)
@@ -58,18 +57,10 @@ def test_send_execute_request(
 
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
         from_address = AgentAddress("0x012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01")
-        request_body = _build_request_body("My name is John Doe", from_address)
-
-        req_body_bytes = json.dumps(request_body).encode("utf-8")
+        req_body_bytes = _build_request_body_bytes("My name is John Doe", from_address)
         request_facts = new_request_facts(req_body_bytes, from_address, agent_config.address, 10)
         req_biscuit = new_biscuit_for_request(request_facts, theoriq_private_key)
-
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": "bearer " + req_biscuit.to_base64(),
-        }
-
-        response = client.post("/api/v1alpha2/execute", data=req_body_bytes, headers=headers)
+        response = client.post("/api/v1alpha1/execute", data=req_body_bytes, headers=req_biscuit.to_headers())
         assert response.status_code == 200
 
         response_body = DialogItem.from_dict(response.json)
@@ -78,8 +69,8 @@ def test_send_execute_request(
 
 def test_send_execute_request_without_biscuit_returns_401(agent_kp, agent_config: AgentConfig, client: FlaskClient):
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
-        request_body = _build_request_body("My name is John Doe", AgentAddress.one())
-        response = client.post("/api/v1alpha2/execute", json=request_body)
+        request_body_bytes = _build_request_body_bytes("My name is John Doe", AgentAddress.one())
+        response = client.post("/api/v1alpha2/execute", data=request_body_bytes)
         assert response.status_code == 401
 
 
@@ -101,9 +92,7 @@ def test_send_execute_request_with_ill_formatted_body_returns_400(
         req_body_bytes = json.dumps(request_body).encode("utf-8")
         request_facts = new_request_facts(req_body_bytes, from_address, agent_config.address, 10)
         req_biscuit = new_biscuit_for_request(request_facts, theoriq_private_key)
-        response = client.post(
-            "/api/v1alpha2/execute", data=req_body_bytes, headers=RequestBiscuit(req_biscuit).to_headers()
-        )
+        response = client.post("/api/v1alpha1/execute", data=req_body_bytes, headers=req_biscuit.to_headers())
         assert response.status_code == 400
 
 
@@ -112,16 +101,12 @@ def test_send_execute_request_when_execute_fn_fails_returns_500(
 ):
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
         from_address = AgentAddress("012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01")
-        request_body = _build_request_body("My name is John Doe should fail", from_address)
+        req_body_bytes = _build_request_body_bytes("My name is John Doe should fail", from_address)
 
         # Generate a request biscuit
-        req_body_str = json.dumps(request_body)
-        req_body_bytes = req_body_str.encode("utf-8")
         request_facts = new_request_facts(req_body_bytes, from_address, agent_config.address, 10)
         req_biscuit = new_biscuit_for_request(request_facts, theoriq_private_key)
-        response = client.post(
-            "/api/v1alpha2/execute", data=req_body_bytes, headers=RequestBiscuit(req_biscuit).to_headers()
-        )
+        response = client.post("/api/v1alpha1/execute", data=req_body_bytes, headers=req_biscuit.to_headers())
         print(response.headers)
         assert response.status_code == 500
 
@@ -129,16 +114,11 @@ def test_send_execute_request_when_execute_fn_fails_returns_500(
 def test_send_chat_completion_request(theoriq_private_key: PrivateKey, agent_config: AgentConfig, client: FlaskClient):
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
         from_address = AgentAddress("012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01")
-        request_body = _build_request_body("My name is John Doe", from_address)
-
-        req_body_str = json.dumps(request_body)
-        req_body_bytes = req_body_str.encode("utf-8")
+        req_body_bytes = _build_request_body_bytes("My name is John Doe", from_address)
         request_facts = new_request_facts(req_body_bytes, from_address, agent_config.address, 10)
         req_biscuit = new_biscuit_for_request(request_facts, theoriq_private_key)
 
-        response = client.post(
-            "/api/v1alpha1/execute", data=req_body_bytes, headers=RequestBiscuit(req_biscuit).to_headers()
-        )
+        response = client.post("/api/v1alpha1/execute", data=req_body_bytes, headers=req_biscuit.to_headers())
         assert response.status_code == 200
 
         response_body = DialogItem.from_dict(response.json)
@@ -156,8 +136,8 @@ def echo_last_prompt(context: ExecuteContext, request: ExecuteRequestBody) -> Ex
     return ExecuteResponse(response_body, TheoriqCost(amount="5", currency=Currency.USDC))
 
 
-def _build_request_body(text: str, source: AgentAddress) -> dict:
-    return {
+def _build_request_body_bytes(text: str, source: AgentAddress) -> bytes:
+    body = {
         "dialog": {
             "items": [
                 {
@@ -169,3 +149,4 @@ def _build_request_body(text: str, source: AgentAddress) -> dict:
             ]
         }
     }
+    return json.dumps(body).encode("utf-8")
