@@ -15,6 +15,10 @@ class BaseData(ABC):
     def to_dict(self) -> Dict[str, Any]:
         pass
 
+    @abstractmethod
+    def to_str(self) -> str:
+        pass
+
     def __str__(self) -> str:
         return str(self.to_dict())  # default str representation of BaseData, to be overwritten by subclasses
 
@@ -69,6 +73,13 @@ class ItemBlock(Generic[T_Data]):
         if self.reference is not None:
             result["ref"] = self.reference
         return result
+
+    def to_str(self, title: Optional[str] = None) -> str:
+        data = self.data if isinstance(self.data, Sequence) else [self.data]
+        result = [d.to_str() for d in data]
+        if title:
+            result.insert(0, title)
+        return "\n".join(result)
 
     @classmethod
     def from_dict(cls, data: dict, block_type: str):

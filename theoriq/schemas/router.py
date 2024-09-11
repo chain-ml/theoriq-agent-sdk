@@ -35,6 +35,12 @@ class RouteItem(BaseData):
             result["reason"] = self.reason
         return result
 
+    def to_str(self) -> str:
+        result = [f"- Name: {self.name}", f"- Score: {self.score}"]
+        if self.reason is not None:
+            result.append(f"- Reason: {self.reason}")
+        return "\n".join(result)
+
     @classmethod
     def from_dict(cls, values: Dict[str, Any]) -> RouteItem:
         """

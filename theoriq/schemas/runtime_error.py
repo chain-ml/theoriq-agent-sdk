@@ -33,6 +33,12 @@ class ErrorItem(BaseData):
             result["message"] = self.message
         return result
 
+    def to_str(self) -> str:
+        result = [f"- Error: {self.err}"]
+        if self.message is not None:
+            result.append(f"- Message: {self.message}")
+        return "\n".join(result)
+
     @classmethod
     def from_dict(cls, values: Dict[str, Any]) -> ErrorItem:
         """

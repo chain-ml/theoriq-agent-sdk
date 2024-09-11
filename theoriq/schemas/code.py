@@ -10,14 +10,16 @@ class CodeItem(BaseData):
     A class representing a code item. Inherits from BaseData.
     """
 
-    def __init__(self, code: str) -> None:
+    def __init__(self, code: str, language: Optional[str] = None) -> None:
         """
         Initializes a CodeItem instance.
 
         Args:
             code (str): The code string to be stored in this CodeItem.
+            language (Optional[str]): The language of the code item.
         """
         self.code = code
+        self.language = language or ""
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -27,6 +29,10 @@ class CodeItem(BaseData):
             Dict[str, Any]: A dictionary with the code stored under the 'code' key.
         """
         return {"code": self.code}
+
+    def to_str(self) -> str:
+        result = [f"```{self.language}", self.code, "```"]
+        return "\n".join(result)
 
     def __str__(self) -> str:
         """
@@ -55,7 +61,9 @@ class CodeItemBlock(ItemBlock[CodeItem]):
         """
         sub_type = f":{language}" if language is not None else ""
         block_type = f"{CodeItemBlock.block_type()}{sub_type}"
-        super().__init__(block_type=block_type, data=CodeItem(code=code), key=key, reference=reference)
+        super().__init__(
+            block_type=block_type, data=CodeItem(code=code, language=language), key=key, reference=reference
+        )
 
     @classmethod
     def from_dict(cls, data: Any, block_type: str) -> CodeItemBlock:

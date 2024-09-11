@@ -10,14 +10,16 @@ class DataItem(BaseData):
     A class representing a data item. Inherits from BaseData.
     """
 
-    def __init__(self, data: str) -> None:
+    def __init__(self, data: str, data_type: Optional[str] = None) -> None:
         """
         Initializes a DataItem instance.
 
         Args:
             data (str): The data string to be stored in this DataItem.
+            data_type (Optional[str]): The data type to be stored in this DataItem.
         """
         self.data = data
+        self.data_type = data_type
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -27,6 +29,13 @@ class DataItem(BaseData):
             Dict[str, Any]: A dictionary with the data stored under the 'data' key.
         """
         return {"data": self.data}
+
+    def to_str(self) -> str:
+        if self.data_type is None:
+            return self.data
+
+        result = [f"```{self.data_type}", self.data, "```"]
+        return "\n".join(result)
 
     def __str__(self):
         """
