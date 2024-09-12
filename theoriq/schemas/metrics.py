@@ -33,7 +33,7 @@ class MetricItem(BaseData):
         return {"name": self.name, "value": self.value, "trendPercentage": self.trend_percentage}
 
     def to_str(self) -> str:
-        result = [f"- Name: {self.name}", f"- Value: {self.value}", f"- TrendPercentage: {self.trend_percentage}%"]
+        result = [f"- Name: {self.name}", f"- Value: {self.value}", f"- TrendPercentage: {self.trend_percentage:.2f}%"]
         return "\n".join(result)
 
     @classmethod
