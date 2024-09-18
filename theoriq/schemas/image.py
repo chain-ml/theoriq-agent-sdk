@@ -30,6 +30,9 @@ class ImageItem(BaseData):
         """
         return {"base64": self.base64}
 
+    def to_str(self) -> str:
+        return self.base64
+
     def __str__(self):
         """
         Returns a string representation of the ImageItem instance.

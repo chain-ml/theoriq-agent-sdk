@@ -10,13 +10,14 @@ class TextItem(BaseData):
     A class representing a text item. Inherits from BaseData.
     """
 
-    def __init__(self, text: str) -> None:
+    def __init__(self, *, text: str, text_type: Optional[str] = None) -> None:
         """
         Initializes a TextItem instance.
 
         Args:
             text (str): The text content to be stored in this TextItem.
         """
+        self.type = text_type
         self.text = text
 
     def to_dict(self) -> Dict[str, Any]:
@@ -27,6 +28,12 @@ class TextItem(BaseData):
             Dict[str, Any]: A dictionary with the text stored under the 'text' key.
         """
         return {"text": self.text}
+
+    def to_str(self) -> str:
+        if self.type is None:
+            return self.text
+        result = [f"```{self.type}", self.text, "```"]
+        return "\n".join(result)
 
     def __str__(self):
         """
@@ -56,7 +63,9 @@ class TextItemBlock(ItemBlock[TextItem]):
 
         sub_type = f":{sub_type}" if sub_type is not None else ""
         block_type = f"{TextItemBlock.block_type()}{sub_type}"
-        super().__init__(block_type=block_type, data=TextItem(text=text), key=key, reference=reference)
+        super().__init__(
+            block_type=block_type, data=TextItem(text=text, text_type=sub_type), key=key, reference=reference
+        )
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], block_type: str) -> TextItemBlock:

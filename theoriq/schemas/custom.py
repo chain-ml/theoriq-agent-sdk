@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, Optional
 
 from .schemas import BaseData, ItemBlock
@@ -40,6 +41,9 @@ class CustomData(BaseData):
             Dict[str, Any]: The dictionary representation of the internal data.
         """
         return self._data
+
+    def to_str(self) -> str:
+        return json.dumps(self._data)
 
 
 class CustomItemBlock(ItemBlock[CustomData]):
