@@ -91,35 +91,42 @@ def agent_data() -> Response:
 
 def execute(execute_request_function: ExecuteRequestFn) -> Response:
     """Execute endpoint"""
-    agent = agent_var.get()
-    protocol_client = ProtocolClient.from_env()
 
+    agent = agent_var.get()
     try:
-        # Process the request biscuit. If not present, return a 401 error
-        request_biscuit = _process_biscuit_request(agent, protocol_client.public_key, request)
-        execute_context = ExecuteContext(agent, protocol_client, request_biscuit)
+        execute_context = _get_execute_context(agent)
+        try:
+            # Execute user's function
+            execute_request_body = ExecuteRequestBody.model_validate(request.json)
+            try:
+                execute_response = execute_request_function(execute_context, execute_request_body)
+            except ExecuteRuntimeError as err:
+                execute_response = execute_context.runtime_error_response(err)
+
+            response = jsonify(execute_response.body.to_dict())
+            response_biscuit = execute_context.new_response_biscuit(response.get_data(), execute_response.theoriq_cost)
+            response = add_biscuit_to_response(response, response_biscuit)
+        except pydantic.ValidationError as err:
+            response = new_error_response(execute_context, err, 400)
+        except Exception as err:
+            response = new_error_response(execute_context, err, 500)
     except TheoriqBiscuitError as err:
+        # Process the request biscuit. If not present, return a 401 error
         return _build_error_payload(
             agent_address=str(agent.config.address), request_id="", err=str(err), status_code=401
         )
-
-    try:
-        # Execute user's function
-        execute_request_body = ExecuteRequestBody.model_validate(request.json)
-        try:
-            execute_response = execute_request_function(execute_context, execute_request_body)
-        except ExecuteRuntimeError as err:
-            execute_response = execute_context.runtime_error_response(err)
-
-        response = jsonify(execute_response.body.to_dict())
-        response_biscuit = execute_context.new_response_biscuit(response.get_data(), execute_response.theoriq_cost)
-        response = add_biscuit_to_response(response, response_biscuit)
-    except pydantic.ValidationError as err:
-        response = new_error_response(execute_context, err, 400)
     except Exception as err:
-        response = new_error_response(execute_context, err, 500)
+        return _build_error_payload(
+            agent_address=str(agent.config.address), request_id="", err=str(err), status_code=500
+        )
+    else:
+        return response
 
-    return response
+
+def _get_execute_context(agent: Agent) -> ExecuteContext:
+    protocol_client = ProtocolClient.from_env()
+    request_biscuit = _process_biscuit_request(agent, protocol_client.public_key, request)
+    return ExecuteContext(agent, protocol_client, request_biscuit)
 
 
 def _process_biscuit_request(agent: Agent, protocol_public_key: str, req: Request) -> RequestBiscuit:
