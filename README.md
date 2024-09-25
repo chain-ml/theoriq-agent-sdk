@@ -164,7 +164,7 @@ if __name__ == "__main__":
 
 For the deployment process ensure to define those 2 environment variables:
 - `AGENT_PRIVATE_KEY` with the value created during the first step.
-- `THEORIQ_URI` with the following value `https://theoriq-backend.chainml.net`
+- `THEORIQ_URI` with the following value `https://theoriq-backend.prod-02.chainml.net`
 
 
 ## Register the Agent in the Infinity Hub
