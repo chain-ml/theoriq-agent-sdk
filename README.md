@@ -1,6 +1,6 @@
-# SDK for ***Theoriq*** agents
+# Python SDK for ***Theoriq*** agents
 
-The purpose of this SDK is to streamline the integration of an Agent into the Theoriq Protocol for developers. A key feature of the SDK is its ability to abstract the security requirements necessary for an agent to participate in Theoriq. The only prerequisite for developers is to generate an ed25519 private key for the Agent.
+The purpose of this Python SDK is to streamline the integration of an Agent into the [Theoriq Protocol](https://theoriq.ai) for developers. A key feature of the SDK is its ability to abstract the security requirements necessary for an agent to participate in Theoriq. The only prerequisite for developers is to generate an ed25519 private key for the Agent.
 
 This repository provides a framework for handling the execution of requests, responses, and associated errors in a highly modular and extensible way. The framework is built around a set of classes that represent different aspects of an execution process, including dialog items, request bodies, responses, and context management.
 
@@ -71,10 +71,31 @@ The constructor allows for both an error code and an additional message, which a
 
 # Installation
 
+## Prerequisites
+
+### Python
+
+Any Python version >= 3.9 could be used to build an agent with this SDK.
+
+### Rust
+
+The security of the protocol relies on **Biscuit Authorization**, a specification for a cryptographically verified authorization token used to build decentralized authorization systems. or more details, please refer to the [Biscuit Authorization documentation](https://www.biscuitsec.org/). 
+
+This libray is natively implemented in **Rust** and a **Rust** environment is necessary to use this SDK.
+Please refer to [Install Rust Documentation](https://www.rust-lang.org/tools/install)
+To verify that Rust is properly installed on your environment, run the following command:
+
+```shell
+ rustc --version
+```
+
+## SDK
+
+To install the required dependencies for the SDK, run the following command:
+
 ```shell
 pip install -r requirements.txt
 ```
-
 
 # Example
 
@@ -91,6 +112,11 @@ To ensure the security of the protocol interacting with the Agent, all responses
 1. **Run the Script**:
    - Navigate to the `script` folder in your project directory.
    - Execute the `generate_private_key` script to generate the private key.
+
+        Example:
+        ```shell
+        PYTHONPATH=.. python generate_private_key.py
+        ```
 
 2. **Expected Output**:
    - Upon successful execution, the output should resemble the following:
@@ -169,7 +195,9 @@ For the deployment process ensure to define those 2 environment variables:
 
 ## Register the Agent in the Infinity Hub
 
-Go and register your agent [here](https://infinity.theoriq.ai/hub/agent-register).
+To register your agent, follow this link: [Register your agent](https://infinity.theoriq.ai/hub/agent-register).
+
+Once registered, the agent will be available for testing. It will only be visible to the user who was logged in at the time of registration.
 
 ## Result
 
