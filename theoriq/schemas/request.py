@@ -154,14 +154,24 @@ class ExecuteRequestBody(BaseModel):
         # Filters items by source type and finds the one with the latest timestamp.
         return self.last_item_predicate(lambda item: item.source_type == source_type)
 
-    def last_item_predicate(self, predicate: Callable[[DialogItem], bool]) -> Optional[DialogItem]:
+    def last_item_predicate(self, predicate: DialogItemPredicate) -> Optional[DialogItem]:
         """
         Returns the last dialog item that matches the given predicate based on the timestamp.
+
+        Args:
+            predicate (DialogItemPredicate): A function that takes a DialogItem and returns a boolean.
+
+            Returns:
+                Optional[DialogItem]: The dialog item that matches the predicate and has the latest timestamp,
+                                       or None if no items match the predicate.
         """
 
         # Filters items matching predicate and finds the one with the latest timestamp.
         items = (item for item in self.dialog.items if predicate(item))
         return max(items, key=lambda obj: obj.timestamp) if items else None
+
+
+DialogItemPredicate = Callable[[DialogItem], bool]
 
 
 class Dialog(BaseModel):
