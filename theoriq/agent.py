@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import os
+from typing import Dict, Optional
 
 import biscuit_auth
 from biscuit_auth import Biscuit, KeyPair, PrivateKey  # pylint: disable=E0611
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from jsonschema.validators import Draft7Validator
 
 from .biscuit import (
     AgentAddress,
@@ -45,10 +47,20 @@ class Agent:
 
     Attributes:
         config (AgentConfig): Agent configuration.
+        schema (Optional[Dict]): Configuration Schema for the agent.
     """
 
-    def __init__(self, config: AgentConfig) -> None:
-        self.config = config
+    def __init__(self, config: AgentConfig, schema: Optional[Dict] = None) -> None:
+        self._config = config
+        self._schema = schema
+
+    @property
+    def config(self) -> AgentConfig:
+        return self._config
+
+    @property
+    def schema(self) -> Optional[Dict]:
+        return self._schema
 
     def verify_biscuit(self, request_biscuit: RequestBiscuit, body: bytes) -> None:
         """
@@ -99,3 +111,8 @@ class Agent:
     def from_env(cls) -> Agent:
         config = AgentConfig.from_env()
         return cls(config)
+
+    @classmethod
+    def validate_schema(cls, schema: Optional[Dict]):
+        if schema is not None:
+            Draft7Validator.check_schema(schema)
