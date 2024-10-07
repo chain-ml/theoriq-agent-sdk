@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Type
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Type
 
 from pydantic import BaseModel, field_serializer, field_validator
 
@@ -152,7 +152,15 @@ class ExecuteRequestBody(BaseModel):
                                   or None if no items match the source type.
         """
         # Filters items by source type and finds the one with the latest timestamp.
-        items = (item for item in self.dialog.items if item.source_type == source_type)
+        return self.last_item_predicate(lambda item: item.source_type == source_type)
+
+    def last_item_predicate(self, predicate: Callable[[DialogItem], bool]) -> Optional[DialogItem]:
+        """
+        Returns the last dialog item that matches the given predicate based on the timestamp.
+        """
+
+        # Filters items matching predicate and finds the one with the latest timestamp.
+        items = (item for item in self.dialog.items if predicate(item))
         return max(items, key=lambda obj: obj.timestamp) if items else None
 
 
