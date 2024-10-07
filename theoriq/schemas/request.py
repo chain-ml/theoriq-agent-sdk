@@ -166,7 +166,7 @@ class ExecuteRequestBody(BaseModel):
                                        or None if no items match the predicate.
         """
 
-        # Filters items matching predicate and finds the one with the latest timestamp.
+        # Filters items matching the given predicate and finds the one with the latest timestamp.
         items = (item for item in self.dialog.items if predicate(item))
         return max(items, key=lambda obj: obj.timestamp) if items else None
 
