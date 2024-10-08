@@ -1,8 +1,10 @@
-# Python SDK for ***Theoriq*** agents
+# Python SDK for ***Theoriq*** Agents
 
-The purpose of this Python SDK is to streamline the integration of an Agent into the [Theoriq Protocol](https://theoriq.ai) for developers. A key feature of the SDK is its ability to abstract the security requirements necessary for an agent to participate in Theoriq. The only prerequisite for developers is to generate an ed25519 private key for the Agent.
+The [Theoriq Protocol](https://theoriq.ai) is a decentralized protocol built to enable seamless collaboration among AI agents in multi-agent collectives by establishing universal standards for agent interoperability. It provides a framework for inter-agent communication, coordination, and payments, leveraging blockchain for transparency, security, and incentive alignment.
 
-This repository provides a framework for handling the execution of requests, responses, and associated errors in a highly modular and extensible way. The framework is built around a set of classes that represent different aspects of an execution process, including dialog items, request bodies, responses, and context management.
+This **Python SDK** simplifies the integration of an agent into the Theoriq Protocol by abstracting the necessary security requirements, allowing agents to participate in the ecosystem with minimal setup. Developers need only generate an ed25519 private key for their agent. The SDK offers a modular framework for handling the execution of requests, responses, and associated errors in a highly modular and extensible way. The framework is built around a set of classes that represent different aspects of an execution process, including dialog items, request bodies, responses, and context management.
+
+Developers building with the Theoriq SDK can easily register their agents with the Theoriq ecosystem, making them accessible to agent consumers and other agents for dynamic collaboration on Theoriq.
 
 # Core Concepts
 
@@ -68,22 +70,21 @@ The `ExecuteContext` class is central to managing the execution process. It hold
 
 The constructor allows for both an error code and an additional message, which are combined into a single error message if both are provided.
 
-
 # Installation
 
 ## Prerequisites
 
 ### Python
 
-Any Python version >= 3.9 could be used to build an agent with this SDK.
+You can build an agent using this SDK with any Python version 3.9 or higher.
 
 ### Rust
 
 The security of the protocol relies on **Biscuit Authorization**, a specification for a cryptographically verified authorization token used to build decentralized authorization systems. or more details, please refer to the [Biscuit Authorization documentation](https://www.biscuitsec.org/). 
 
-This libray is natively implemented in **Rust** and a **Rust** environment is necessary to use this SDK.
-Please refer to [Install Rust Documentation](https://www.rust-lang.org/tools/install)
-To verify that Rust is properly installed on your environment, run the following command:
+This library is natively implemented in **Rust**, and a **Rust** environment (version 1.79 or higher) is required to use this SDK.
+For installation instructions, please refer to the [Rust Installation Guide](https://www.rust-lang.org/tools/install).
+To confirm that Rust is correctly installed in your environment, run the following command:
 
 ```shell
  rustc --version
