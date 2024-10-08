@@ -42,7 +42,6 @@ def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn, s
     v1alpha2_blueprint.register_blueprint(theoriq_configuration_blueprint())
     main_blueprint.register_blueprint(v1alpha2_blueprint)
 
-
     return main_blueprint
 
 
