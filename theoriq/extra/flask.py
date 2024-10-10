@@ -78,8 +78,8 @@ def sign_challenge() -> Response:
 
 def agent_data() -> Response:
     """Agent data endpoint"""
-    path = os.getenv("AGENT_YAML_PATH")
     agent = agent_var.get()
+    path = agent.config.agent_yaml_path
     result: Dict[str, Any] = {"publicKey": agent.public_key}
     metadata = {}
 
