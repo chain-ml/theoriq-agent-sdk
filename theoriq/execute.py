@@ -14,7 +14,7 @@ from .biscuit.facts import TheoriqRequest
 from .protocol.protocol_client import ProtocolClient
 from .schemas import DialogItem, ErrorItemBlock, ExecuteRequestBody, ItemBlock
 from .schemas.request import Dialog
-from .types import Currency
+from .types import Currency, SourceType
 
 
 class ExecuteRuntimeError(RuntimeError):
@@ -170,6 +170,27 @@ class ExecuteContext:
             str: The request ID as a string.
         """
         return str(self._request_biscuit.request_facts.req_id)
+
+    @property
+    def request_sender_type(self) -> SourceType:
+        """
+        Returns the source type of the sender or the request from the request biscuit.
+
+        Returns:
+            SourceType: The source type of the sender of the request.
+        """
+
+        return SourceType.from_address(self._request_biscuit.request_facts.request.from_addr)
+
+    @property
+    def request_sender_address(self) -> str:
+        """
+        Returns the address of the sender of the request from the request biscuit.
+
+        Returns:
+            str: The address of the sender of the request as a string.
+        """
+        return self._request_biscuit.request_facts.request.from_addr
 
     @property
     def budget(self) -> TheoriqBudget:

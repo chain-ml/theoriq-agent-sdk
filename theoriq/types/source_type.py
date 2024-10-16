@@ -33,6 +33,19 @@ class SourceType(Enum):
         except ValueError as e:
             raise ValueError(f"'{value}' is not a valid SourceType") from e
 
+    @staticmethod
+    def from_address(address: str) -> SourceType:
+        """
+        A static method that attempts to convert a given address to a `SourceType` enum.
+        """
+
+        length = len(address.removeprefix("0x"))
+        if length == 40:
+            return SourceType.User
+        if length == 64:
+            return SourceType.Agent
+        raise ValueError(f"'{address}' is not a valid address")
+
     @property
     def is_user(self) -> bool:
         return self == SourceType.User
