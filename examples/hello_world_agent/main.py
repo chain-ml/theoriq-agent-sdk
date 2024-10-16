@@ -13,12 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse:
-    logger.info(f"Received request: {context.request_id} from {context.request_sender_type} {context.request_sender_address}")
+    logger.info(
+        f"Received request: {context.request_id} from {context.request_sender_type} {context.request_sender_address}"
+    )
 
     # Get the last `TextItemBlock` from the Dialog
     last_block = req.last_item.blocks[0]
     text_value = last_block.data.text
-
 
     # Core implementation of the Agent
     agent_result = f"Hello {text_value} from a Theoriq Agent!"

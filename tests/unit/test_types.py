@@ -13,15 +13,10 @@ invalid_agent_address = [
     ("0x148656c6c6f20776f726c642c207468692346c6c6f20776f726c642c20XXXXXX", "address must only contain hex digits"),
 ]
 
-valid_user_addresses = [
-    "0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379f",
-    "1F32Bc2B1Ace25D762E22888a71C7eC0799D379f"
-]
+valid_user_addresses = ["0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379f", "1F32Bc2B1Ace25D762E22888a71C7eC0799D379f"]
 
-invalid_user_addresses = [
-    "0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379",
-    "0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379f6"
-]
+invalid_user_addresses = ["0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379", "0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379f6"]
+
 
 @pytest.mark.parametrize("address", valid_agent_address)
 def test_valid_agent_address(address):
