@@ -54,6 +54,7 @@ class Agent:
         """
         Verify the biscuit.
 
+        :param request_biscuit: Request biscuit.
         :param body: the body of the request
         :raises ParseBiscuitError: if the biscuit could not be parsed.
         :raises VerificationError: if the biscuit is not valid.
@@ -79,10 +80,13 @@ class Agent:
         """Verify Facts on the given biscuit."""
         target_address = AgentAddress(facts.request.to_addr)
         if target_address != self.config.address:
-            raise VerificationError(f"biscuit's target address '{target_address}' does not match our agent's address")
+            msg = f"biscuit's target address '{target_address}' does not match agent's address `{target_address}`"
+            raise VerificationError(msg)
+
         hashed_body = hash_body(body)
         if hashed_body != facts.request.body_hash:
-            raise VerificationError(f"biscuit's request body hash does not match the received body '{hashed_body}'")
+            msg = f"biscuit's request body hash `{facts.request.body_hash}` does not match the received body '{hashed_body}'"
+            raise VerificationError(msg)
 
     def sign_challenge(self, challenge: bytes) -> bytes:
         """Sign the given challenge with the Agent's private key"""
