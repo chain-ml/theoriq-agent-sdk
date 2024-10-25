@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import hashlib
 import re
-from typing import Any, ClassVar, Self
+from typing import Any, ClassVar
 
 
 class PayloadHash:
@@ -50,11 +52,11 @@ class PayloadHash:
         return f"0x{self._hash}"
 
     @classmethod
-    def from_str(cls, payload: str) -> Self:
+    def from_str(cls, payload: str) -> PayloadHash:
         return cls(payload.encode("utf-8"))
 
     @classmethod
-    def from_hash(cls, hash_value: str) -> Self:
+    def from_hash(cls, hash_value: str) -> PayloadHash:
         result = cls(b"")
         tmp = cls._normalize_hash(hash_value)
         if not bool(cls._SHA256_REGEX.fullmatch(tmp)):
