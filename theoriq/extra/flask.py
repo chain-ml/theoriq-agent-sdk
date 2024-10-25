@@ -1,5 +1,5 @@
 """Helpers to write agent using a flask web app."""
-
+import logging
 import os
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
@@ -17,6 +17,7 @@ from ..protocol import ProtocolClient
 from ..schemas import ChallengeRequestBody, ExecuteRequestBody
 from . import start_time
 
+logger = logging.getLogger(__name__)
 
 def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn, schema: Optional[Dict] = None) -> Blueprint:
     """
@@ -98,12 +99,14 @@ def agent_data() -> Response:
 
 def execute(execute_request_function: ExecuteRequestFn) -> Response:
     """Execute endpoint"""
-
+    logger.debug("Executing request")
+    logger.debug(request.json)
     agent = agent_var.get()
     try:
         execute_context = _get_execute_context(agent)
         try:
             # Execute user's function
+
             execute_request_body = ExecuteRequestBody.model_validate(request.json)
             try:
                 execute_response = execute_request_function(execute_context, execute_request_body)
@@ -116,6 +119,7 @@ def execute(execute_request_function: ExecuteRequestFn) -> Response:
         except pydantic.ValidationError as err:
             response = new_error_response(execute_context, err, 400)
         except Exception as err:
+            logger.exception(err)
             response = new_error_response(execute_context, err, 500)
     except TheoriqBiscuitError as err:
         # Process the request biscuit. If not present, return a 401 error
