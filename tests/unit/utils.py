@@ -4,14 +4,13 @@ import uuid
 
 from biscuit_auth import PrivateKey
 from theoriq.biscuit import AgentAddress, RequestBiscuit, RequestFacts, ResponseFacts, TheoriqCost
-from theoriq.biscuit.facts import TheoriqBudget, TheoriqRequest, TheoriqResponse
+from theoriq.biscuit.facts import PayloadHash, TheoriqBudget, TheoriqRequest, TheoriqResponse
 from theoriq.types.currency import Currency
-from theoriq.utils import hash_body
 
 
 def new_request_facts(body: bytes, from_addr: AgentAddress, to_addr: AgentAddress, amount: int) -> RequestFacts:
     """Creates a new request facts for testing purposes"""
-    theoriq_request = TheoriqRequest(body_hash=hash_body(body), from_addr=str(from_addr), to_addr=str(to_addr))
+    theoriq_request = TheoriqRequest(body_hash=PayloadHash(body), from_addr=str(from_addr), to_addr=str(to_addr))
     theoriq_budget = TheoriqBudget.from_amount(amount=str(amount), currency=Currency.USDC)
     return RequestFacts(uuid.uuid4(), theoriq_request, theoriq_budget)
 

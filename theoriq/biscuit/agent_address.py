@@ -25,7 +25,7 @@ class AgentAddress:
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, AgentAddress):
-            return self.address == other.address
+            return self.address.removeprefix("0x") == other.address.removeprefix("0x")
         return False
 
     def new_authority_builder(self, expires_at: Optional[datetime] = None) -> BiscuitBuilder:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from biscuit_auth import Authorizer, Biscuit, BlockBuilder, Rule  # pylint: disable=E0611
-from theoriq.biscuit import TheoriqCost, TheoriqResponse
+from theoriq.biscuit import PayloadHash, TheoriqCost, TheoriqResponse
 from theoriq.types.currency import Currency
 
 
@@ -48,7 +48,7 @@ class ResponseFacts:
         facts = authorizer.query(rule)
 
         [req_id, body_hash, to_addr, amount, currency] = facts[0].terms
-        theoriq_response = TheoriqResponse(body_hash=body_hash, to_addr=to_addr)
+        theoriq_response = TheoriqResponse(body_hash=PayloadHash.from_hash(body_hash), to_addr=to_addr)
         theoriq_cost = TheoriqCost(amount=amount, currency=Currency.from_value(currency))
 
         return ResponseFacts(req_id, theoriq_response, theoriq_cost)
