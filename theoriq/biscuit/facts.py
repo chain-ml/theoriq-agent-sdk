@@ -108,7 +108,7 @@ class TheoriqResponse(FactConvertibleBase):
     """`theoriq:response` fact"""
 
     def __init__(self, *, body_hash: PayloadHash, to_addr: str) -> None:
-        self.body_hash = body_hash
+        self._body_hash = body_hash
         self.to_addr = to_addr
 
     def __eq__(self, other: object) -> bool:
@@ -120,11 +120,11 @@ class TheoriqResponse(FactConvertibleBase):
         """Convert to a biscuit fact"""
         return Fact(
             "theoriq:response({req_id}, {body_hash}, {to_addr})",
-            {"req_id": str(request_id), "body_hash": str(self.body_hash), "to_addr": self.to_addr},
+            {"req_id": str(request_id), "body_hash": str(self._body_hash), "to_addr": self.to_addr},
         )
 
     def __str__(self):
-        return f"TheoriqResponse(body_hash={self.body_hash}, to_addr={self.to_addr})"
+        return f"TheoriqResponse(body_hash={self._body_hash}, to_addr={self.to_addr})"
 
     @classmethod
     def from_body(cls, body: bytes, to_addr: str) -> TheoriqResponse:
