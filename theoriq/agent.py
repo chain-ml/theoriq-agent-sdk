@@ -15,7 +15,7 @@ from .biscuit import (
     TheoriqCost,
     VerificationError,
 )
-from .utils import hash_body
+from .biscuit.payload_hash import PayloadHash
 
 
 class AgentConfig:
@@ -83,7 +83,7 @@ class Agent:
             msg = f"biscuit's target address '{target_address}' does not match agent's address `{target_address}`"
             raise VerificationError(msg)
 
-        hashed_body = hash_body(body)
+        hashed_body = PayloadHash(body)
         if hashed_body != facts.request.body_hash:
             msg = f"biscuit's request body hash `{facts.request.body_hash}` does not match the received body '{hashed_body}'"
             raise VerificationError(msg)
