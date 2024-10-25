@@ -14,6 +14,7 @@ def test_equality():
     assert ph == ph_str.upper()
     assert ph == ph_str.lower()
 
+
 def test_inequality():
     payload = "Theoriq SDK helps to develop agent on top of Theoriq Protocol"
     payload_bytes = payload.encode("utf-8")

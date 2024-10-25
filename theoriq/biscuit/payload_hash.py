@@ -48,4 +48,4 @@ class PayloadHash:
 
     @classmethod
     def from_str(cls, payload: str) -> Self:
-        return cls(payload.encode('utf-8'))
+        return cls(payload.encode("utf-8"))
