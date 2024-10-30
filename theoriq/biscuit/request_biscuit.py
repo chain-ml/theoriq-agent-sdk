@@ -79,7 +79,7 @@ class RequestFacts:
 
 
 class RequestBiscuit:
-    """Request biscuit used by the `theoriq` protocol"""
+    """Request biscuit used by the `Theoriq` protocol"""
 
     def __init__(self, biscuit: Biscuit) -> None:
         self.biscuit: Biscuit = biscuit

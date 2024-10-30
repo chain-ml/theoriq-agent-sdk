@@ -1,7 +1,7 @@
 """
 execute.py
 
-Types and functions used by an Agent when executing a theoriq request
+Types and functions used by an Agent when executing a Theoriq request
 """
 
 from __future__ import annotations

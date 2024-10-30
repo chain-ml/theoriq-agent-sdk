@@ -124,13 +124,16 @@ class ConfigurationRef(BaseModel):
     """
     Represents the expected payload for a configuration request.
     """
+
     hash: str
     id: str
+
 
 class Configuration(BaseModel):
     """
     Represents the expected payload for a configuration request.
     """
+
     fromRef: ConfigurationRef
 
 

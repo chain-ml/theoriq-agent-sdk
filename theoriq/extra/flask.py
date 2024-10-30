@@ -1,4 +1,5 @@
 """Helpers to write agent using a flask web app."""
+
 import logging
 import os
 from datetime import datetime, timezone
@@ -19,7 +20,10 @@ from . import start_time
 
 logger = logging.getLogger(__name__)
 
-def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFn, schema: Optional[Dict] = None) -> Blueprint:
+
+def theoriq_blueprint(
+    agent_config: AgentConfig, execute_fn: ExecuteRequestFn, schema: Optional[Dict] = None
+) -> Blueprint:
     """
     Theoriq blueprint
     :return: a blueprint with all the routes required by the `theoriq` protocol
@@ -55,10 +59,12 @@ def theoriq_system_blueprint() -> Blueprint:
     blueprint.add_url_rule("/livez", view_func=livez, methods=["GET"])
     return blueprint
 
+
 def theoriq_configuration_blueprint() -> Blueprint:
     blueprint = Blueprint("theoriq_configuration", __name__, url_prefix="/configuration")
     blueprint.add_url_rule("/schema", view_func=get_configuration_schema, methods=["GET"])
     return blueprint
+
 
 def livez() -> Response:
     return jsonify({"startTime": start_time})
@@ -137,6 +143,7 @@ def execute(execute_request_function: ExecuteRequestFn) -> Response:
 def get_configuration_schema() -> Response:
     agent = agent_var.get()
     return jsonify(agent.schema or {})
+
 
 def _get_execute_context(agent: Agent) -> ExecuteContext:
     protocol_client = ProtocolClient.from_env()
