@@ -1,10 +1,7 @@
 from uuid import uuid4
 
-from pydantic import ValidationError
-
-from theoriq.api_v1alpha1.schemas import ExecuteRequestBody
+from theoriq.schemas import ExecuteRequestBody, Dialog
 from theoriq.biscuit import AgentAddress
-from theoriq.dialog import Dialog
 from theoriq.types import SourceType
 
 dialog_payload = {
