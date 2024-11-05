@@ -44,10 +44,17 @@ class DialogItem:
     """
 
     def __init__(self, timestamp: str, source_type: str, source: str, blocks: Sequence[ItemBlock[Any]]) -> None:
-        self.timestamp: datetime = datetime.fromisoformat(timestamp)
+        self.timestamp: datetime = self._datetime_from_str(timestamp)
         self.source = source
         self.source_type = SourceType.from_value(source_type)
         self.blocks = blocks
+
+    @classmethod
+    def _datetime_from_str(cls, value: str) -> datetime:
+        try:
+            return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+        except ValueError:
+            return datetime.fromisoformat(value)
 
     @classmethod
     def from_dict(cls, values: Any | None) -> DialogItem:
