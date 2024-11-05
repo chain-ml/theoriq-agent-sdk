@@ -11,9 +11,10 @@ from typing import Any, Callable, Dict, Optional, Sequence
 from .agent import Agent
 from .biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
 from .biscuit.facts import TheoriqRequest
-from .protocol.protocol_client import ProtocolClient
-from .schemas import DialogItem, ErrorItemBlock, ExecuteRequestBody, ItemBlock
-from .schemas.request import Dialog
+from .dialog import ItemBlock, DialogItem
+from .dialog.runtime_error import ErrorItemBlock
+from theoriq.api_v1alpha1.protocol.protocol_client import ProtocolClient
+from theoriq.api_v1alpha1.schemas.request import Dialog, ExecuteRequestBody
 from .types import Currency, SourceType
 
 
@@ -160,6 +161,18 @@ class ExecuteContext:
             str: The agent's address as a string.
         """
         return str(self._agent.config.address)
+
+    @property
+    def agent_configuration(self) -> Optional[Dict[str, Any]]:
+        virtual_address = self._agent.virtual_address
+        if virtual_address.is_null:
+            return None
+        try:
+            return self._protocol_client.get_configuration(
+                request_biscuit=self._request_biscuit, agent_address=virtual_address
+            )
+        except RuntimeError:
+            return {}
 
     @property
     def request_id(self) -> str:

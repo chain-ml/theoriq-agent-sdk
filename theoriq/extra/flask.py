@@ -1,21 +1,21 @@
 """Helpers to write agent using a flask web app."""
 
 import logging
-import os
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 import flask
 import pydantic
 from flask import Blueprint, Request, Response, jsonify, request
+from theoriq.biscuit import AgentAddress
 from theoriq.types import AgentDataObject
 
 from ..agent import Agent, AgentConfig
 from ..biscuit import RequestBiscuit, RequestFacts, ResponseBiscuit, TheoriqBiscuitError
 from ..execute import ExecuteContext, ExecuteRequestFn, ExecuteRuntimeError
 from ..extra.globals import agent_var
-from ..protocol import ProtocolClient
-from ..schemas import ChallengeRequestBody, ExecuteRequestBody
+from theoriq.api_v1alpha1.protocol import ProtocolClient
+from theoriq.api_v1alpha1.schemas import ChallengeRequestBody, ExecuteRequestBody
 from . import start_time
 
 logger = logging.getLogger(__name__)
@@ -109,11 +109,13 @@ def execute(execute_request_function: ExecuteRequestFn) -> Response:
     logger.debug(request.json)
     agent = agent_var.get()
     try:
+        execute_request_body = ExecuteRequestBody.model_validate(request.json)
+        configuration = execute_request_body.configuration
+        if configuration is not None:
+            agent.virtual_address = AgentAddress(configuration.fromRef.id)
         execute_context = _get_execute_context(agent)
         try:
             # Execute user's function
-
-            execute_request_body = ExecuteRequestBody.model_validate(request.json)
             try:
                 execute_response = execute_request_function(execute_context, execute_request_body)
             except ExecuteRuntimeError as err:

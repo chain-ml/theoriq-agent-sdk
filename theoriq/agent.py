@@ -58,6 +58,7 @@ class Agent:
     def __init__(self, config: AgentConfig, schema: Optional[Dict] = None) -> None:
         self._config = config
         self._schema = schema
+        self.virtual_address: AgentAddress = AgentAddress.null()
 
     @property
     def config(self) -> AgentConfig:
@@ -110,6 +111,9 @@ class Agent:
         private_key_bytes = bytes(self.config.private_key.to_bytes())
         private_key = Ed25519PrivateKey.from_private_bytes(private_key_bytes)
         return private_key.sign(challenge)
+
+    def __str__(self):
+        return f"Address: {self.config.address}, Public key: {self.config.public_key}"
 
     @property
     def public_key(self) -> str:

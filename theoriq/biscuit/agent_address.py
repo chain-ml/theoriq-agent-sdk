@@ -94,3 +94,10 @@ class AgentAddress:
     @classmethod
     def null(cls) -> AgentAddress:
         return cls.from_int(0)
+
+    @property
+    def is_null(self) -> bool:
+        return self.address == AgentAddress.null()
+
+    def __hash__(self) -> int:
+        return hash(self.address)

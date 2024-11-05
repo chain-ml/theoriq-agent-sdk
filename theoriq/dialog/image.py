@@ -4,7 +4,7 @@ import base64
 import mimetypes
 from typing import Any, Dict, Optional
 
-from .schemas import BaseData, ItemBlock
+from .item_block import BaseData, ItemBlock
 
 
 class ImageItem(BaseData):

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional, Sequence
 
-from .schemas import BaseData, ItemBlock
+from .item_block import BaseData, ItemBlock
 
 
 class MetricItem(BaseData):
