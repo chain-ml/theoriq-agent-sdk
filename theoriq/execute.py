@@ -6,11 +6,12 @@ Types and functions used by an Agent when executing a theoriq request
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from .agent import Agent
 from .biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
 from .biscuit.facts import TheoriqRequest
+from .metric import Metric
 from .protocol.protocol_client import ProtocolClient
 from .schemas import DialogItem, ErrorItemBlock, ExecuteRequestBody, ItemBlock
 from .schemas.request import Dialog
@@ -66,6 +67,24 @@ class ExecuteContext:
             message (str): The message to send as an event.
         """
         self._protocol_client.post_event(request_biscuit=self._request_biscuit, message=message)
+
+    def send_metrics(self, metrics: List[Metric]):
+        """
+        Sends agent metrics via the protocol client.
+
+        Args:
+            metrics (List[MetricRequest]): The list of metrics to send.
+        """
+        self._protocol_client.post_metrics(request_biscuit=self._request_biscuit, metrics=metrics)
+
+    def send_metric(self, metric: Metric):
+        """
+        Sends agent metrics via the protocol client.
+
+        Args:
+            metric (MetricRequest): The metric to send.
+        """
+        self._protocol_client.post_metrics(request_biscuit=self._request_biscuit, metrics=[metric])
 
     def new_response_biscuit(self, body: bytes, cost: TheoriqCost) -> ResponseBiscuit:
         """
