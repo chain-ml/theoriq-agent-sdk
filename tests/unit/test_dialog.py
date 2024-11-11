@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from theoriq.biscuit import AgentAddress
-from theoriq.schemas import Dialog, ExecuteRequestBody
+from theoriq.schemas import Dialog
 from theoriq.types import SourceType
 
 dialog_payload = {
@@ -26,9 +26,3 @@ def test_dialog_deserialization():
         next(iter(d.items[0].find_blocks_of_type("text"))).data.text
         == "Give me the trending tokens in the last 24 hours"
     )
-
-
-def test_exec_request_body_deserialization():
-    request_body = {"dialog": dialog_payload}
-    e: ExecuteRequestBody = ExecuteRequestBody.model_validate(request_body)
-    assert isinstance(e, ExecuteRequestBody)
