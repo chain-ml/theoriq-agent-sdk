@@ -1,4 +1,5 @@
 from theoriq.schemas import ExecuteRequestBody
+from theoriq.types import SourceType
 
 request_payload = {
     "dialog": {
@@ -47,3 +48,10 @@ def test_last_item_with_different_formats():
     e: ExecuteRequestBody = ExecuteRequestBody.model_validate(request_payload)
     li = e.last_item
     assert li is not None
+    assert li.source == "0x30fBa3e4195D17d06Ea9740338c8cdc9611468A9"
+
+def test_last_item_from():
+    e: ExecuteRequestBody = ExecuteRequestBody.model_validate(request_payload)
+    li = e.last_item_from(SourceType.Agent)
+    assert li is not None
+    assert li.source == "a271094f9b32aa6fb20c8de5e6cdb06e41603415fc749c7a43e46d5875f93c9f"
