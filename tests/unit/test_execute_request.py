@@ -50,6 +50,7 @@ def test_last_item_with_different_formats():
     assert li is not None
     assert li.source == "0x30fBa3e4195D17d06Ea9740338c8cdc9611468A9"
 
+
 def test_last_item_from():
     e: ExecuteRequestBody = ExecuteRequestBody.model_validate(request_payload)
     li = e.last_item_from(SourceType.Agent)
