@@ -13,6 +13,15 @@ from ..schemas.agent import AgentResponse
 from ..schemas.event_request import EventRequest
 
 
+class MetricsRequest:
+    def __init__(self, metrics: List[Metric]):
+        self._metrics = metrics
+
+    def to_dict(self) -> Dict[str, Any]:
+        payload = {"metrics": [metric.to_dict() for metric in self._metrics]}
+        return payload
+
+
 class ProtocolClient:
     _config_cache: OrderedDict[str, Dict[str, Any]] = OrderedDict()
 
@@ -90,6 +99,12 @@ class ProtocolClient:
                 )
                 retry_delay *= 2
                 retry_count += 1
+
+    def post_metrics(self, request_biscuit: RequestBiscuit, metrics: List[Metric]) -> None:
+        url = f"{self._uri}/requests/execute-{request_biscuit.request_facts.req_id}/metrics"
+        headers = request_biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            client.post(url=url, json=MetricsRequest(metrics).to_dict(), headers=headers)
 
     def _send_event(self, request: EventRequest, headers: Dict[str, str]) -> None:
         url = f"{self._uri}/requests/execute-{request.request_id.replace('-', '')}/events"

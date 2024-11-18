@@ -52,9 +52,10 @@ class DialogItem:
     @classmethod
     def _datetime_from_str(cls, value: str) -> datetime:
         try:
-            return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+            result = datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
         except ValueError:
-            return datetime.fromisoformat(value)
+            result = datetime.fromisoformat(value)
+        return result.replace(tzinfo=timezone.utc) if result.tzinfo is None else result
 
     @classmethod
     def from_dict(cls, values: Any | None) -> DialogItem:
