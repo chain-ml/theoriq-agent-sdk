@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from theoriq.biscuit import AgentAddress
-from theoriq.schemas import Dialog
+from theoriq.dialog import Dialog
 from theoriq.types import SourceType
 
 dialog_payload = {
