@@ -3,18 +3,19 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, Iterable, List, Sequence, Type
 
-from pydantic import BaseModel, field_validator, field_serializer
+from pydantic import BaseModel, field_serializer, field_validator
+
+from theoriq.types import SourceType
 
 from .code import CodeItemBlock
 from .custom import CustomItemBlock
 from .data import DataItemBlock
 from .image import ImageItemBlock
-from .metrics import MetricsItemBlock
-from .router import RouterItemBlock, RouteItem
-from .runtime_error import ErrorItemBlock
 from .item_block import ItemBlock
+from .metrics import MetricsItemBlock
+from .router import RouteItem, RouterItemBlock
+from .runtime_error import ErrorItemBlock
 from .text import TextItemBlock
-from theoriq.types import SourceType
 
 block_classes: Dict[str, Type[ItemBlock]] = {
     "code": CodeItemBlock,

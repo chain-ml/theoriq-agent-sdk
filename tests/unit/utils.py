@@ -3,6 +3,7 @@
 import uuid
 
 from biscuit_auth import PrivateKey
+
 from theoriq.biscuit import AgentAddress, RequestBiscuit, RequestFacts, ResponseFacts, TheoriqCost
 from theoriq.biscuit.facts import PayloadHash, TheoriqBudget, TheoriqRequest, TheoriqResponse
 from theoriq.types.currency import Currency

@@ -6,6 +6,7 @@ from typing import Optional
 import pytest
 from biscuit_auth import KeyPair, PrivateKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
 from theoriq.agent import AgentConfig
 
 

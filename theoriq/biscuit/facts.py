@@ -9,6 +9,7 @@ from typing import Optional
 from uuid import UUID
 
 from biscuit_auth import Fact  # pylint: disable=E0611
+
 from theoriq.types.currency import Currency
 from theoriq.utils import verify_address
 
