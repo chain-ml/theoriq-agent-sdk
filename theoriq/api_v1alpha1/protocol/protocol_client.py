@@ -7,9 +7,12 @@ from typing import Any, Dict, List, Optional, Sequence
 import httpx
 
 from theoriq.biscuit import RequestBiscuit
-from ..schemas.api import PublicKeyResponse
+
+from ...types import Metric
 from ..schemas.agent import AgentResponse
-from ..schemas.event_request import EventRequest
+from ..schemas.api import PublicKeyResponse
+from ..schemas.event_request import EventRequestBody
+from ..schemas.metrics import MetricsRequestBody
 
 
 class ProtocolClient:
@@ -54,7 +57,7 @@ class ProtocolClient:
         prev_errors: List[Dict[str, Any]] = []
 
         headers = request_biscuit.to_headers()
-        event_request = EventRequest(message=message, request_id=str(request_biscuit.request_facts.req_id))
+        event_request = EventRequestBody(message=message, request_id=str(request_biscuit.request_facts.req_id))
         while retry_count <= self._max_retries:
             try:
                 self._send_event(event_request, headers=headers)
@@ -72,7 +75,13 @@ class ProtocolClient:
                 retry_delay *= 2
                 retry_count += 1
 
-    def _send_event(self, request: EventRequest, headers: Dict[str, str]) -> None:
+    def post_metrics(self, request_biscuit: RequestBiscuit, metrics: List[Metric]) -> None:
+        url = f"{self._uri}/requests/execute-{request_biscuit.request_facts.req_id}/metrics"
+        headers = request_biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            client.post(url=url, json=MetricsRequestBody(metrics).to_dict(), headers=headers)
+
+    def _send_event(self, request: EventRequestBody, headers: Dict[str, str]) -> None:
         url = f"{self._uri}/requests/execute-{request.request_id.replace('-', '')}/events"
         with httpx.Client(timeout=self._timeout) as client:
             client.post(url=url, json=request.to_dict(), headers=headers)

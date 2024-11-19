@@ -7,6 +7,10 @@ from typing import Any, Dict, Optional
 import flask
 import pydantic
 from flask import Blueprint, Request, Response, jsonify, request
+
+from theoriq.api_v1alpha1.protocol import ProtocolClient
+from theoriq.api_v1alpha1.schemas import ChallengeRequestBody, ExecuteRequestBody as ExecuteRequestBodyV1
+from theoriq.api_v1alpha2.schemas import ExecuteRequestBody as ExecuteRequestBodyV2
 from theoriq.biscuit import AgentAddress
 from theoriq.types import AgentDataObject
 
@@ -14,8 +18,6 @@ from ..agent import Agent, AgentConfig
 from ..biscuit import RequestBiscuit, RequestFacts, ResponseBiscuit, TheoriqBiscuitError
 from ..execute import ExecuteContext, ExecuteRequestFn, ExecuteRuntimeError
 from ..extra.globals import agent_var
-from theoriq.api_v1alpha1.protocol import ProtocolClient
-from theoriq.api_v1alpha1.schemas import ChallengeRequestBody, ExecuteRequestBody
 from . import start_time
 
 logger = logging.getLogger(__name__)
@@ -36,19 +38,28 @@ def theoriq_blueprint(
     def set_context():
         agent_var.set(Agent(agent_config, schema))
 
-    v1alpha1_blue_print = Blueprint("v1alpha1", __name__, url_prefix="/api/v1alpha1")
-    v1alpha1_blue_print.add_url_rule("/execute", view_func=lambda: execute(execute_fn), methods=["POST"])
-    v1alpha1_blue_print.register_blueprint(theoriq_system_blueprint())
-    v1alpha1_blue_print.register_blueprint(theoriq_configuration_blueprint())
+    v1alpha1_blue_print = _build_v1alpha1_blueprint(execute_fn)
     main_blueprint.register_blueprint(v1alpha1_blue_print)
 
-    v1alpha2_blueprint = Blueprint("v1alpha2", __name__, url_prefix="/api/v1alpha2")
-    v1alpha2_blueprint.add_url_rule("/execute", view_func=lambda: execute(execute_fn), methods=["POST"])
-    v1alpha2_blueprint.register_blueprint(theoriq_system_blueprint())
-    v1alpha2_blueprint.register_blueprint(theoriq_configuration_blueprint())
+    v1alpha2_blueprint = _build_v1alpha2_blueprint(execute_fn)
     main_blueprint.register_blueprint(v1alpha2_blueprint)
 
     return main_blueprint
+
+
+def _build_v1alpha1_blueprint(execute_fn: ExecuteRequestFn) -> Blueprint:
+    v1alpha1_blue_print = Blueprint("v1alpha1", __name__, url_prefix="/api/v1alpha1")
+    v1alpha1_blue_print.add_url_rule("/execute", view_func=lambda: execute_v1alpha1(execute_fn), methods=["POST"])
+    v1alpha1_blue_print.register_blueprint(theoriq_system_blueprint())
+    return v1alpha1_blue_print
+
+
+def _build_v1alpha2_blueprint(execute_fn: ExecuteRequestFn):
+    v1alpha2_blueprint = Blueprint("v1alpha2", __name__, url_prefix="/api/v1alpha2")
+    v1alpha2_blueprint.add_url_rule("/execute", view_func=lambda: execute_v1alpha2(execute_fn), methods=["POST"])
+    v1alpha2_blueprint.register_blueprint(theoriq_system_blueprint())
+    v1alpha2_blueprint.register_blueprint(theoriq_configuration_blueprint())
+    return v1alpha2_blueprint
 
 
 def theoriq_system_blueprint() -> Blueprint:
@@ -103,13 +114,49 @@ def agent_data() -> Response:
     return jsonify(result)
 
 
-def execute(execute_request_function: ExecuteRequestFn) -> Response:
+def execute_v1alpha1(execute_request_function: ExecuteRequestFn) -> Response:
     """Execute endpoint"""
     logger.debug("Executing request")
     logger.debug(request.json)
     agent = agent_var.get()
     try:
-        execute_request_body = ExecuteRequestBody.model_validate(request.json)
+        execute_request_body = ExecuteRequestBodyV1.model_validate(request.json)
+        execute_context = _get_execute_context(agent)
+        try:
+            # Execute user's function
+            try:
+                execute_response = execute_request_function(execute_context, execute_request_body)
+            except ExecuteRuntimeError as err:
+                execute_response = execute_context.runtime_error_response(err)
+
+            response = jsonify(execute_response.body.to_dict())
+            response_biscuit = execute_context.new_response_biscuit(response.get_data(), execute_response.theoriq_cost)
+            response = add_biscuit_to_response(response, response_biscuit)
+        except pydantic.ValidationError as err:
+            response = new_error_response(execute_context, err, 400)
+        except Exception as err:
+            logger.exception(err)
+            response = new_error_response(execute_context, err, 500)
+    except TheoriqBiscuitError as err:
+        # Process the request biscuit. If not present, return a 401 error
+        return _build_error_payload(
+            agent_address=str(agent.config.address), request_id="", err=str(err), status_code=401
+        )
+    except Exception as err:
+        return _build_error_payload(
+            agent_address=str(agent.config.address), request_id="", err=str(err), status_code=500
+        )
+    else:
+        return response
+
+
+def execute_v1alpha2(execute_request_function: ExecuteRequestFn) -> Response:
+    """Execute endpoint"""
+    logger.debug("Executing request")
+    logger.debug(request.json)
+    agent = agent_var.get()
+    try:
+        execute_request_body = ExecuteRequestBodyV2.model_validate(request.json)
         configuration = execute_request_body.configuration
         if configuration is not None:
             agent.virtual_address = AgentAddress(configuration.fromRef.id)

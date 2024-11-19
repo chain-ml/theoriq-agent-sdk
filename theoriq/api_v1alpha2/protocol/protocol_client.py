@@ -7,19 +7,13 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import httpx
 
+from theoriq.api_v1alpha2.schemas.metrics import MetricsRequestBody
 from theoriq.biscuit import AgentAddress, RequestBiscuit
-from ..schemas.api import PublicKeyResponse
+from theoriq.types import Metric
+
 from ..schemas.agent import AgentResponse
-from ..schemas.event_request import EventRequest
-
-
-class MetricsRequest:
-    def __init__(self, metrics: List[Metric]):
-        self._metrics = metrics
-
-    def to_dict(self) -> Dict[str, Any]:
-        payload = {"metrics": [metric.to_dict() for metric in self._metrics]}
-        return payload
+from ..schemas.api import PublicKeyResponse
+from ..schemas.event_request import EventRequestBody
 
 
 class ProtocolClient:
@@ -82,7 +76,7 @@ class ProtocolClient:
         prev_errors: List[Dict[str, Any]] = []
 
         headers = request_biscuit.to_headers()
-        event_request = EventRequest(message=message, request_id=str(request_biscuit.request_facts.req_id))
+        event_request = EventRequestBody(message=message, request_id=str(request_biscuit.request_facts.req_id))
         while retry_count <= self._max_retries:
             try:
                 self._send_event(event_request, headers=headers)
@@ -104,9 +98,9 @@ class ProtocolClient:
         url = f"{self._uri}/requests/execute-{request_biscuit.request_facts.req_id}/metrics"
         headers = request_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
-            client.post(url=url, json=MetricsRequest(metrics).to_dict(), headers=headers)
+            client.post(url=url, json=MetricsRequestBody(metrics).to_dict(), headers=headers)
 
-    def _send_event(self, request: EventRequest, headers: Dict[str, str]) -> None:
+    def _send_event(self, request: EventRequestBody, headers: Dict[str, str]) -> None:
         url = f"{self._uri}/requests/execute-{request.request_id.replace('-', '')}/events"
         with httpx.Client(timeout=self._timeout) as client:
             client.post(url=url, json=request.to_dict(), headers=headers)

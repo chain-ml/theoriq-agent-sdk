@@ -8,14 +8,15 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
+from theoriq.api_v1alpha1.protocol.protocol_client import ProtocolClient
+from theoriq.api_v1alpha1.schemas.request import ExecuteRequestBody
+
 from .agent import Agent
 from .biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
 from .biscuit.facts import TheoriqRequest
-from .dialog import ItemBlock, DialogItem
+from .dialog import Dialog, DialogItem, ItemBlock
 from .dialog.runtime_error import ErrorItemBlock
-from theoriq.api_v1alpha1.protocol.protocol_client import ProtocolClient
-from theoriq.api_v1alpha1.schemas.request import Dialog, ExecuteRequestBody
-from .types import Currency, SourceType
+from .types import Currency, Metric, SourceType
 
 
 class ExecuteRuntimeError(RuntimeError):

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from typing import Optional
 
-from pydantic import BaseModel, field_validator, field_serializer
+from pydantic import BaseModel
 
-from theoriq.dialog import DialogItem, Dialog, DialogItemPredicate
+from theoriq.dialog import Dialog, DialogItem, DialogItemPredicate
 from theoriq.types import SourceType
 
 

@@ -7,12 +7,13 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from flask import Flask
 from flask.testing import FlaskClient
 from tests.unit.fixtures import *  # noqa: F403
+
 from theoriq.agent import AgentConfig
+from theoriq.api_v1alpha1.schemas import ChallengeResponseBody, ExecuteRequestBody
 from theoriq.biscuit import AgentAddress, TheoriqCost
+from theoriq.dialog import DialogItem
 from theoriq.execute import ExecuteContext, ExecuteResponse
 from theoriq.extra.flask import theoriq_blueprint
-from theoriq.dialog import DialogItem
-from theoriq.api_v1alpha1.schemas import ChallengeResponseBody, ExecuteRequestBody
 from theoriq.types import Currency, SourceType
 
 from .. import OsEnviron

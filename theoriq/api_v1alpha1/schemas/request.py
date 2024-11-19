@@ -4,7 +4,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from theoriq.dialog import DialogItem, Dialog, DialogItemPredicate
+from theoriq.dialog import Dialog, DialogItem, DialogItemPredicate
 from theoriq.types import SourceType
 
 

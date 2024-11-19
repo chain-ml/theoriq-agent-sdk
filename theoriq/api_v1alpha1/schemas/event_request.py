@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from theoriq.dialog import ItemBlock
 
 
-class EventRequest:
+class EventRequestBody:
     def __init__(self, *, message: str, request_id: str, obj: Optional[ItemBlock] = None) -> None:
         self.message = message
         self.request_id = request_id

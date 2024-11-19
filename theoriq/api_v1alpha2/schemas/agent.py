@@ -36,7 +36,7 @@ class SupportedBlocks(BaseModel):
 
 
 class Configuration(BaseModel):
-    schema: Dict[str, Any]
+    config_schema: Dict[str, Any] = Field(..., alias="schema")
     supported_blocks: SupportedBlocks = Field(..., alias="supportedBlocks")
     deployment: Optional[Dict[str, Any]] = None
     virtual: Optional[Virtual] = None
