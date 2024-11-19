@@ -44,6 +44,6 @@ line-length = 120
 profile = "black"
 line_length = 120
 py_version=39
-src_paths = ["src"]
+src_paths = ["theoriq"]
 skip = ["__init__.py"]
 skip_glob = ["**/.venv/*", "**/venv/*", "**/docs/*", "**/stubs/*"]
