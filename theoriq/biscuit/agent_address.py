@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -91,6 +92,10 @@ class AgentAddress:
     @classmethod
     def one(cls) -> AgentAddress:
         return cls.from_int(1)
+
+    @classmethod
+    def random(cls) -> AgentAddress:
+        return cls(hex(random.getrandbits(256)))
 
     @classmethod
     def null(cls) -> AgentAddress:

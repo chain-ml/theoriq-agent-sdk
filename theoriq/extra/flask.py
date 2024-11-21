@@ -117,13 +117,12 @@ def agent_data() -> Response:
 def execute_v1alpha1(execute_request_function: ExecuteRequestFn) -> Response:
     """Execute endpoint"""
     logger.debug("Executing request")
-    logger.debug(request.json)
     agent = agent_var.get()
     try:
-        execute_request_body = ExecuteRequestBodyV1.model_validate(request.json)
         execute_context = _get_execute_context(agent)
         try:
             # Execute user's function
+            execute_request_body = ExecuteRequestBodyV1.model_validate(request.json)
             try:
                 execute_response = execute_request_function(execute_context, execute_request_body)
             except ExecuteRuntimeError as err:
@@ -153,15 +152,15 @@ def execute_v1alpha1(execute_request_function: ExecuteRequestFn) -> Response:
 def execute_v1alpha2(execute_request_function: ExecuteRequestFn) -> Response:
     """Execute endpoint"""
     logger.debug("Executing request")
-    logger.debug(request.json)
     agent = agent_var.get()
     try:
-        execute_request_body = ExecuteRequestBodyV2.model_validate(request.json)
-        configuration = execute_request_body.configuration
-        if configuration is not None:
-            agent.virtual_address = AgentAddress(configuration.fromRef.id)
         execute_context = _get_execute_context(agent)
         try:
+            execute_request_body = ExecuteRequestBodyV2.model_validate(request.json)
+            configuration = execute_request_body.configuration
+            if configuration is not None:
+                agent.virtual_address = AgentAddress(configuration.fromRef.id)
+
             # Execute user's function
             try:
                 execute_response = execute_request_function(execute_context, execute_request_body)
