@@ -1,5 +1,7 @@
 """Utility module"""
 
+import os
+
 
 def verify_address(address: str) -> str:
     """
@@ -15,3 +17,7 @@ def verify_address(address: str) -> str:
         raise TypeError(f"address must only contain hex digits: {address}") from e
     else:
         return add
+
+
+def is_protocol_secured() -> bool:
+    return os.getenv("THEORIQ_SECURED", "true").lower() == "true"

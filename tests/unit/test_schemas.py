@@ -1,4 +1,4 @@
-from theoriq.api_v1alpha1.schemas import ExecuteRequestBody
+from theoriq.api.v1alpha1.schemas import ExecuteRequestBody
 from theoriq.dialog import Dialog, DialogItem
 from theoriq.dialog.item_block import filter_blocks
 from theoriq.dialog.text import TextItemBlock

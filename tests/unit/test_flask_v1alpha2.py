@@ -9,11 +9,11 @@ from flask.testing import FlaskClient
 from tests.unit.fixtures import *  # noqa: F403
 
 from theoriq.agent import AgentConfig
-from theoriq.api_v1alpha2.schemas import ChallengeResponseBody, ExecuteRequestBody
+from theoriq.api.v1alpha2.execute import ExecuteContext, ExecuteResponse
+from theoriq.api.v1alpha2.schemas import ChallengeResponseBody, ExecuteRequestBody
 from theoriq.biscuit import AgentAddress, TheoriqCost
 from theoriq.dialog import DialogItem
-from theoriq.execute import ExecuteContext, ExecuteResponse
-from theoriq.extra.flask import theoriq_blueprint
+from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
 from theoriq.types import Currency, SourceType
 
 from .. import OsEnviron

@@ -1,4 +1,4 @@
-from theoriq.api_v1alpha1.schemas import ExecuteRequestBody
+from theoriq.api.v1alpha1.schemas import ExecuteRequestBody
 from theoriq.types import SourceType
 
 request_payload = {

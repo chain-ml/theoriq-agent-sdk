@@ -1,53 +1,20 @@
-"""
-execute.py
-
-Types and functions used by an Agent when executing a Theoriq request
-"""
-
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Sequence
+import abc
+from typing import Any, Dict, Optional, Sequence
 
-from theoriq.api_v1alpha1.protocol.protocol_client import ProtocolClient
-from theoriq.api_v1alpha1.schemas.request import ExecuteRequestBody
-
-from .agent import Agent
-from .biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
-from .biscuit.facts import TheoriqRequest
-from .dialog import Dialog, DialogItem, ItemBlock
-from .dialog.runtime_error import ErrorItemBlock
-from .types import Currency, Metric, SourceType
+from theoriq import Agent
+from theoriq.biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
+from theoriq.dialog import DialogItem, ErrorItemBlock, ItemBlock
+from theoriq.types import Currency, SourceType
 
 
-class ExecuteRuntimeError(RuntimeError):
-    """
-    Custom exception class for runtime errors during the execution of a request.
-
-    Attributes:
-        err (str): The error code or message.
-        message (Optional[str]): An optional message providing additional context for the error.
-    """
-
-    def __init__(self, err: str, message: Optional[str] = None) -> None:
-        """
-        Initializes an ExecuteRuntimeError instance.
-
-        Args:
-            err (str): The error code or message.
-            message (Optional[str]): An optional additional message providing more details about the error.
-        """
-        # Calls the base class constructor with a combined error and message if both are provided.
-        super().__init__(err if message is None else f"{err}, {message}")
-        self.err = err
-        self.message = message
-
-
-class ExecuteContext:
+class ExecuteContextBase:
     """
     Represents the context for executing a request, managing interactions with the agent and protocol client.
     """
 
-    def __init__(self, agent: Agent, protocol_client: ProtocolClient, request_biscuit: RequestBiscuit) -> None:
+    def __init__(self, agent: Agent, request_biscuit: RequestBiscuit) -> None:
         """
         Initializes an ExecuteContext instance.
 
@@ -56,36 +23,8 @@ class ExecuteContext:
             protocol_client (ProtocolClient): The client responsible for communicating with the protocol.
             request_biscuit (RequestBiscuit): The biscuit associated with the request, containing metadata and permissions.
         """
-        self._protocol_client = protocol_client
         self._agent = agent
         self._request_biscuit = request_biscuit
-
-    def send_event(self, message: str) -> None:
-        """
-        Sends an event message via the protocol client.
-
-        Args:
-            message (str): The message to send as an event.
-        """
-        self._protocol_client.post_event(request_biscuit=self._request_biscuit, message=message)
-
-    def send_metrics(self, metrics: List[Metric]):
-        """
-        Sends agent metrics via the protocol client.
-
-        Args:
-            metrics (List[MetricRequest]): The list of metrics to send.
-        """
-        self._protocol_client.post_metrics(request_biscuit=self._request_biscuit, metrics=metrics)
-
-    def send_metric(self, metric: Metric):
-        """
-        Sends agent metrics via the protocol client.
-
-        Args:
-            metric (MetricRequest): The metric to send.
-        """
-        self._protocol_client.post_metrics(request_biscuit=self._request_biscuit, metrics=[metric])
 
     def new_response_biscuit(self, body: bytes, cost: TheoriqCost) -> ResponseBiscuit:
         """
@@ -149,6 +88,7 @@ class ExecuteContext:
         """
         return self.new_free_response(blocks=[ErrorItemBlock.new(err=err.err, message=err.message)])
 
+    @abc.abstractmethod
     def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
         """
         Sends a request to another address, attenuating the biscuit for the request and handling the response.
@@ -161,15 +101,7 @@ class ExecuteContext:
         Returns:
             ExecuteResponse: The response received from the request.
         """
-        config = self._agent.config
-        execute_request_body = ExecuteRequestBody(
-            dialog=Dialog(items=[DialogItem.new(source=self.agent_address, blocks=blocks)])
-        )
-        body = execute_request_body.model_dump_json().encode("utf-8")
-        theoriq_request = TheoriqRequest.from_body(body=body, from_addr=config.address, to_addr=to_addr)
-        request_biscuit = self._request_biscuit.attenuate_for_request(theoriq_request, budget, config.private_key)
-        response = self._protocol_client.post_request(request_biscuit=request_biscuit, content=body, to_addr=to_addr)
-        return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
+        pass
 
     @property
     def agent_address(self) -> str:
@@ -180,18 +112,6 @@ class ExecuteContext:
             str: The agent's address as a string.
         """
         return str(self._agent.config.address)
-
-    @property
-    def agent_configuration(self) -> Optional[Dict[str, Any]]:
-        virtual_address = self._agent.virtual_address
-        if virtual_address.is_null:
-            return None
-        try:
-            return self._protocol_client.get_configuration(
-                request_biscuit=self._request_biscuit, agent_address=virtual_address
-            )
-        except RuntimeError:
-            return {}
 
     @property
     def request_id(self) -> str:
@@ -290,8 +210,24 @@ class ExecuteResponse:
         )
 
 
-ExecuteRequestFn = Callable[[ExecuteContext, ExecuteRequestBody], ExecuteResponse]
-"""
-Type alias for a function that takes an ExecuteContext and an ExecuteRequestBody,
-and returns an ExecuteResponse.
-"""
+class ExecuteRuntimeError(RuntimeError):
+    """
+    Custom exception class for runtime errors during the execution of a request.
+
+    Attributes:
+        err (str): The error code or message.
+        message (Optional[str]): An optional message providing additional context for the error.
+    """
+
+    def __init__(self, err: str, message: Optional[str] = None) -> None:
+        """
+        Initializes an ExecuteRuntimeError instance.
+
+        Args:
+            err (str): The error code or message.
+            message (Optional[str]): An optional additional message providing more details about the error.
+        """
+        # Calls the base class constructor with a combined error and message if both are provided.
+        super().__init__(err if message is None else f"{err}, {message}")
+        self.err = err
+        self.message = message

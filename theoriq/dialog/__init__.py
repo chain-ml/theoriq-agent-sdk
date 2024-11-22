@@ -4,5 +4,6 @@ from .custom import CustomData, CustomItemBlock
 from .image import ImageItem, ImageItemBlock
 from .metrics import MetricItem, MetricsItemBlock
 from .router import RouteItem, RouterItemBlock
+from .runtime_error import ErrorItemBlock
 
 from .dialog import Dialog, DialogItem, DialogItemPredicate
