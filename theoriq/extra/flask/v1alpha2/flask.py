@@ -24,25 +24,7 @@ from theoriq.extra.globals import agent_var
 logger = logging.getLogger(__name__)
 
 
-def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFnV1alpha2) -> Blueprint:
-    """
-    Theoriq blueprint
-    :return: a blueprint with all the routes required by the `theoriq` protocol
-    """
-
-    main_blueprint = Blueprint("main_blueprint", __name__)
-
-    @main_blueprint.before_request
-    def set_context():
-        agent_var.set(Agent(agent_config, None))
-
-    v1alpha1_blue_print = _build_v1alpha2_blueprint(execute_fn)
-    main_blueprint.register_blueprint(v1alpha1_blue_print)
-
-    return main_blueprint
-
-
-def theoriq_blueprint_v1alpha2(
+def theoriq_blueprint(
     agent_config: AgentConfig, execute_fn: ExecuteRequestFnV1alpha2, schema: Optional[Dict] = None
 ) -> Blueprint:
     """
@@ -59,7 +41,6 @@ def theoriq_blueprint_v1alpha2(
 
     v1alpha2_blueprint = _build_v1alpha2_blueprint(execute_fn)
     main_blueprint.register_blueprint(v1alpha2_blueprint)
-
     return main_blueprint
 
 
@@ -70,10 +51,11 @@ def theoriq_configuration_blueprint() -> Blueprint:
 
 
 def _build_v1alpha2_blueprint(execute_fn: ExecuteRequestFnV1alpha2):
-    v1alpha2_blueprint = Blueprint("v1alpha2", __name__, url_prefix="/api/v1alpha2")
+    v1alpha2_blueprint = Blueprint("v1alpha2", __name__, url_prefix="/api/v1alpha1")
     v1alpha2_blueprint.add_url_rule("/execute", view_func=lambda: execute_v1alpha2(execute_fn), methods=["POST"])
     v1alpha2_blueprint.register_blueprint(theoriq_system_blueprint())
     v1alpha2_blueprint.register_blueprint(theoriq_configuration_blueprint())
+
     return v1alpha2_blueprint
 
 
