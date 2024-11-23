@@ -1,7 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
+
 
 
 class System(BaseModel):
@@ -39,7 +40,16 @@ class Configuration(BaseModel):
     config_schema: Dict[str, Any] = Field(..., alias="schema")
     supported_blocks: SupportedBlocks = Field(..., alias="supportedBlocks")
     deployment: Optional[Dict[str, Any]] = None
-    virtual: Optional[Virtual] = None
+    virtual: Optional[Virtual] = Field(default=None)
+
+    @field_validator("virtual", mode="before")
+    def validate_virtual(cls, value):
+        # Handle cases where `b` is an empty dict or None
+        if value is None or value == {}:
+            return None
+        if isinstance(value, dict):
+            return Virtual(**value)
+        return value
 
 
 class AgentResponse(BaseModel):

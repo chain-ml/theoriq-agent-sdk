@@ -5,9 +5,10 @@ import dotenv
 from flask import Flask
 
 from theoriq import AgentConfig, ExecuteContext, ExecuteResponse
-from theoriq.api_v1alpha1.schemas import ExecuteRequestBody, TextItemBlock
+from theoriq.api.v1alpha1.schemas import ExecuteRequestBody
 from theoriq.biscuit import TheoriqCost
-from theoriq.extra.flask import theoriq_blueprint
+from theoriq.dialog import TextItemBlock
+from theoriq.extra.flask.v1alpha1.flask import theoriq_blueprint
 from theoriq.types import Currency
 
 logger = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ if __name__ == "__main__":
     dotenv.load_dotenv()
     agent_config = AgentConfig.from_env()
 
-    # Create and register theoriq blueprint
+    # Create and register theoriq blueprint with v1alpha1 api version
     blueprint = theoriq_blueprint(agent_config, execute)
     app.register_blueprint(blueprint)
     app.run(host="0.0.0.0", port=os.environ.get("FLASK_PORT", 8000))
