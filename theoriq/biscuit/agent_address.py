@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import os
 import random
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -95,7 +97,9 @@ class AgentAddress:
 
     @classmethod
     def random(cls) -> AgentAddress:
-        return cls(hex(random.getrandbits(256)))
+        random_bytes = os.urandom(32)
+        keccak_hash = hashlib.sha3_256(random_bytes).hexdigest()
+        return cls(keccak_hash)
 
     @classmethod
     def null(cls) -> AgentAddress:

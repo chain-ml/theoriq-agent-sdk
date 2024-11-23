@@ -8,7 +8,7 @@ def verify_address(address: str) -> str:
     Verify the address
     :raise TypeError: if the address is not 32 bytes long or does not only contain hex digits
     """
-    add = address.removeprefix("0x")
+    add = address.removeprefix("0x").strip()
     try:
         length = len(bytes.fromhex(add))
         if length != 32:
