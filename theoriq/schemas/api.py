@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from typing import List
 
+import yaml
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
@@ -25,6 +28,13 @@ class AgentResponse(BaseModel):
 
     def __str__(self):
         return f"AgentResponse(id={self.id}, name={self.name})"
+
+    @classmethod
+    def from_yaml(cls, filename: str) -> AgentResponse:
+        with open(filename, "r", encoding="utf-8") as file:
+            yaml_data = yaml.safe_load(file)
+
+        return AgentResponse(**yaml_data)
 
 
 class PublicKeyResponse(BaseModel):
