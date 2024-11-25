@@ -13,6 +13,7 @@ def test_agent_address_from_public_key():
 
     assert str(agent_address) == "0x4933829bd988807466be707dc500b791f1f0a550a2c2e92e349c384220fbcaa3"
 
+
 def test_agent_random():
     add = AgentAddress.random()
     assert isinstance(add, AgentAddress)

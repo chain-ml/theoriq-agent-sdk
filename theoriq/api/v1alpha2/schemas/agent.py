@@ -4,7 +4,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
 
-
 class System(BaseModel):
     id: str
     public_key: str = Field(..., alias="publicKey")
