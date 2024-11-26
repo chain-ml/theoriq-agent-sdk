@@ -4,9 +4,10 @@ import abc
 from typing import Any, Dict, Optional, Sequence
 
 from theoriq import Agent
-from theoriq.biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
-from theoriq.dialog import DialogItem, ErrorItemBlock, ItemBlock
-from theoriq.types import Currency, SourceType
+
+from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
+from ..dialog import DialogItem, ErrorItemBlock, ItemBlock
+from ..types import Currency, SourceType
 
 
 class ExecuteContextBase:

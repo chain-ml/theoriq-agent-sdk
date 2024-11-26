@@ -11,14 +11,15 @@ from theoriq.agent import Agent, AgentConfig
 from theoriq.api import ExecuteContextV1alpha1, ExecuteRequestFnV1alpha1
 from theoriq.api.v1alpha1.schemas import ExecuteRequestBody as ExecuteRequestBodyV1
 from theoriq.biscuit import TheoriqBiscuitError
-from theoriq.extra.flask.common import (
+from theoriq.extra.globals import agent_var
+
+from ..common import (
     add_biscuit_to_response,
     build_error_payload,
     new_error_response,
     process_biscuit_request,
     theoriq_system_blueprint,
 )
-from theoriq.extra.globals import agent_var
 
 logger = logging.getLogger(__name__)
 

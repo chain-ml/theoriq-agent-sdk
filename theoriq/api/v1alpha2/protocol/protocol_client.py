@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import httpx
 
-from theoriq.api.v1alpha2.schemas.metrics import MetricsRequestBody
 from theoriq.biscuit import AgentAddress, RequestBiscuit
 from theoriq.types import Metric
 from theoriq.utils import is_protocol_secured
@@ -15,6 +14,7 @@ from theoriq.utils import is_protocol_secured
 from ..schemas.agent import AgentResponse
 from ..schemas.api import PublicKeyResponse
 from ..schemas.event_request import EventRequestBody
+from ..schemas.metrics import MetricsRequestBody
 
 
 class ProtocolClient:

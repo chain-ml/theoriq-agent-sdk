@@ -5,8 +5,7 @@ from typing import Any, Callable, Dict, Iterable, List, Sequence, Type
 
 from pydantic import BaseModel, field_serializer, field_validator
 
-from theoriq.types import SourceType
-
+from ..types import SourceType
 from .code import CodeItemBlock
 from .custom import CustomItemBlock
 from .data import DataItemBlock

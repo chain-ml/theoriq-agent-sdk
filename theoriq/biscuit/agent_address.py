@@ -9,9 +9,7 @@ from typing import Optional
 
 from biscuit_auth import Authorizer, Biscuit, BiscuitBuilder, Check, Policy, PublicKey, Rule  # pylint: disable=E0611
 
-from theoriq.utils import verify_address
-
-from .utils import hash_public_key
+from .utils import hash_public_key, verify_address
 
 
 class AgentAddress:
