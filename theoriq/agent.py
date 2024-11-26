@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import os
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import biscuit_auth
 from biscuit_auth import Biscuit, KeyPair, PrivateKey  # pylint: disable=E0611
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from jsonschema import ValidationError
 from jsonschema.validators import Draft7Validator
 
 from .biscuit import (
@@ -18,6 +19,10 @@ from .biscuit import (
     VerificationError,
 )
 from .biscuit.payload_hash import PayloadHash
+
+
+class AgentConfigurationSchemaError(Exception):
+    pass
 
 
 class AgentConfig:
@@ -111,6 +116,16 @@ class Agent:
         private_key_bytes = bytes(self.config.private_key.to_bytes())
         private_key = Ed25519PrivateKey.from_private_bytes(private_key_bytes)
         return private_key.sign(challenge)
+
+    def validate_configuration(self, values: Any) -> None:
+        if self.schema is None:
+            return
+
+        validator = Draft7Validator(self.schema)
+        try:
+            validator.validate(values)
+        except ValidationError as e:
+            raise AgentConfigurationSchemaError(e.message) from e
 
     def __str__(self):
         return f"Address: {self.config.address}, Public key: {self.config.public_key}"

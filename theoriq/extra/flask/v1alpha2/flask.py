@@ -48,6 +48,8 @@ def theoriq_blueprint(
 def theoriq_configuration_blueprint() -> Blueprint:
     blueprint = Blueprint("theoriq_configuration", __name__, url_prefix="/configuration")
     blueprint.add_url_rule("/schema", view_func=get_configuration_schema, methods=["GET"])
+    blueprint.add_url_rule("/<string:agent_id>/validate", view_func=validate_configuration, methods=["POST"])
+    blueprint.add_url_rule("/<string:agent_id>/apply", view_func=apply_schema, methods=["POST"])
     return blueprint
 
 
@@ -104,3 +106,19 @@ def execute_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Resp
 def get_configuration_schema() -> Response:
     agent = agent_var.get()
     return jsonify(agent.schema or {})
+
+
+def validate_configuration(agent_id: str) -> Response:
+    payload = request.json
+    agent = agent_var.get()
+    try:
+        agent.validate_configuration(payload)
+        return Response(status=200)
+    except Exception as err:
+        return build_error_payload(
+            agent_address=str(agent.config.address), request_id="", err=str(err), status_code=401
+        )
+
+
+def apply_schema(agent_id: str) -> Response:
+    return jsonify({})
