@@ -10,7 +10,7 @@ import theoriq
 from theoriq import ExecuteRuntimeError
 from theoriq.agent import Agent, AgentConfig
 from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
-from theoriq.api.v1alpha2.schemas import ExecuteRequestBody as ExecuteRequestBodyV2
+from theoriq.api.v1alpha2.schemas import ExecuteRequestBody as ExecuteRequestBodyV1alpha2
 from theoriq.biscuit import AgentAddress, TheoriqBiscuitError
 from theoriq.extra.flask.common import (
     add_biscuit_to_response,
@@ -51,7 +51,7 @@ def theoriq_configuration_blueprint() -> Blueprint:
 
 
 def _build_v1alpha2_blueprint(execute_fn: ExecuteRequestFnV1alpha2):
-    v1alpha2_blueprint = Blueprint("v1alpha2", __name__, url_prefix="/api/v1alpha1")
+    v1alpha2_blueprint = Blueprint("v1alpha2", __name__, url_prefix="/api/v1alpha2")
     v1alpha2_blueprint.add_url_rule("/execute", view_func=lambda: execute_v1alpha2(execute_fn), methods=["POST"])
     v1alpha2_blueprint.register_blueprint(theoriq_system_blueprint())
     v1alpha2_blueprint.register_blueprint(theoriq_configuration_blueprint())
@@ -68,7 +68,7 @@ def execute_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Resp
         request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
         execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit)
         try:
-            execute_request_body = ExecuteRequestBodyV2.model_validate(request.json)
+            execute_request_body = ExecuteRequestBodyV1alpha2.model_validate(request.json)
             configuration = execute_request_body.configuration
             if configuration is not None:
                 agent.virtual_address = AgentAddress(configuration.fromRef.id)
