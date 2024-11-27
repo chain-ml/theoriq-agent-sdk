@@ -6,7 +6,7 @@ import dotenv
 from council.llm import AnthropicLLM, LLMConfigObject, LLMFunction, LLMMessage
 from flask import Flask
 
-from theoriq import AgentConfig, ExecuteContext, ExecuteResponse
+from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha1.schemas import ExecuteRequestBody
 from theoriq.biscuit import TheoriqCost
 from theoriq.dialog import TextItemBlock
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     app = Flask(__name__)
 
     # Load agent configuration from env
-    agent_config = AgentConfig.from_env()
+    agent_config = AgentDeploymentConfiguration.from_env()
     config = LLMConfigObject.from_yaml(os.path.join(os.path.dirname(__file__), "config.yaml"))
 
     # Create and register theoriq blueprint with v1alpha1 api version

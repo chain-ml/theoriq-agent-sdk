@@ -8,7 +8,7 @@ from flask import Blueprint, Response, jsonify, request
 
 import theoriq
 from theoriq import ExecuteRuntimeError
-from theoriq.agent import Agent, AgentConfig
+from theoriq.agent import Agent, AgentDeploymentConfiguration
 from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
 from theoriq.biscuit import AgentAddress, TheoriqBiscuitError
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 def theoriq_blueprint(
-    agent_config: AgentConfig, execute_fn: ExecuteRequestFnV1alpha2, schema: Optional[Dict] = None
+    agent_config: AgentDeploymentConfiguration, execute_fn: ExecuteRequestFnV1alpha2, schema: Optional[Dict] = None
 ) -> Blueprint:
     """
     Theoriq blueprint
@@ -121,4 +121,13 @@ def validate_configuration(agent_id: str) -> Response:
 
 
 def apply_configuration(agent_id: str) -> Response:
-    return jsonify({})
+    payload = request.json
+    agent = agent_var.get()
+    try:
+        agent.validate_configuration(payload)
+        #TODO Add Apply logic
+        return Response(status=200)
+    except Exception as err:
+        return build_error_payload(
+            agent_address=str(agent.config.address), request_id="", err=str(err), status_code=401
+        )

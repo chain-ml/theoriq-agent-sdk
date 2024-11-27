@@ -8,7 +8,7 @@ from flask import Flask
 from flask.testing import FlaskClient
 from tests.unit.fixtures import *  # noqa: F403
 
-from theoriq.agent import AgentConfig
+from theoriq.agent import AgentDeploymentConfiguration
 from theoriq.api.v1alpha2.execute import ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2.schemas import ChallengeResponseBody, ExecuteRequestBody
 from theoriq.biscuit import AgentAddress, TheoriqCost
@@ -21,7 +21,7 @@ from .utils import new_biscuit_for_request, new_request_facts
 
 
 @pytest.fixture
-def app(agent_config: AgentConfig) -> Flask:
+def app(agent_config: AgentDeploymentConfiguration) -> Flask:
     app = Flask(__name__)
     app.config["TESTING"] = True
 
@@ -54,7 +54,7 @@ def test_send_sign_challenge(client: FlaskClient, agent_public_key: Ed25519Publi
 
 
 def test_send_execute_request(
-    theoriq_private_key: PrivateKey, agent_kp, agent_config: AgentConfig, client: FlaskClient
+    theoriq_private_key: PrivateKey, agent_kp, agent_config: AgentDeploymentConfiguration, client: FlaskClient
 ):
 
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
@@ -69,7 +69,7 @@ def test_send_execute_request(
         assert response_body.blocks[0].data.text == "My name is John Doe"
 
 
-def test_send_execute_request_without_biscuit_returns_401(agent_kp, agent_config: AgentConfig, client: FlaskClient):
+def test_send_execute_request_without_biscuit_returns_401(agent_kp, agent_config: AgentDeploymentConfiguration, client: FlaskClient):
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
         request_body_bytes = _build_request_body_bytes("My name is John Doe", AgentAddress.one())
         response = client.post("/api/v1alpha2/execute", data=request_body_bytes)
@@ -77,7 +77,7 @@ def test_send_execute_request_without_biscuit_returns_401(agent_kp, agent_config
 
 
 def test_send_execute_request_with_ill_formatted_body_returns_400(
-    theoriq_private_key: PrivateKey, agent_config: AgentConfig, client: FlaskClient
+    theoriq_private_key: PrivateKey, agent_config: AgentDeploymentConfiguration, client: FlaskClient
 ):
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
         from_address = AgentAddress.random()
@@ -99,7 +99,7 @@ def test_send_execute_request_with_ill_formatted_body_returns_400(
 
 
 def test_send_execute_request_when_execute_fn_fails_returns_500(
-    theoriq_private_key, agent_config: AgentConfig, client: FlaskClient
+    theoriq_private_key, agent_config: AgentDeploymentConfiguration, client: FlaskClient
 ):
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
         from_address = AgentAddress.random()
@@ -113,7 +113,7 @@ def test_send_execute_request_when_execute_fn_fails_returns_500(
         assert response.status_code == 500
 
 
-def test_send_chat_completion_request(theoriq_private_key: PrivateKey, agent_config: AgentConfig, client: FlaskClient):
+def test_send_chat_completion_request(theoriq_private_key: PrivateKey, agent_config: AgentDeploymentConfiguration, client: FlaskClient):
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
         from_address = AgentAddress.random()
         req_body_bytes = _build_request_body_bytes("My name is John Doe", from_address)

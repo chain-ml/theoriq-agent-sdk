@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import os
 from typing import Any, Dict, Optional
 
@@ -25,8 +26,8 @@ class AgentConfigurationSchemaError(Exception):
     pass
 
 
-class AgentConfig:
-    """Expected configuration for a 'Theoriq' agent."""
+class AgentDeploymentConfiguration:
+    """Expected configuration for a deployment of a 'Theoriq' agent."""
 
     def __init__(self, private_key: PrivateKey, prefix: str = "") -> None:
         agent_kp = KeyPair.from_private_key(private_key)
@@ -36,7 +37,7 @@ class AgentConfig:
         self.prefix = prefix
 
     @classmethod
-    def from_env(cls, env_prefix: str = "") -> AgentConfig:
+    def from_env(cls, env_prefix: str = "") -> AgentDeploymentConfiguration:
         private_key = os.environ[f"{env_prefix}AGENT_PRIVATE_KEY"]
         agent_private_key = PrivateKey.from_hex(private_key.removeprefix("0x"))
         return cls(agent_private_key, prefix=env_prefix)
@@ -56,17 +57,17 @@ class Agent:
     This class helps with the integration with biscuits and theoriq signing challenge.
 
     Attributes:
-        config (AgentConfig): Agent configuration.
+        config (AgentDeploymentConfiguration): Agent configuration.
         schema (Optional[Dict]): Configuration Schema for the agent.
     """
 
-    def __init__(self, config: AgentConfig, schema: Optional[Dict] = None) -> None:
+    def __init__(self, config: AgentDeploymentConfiguration, schema: Optional[Dict] = None) -> None:
         self._config = config
         self._schema = schema
         self.virtual_address: AgentAddress = AgentAddress.null()
 
     @property
-    def config(self) -> AgentConfig:
+    def config(self) -> AgentDeploymentConfiguration:
         return self._config
 
     @property
@@ -137,7 +138,7 @@ class Agent:
 
     @classmethod
     def from_env(cls) -> Agent:
-        config = AgentConfig.from_env()
+        config = AgentDeploymentConfiguration.from_env()
         return cls(config)
 
     @classmethod

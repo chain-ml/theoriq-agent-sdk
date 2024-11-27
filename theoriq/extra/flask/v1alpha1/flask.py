@@ -7,7 +7,7 @@ from flask import Blueprint, Response, jsonify, request
 
 import theoriq
 from theoriq import ExecuteRuntimeError
-from theoriq.agent import Agent, AgentConfig
+from theoriq.agent import Agent, AgentDeploymentConfiguration
 from theoriq.api import ExecuteContextV1alpha1, ExecuteRequestFnV1alpha1
 from theoriq.api.v1alpha1.schemas import ExecuteRequestBody as ExecuteRequestBodyV1
 from theoriq.biscuit import TheoriqBiscuitError
@@ -24,7 +24,7 @@ from ..common import (
 logger = logging.getLogger(__name__)
 
 
-def theoriq_blueprint(agent_config: AgentConfig, execute_fn: ExecuteRequestFnV1alpha1) -> Blueprint:
+def theoriq_blueprint(agent_config: AgentDeploymentConfiguration, execute_fn: ExecuteRequestFnV1alpha1) -> Blueprint:
     """
     Theoriq blueprint
     :return: a blueprint with all the routes required by the `theoriq` protocol
