@@ -49,7 +49,7 @@ def theoriq_configuration_blueprint() -> Blueprint:
     blueprint = Blueprint("theoriq_configuration", __name__, url_prefix="/configuration")
     blueprint.add_url_rule("/schema", view_func=get_configuration_schema, methods=["GET"])
     blueprint.add_url_rule("/<string:agent_id>/validate", view_func=validate_configuration, methods=["POST"])
-    blueprint.add_url_rule("/<string:agent_id>/apply", view_func=apply_schema, methods=["POST"])
+    blueprint.add_url_rule("/<string:agent_id>/apply", view_func=apply_configuration, methods=["POST"])
     return blueprint
 
 
@@ -120,5 +120,5 @@ def validate_configuration(agent_id: str) -> Response:
         )
 
 
-def apply_schema(agent_id: str) -> Response:
+def apply_configuration(agent_id: str) -> Response:
     return jsonify({})
