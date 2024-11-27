@@ -108,11 +108,14 @@ class ExecuteContextBase:
     def agent_address(self) -> str:
         """
         Returns the address of the agent.
+        If the agent is virtual return the virtual address
 
         Returns:
             str: The agent's address as a string.
         """
-        return str(self._agent.config.address)
+        if self._agent.virtual_address is None:
+            return str(self._agent.config.address)
+        return str(self._agent.virtual_address)
 
     @property
     def request_id(self) -> str:

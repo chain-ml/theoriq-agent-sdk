@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, Iterable, List, Sequence, Type
 
@@ -52,7 +53,10 @@ class DialogItem:
     @classmethod
     def _datetime_from_str(cls, value: str) -> datetime:
         try:
-            result = datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+            if re.search(r"\.\d+Z$", value):
+                result = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ")
+            else:
+                result = datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
         except ValueError:
             result = datetime.fromisoformat(value)
         return result.replace(tzinfo=timezone.utc) if result.tzinfo is None else result
@@ -62,13 +66,17 @@ class DialogItem:
         if values is None:
             raise ValueError("Cannot create a DialogItem from None")
 
-        blocks: List[ItemBlock[Any]] = []
-        for item in values["blocks"]:
+        if not isinstance(values, dict):
+            raise ValueError(f"Expect a dictionary, got {type(values)}")
+
+        item_blocks: List[ItemBlock[Any]] = []
+        blocs = values.get("blocks", [])
+        for item in blocs:
             block_type: str = item["type"]
             bloc_class = block_classes.get(ItemBlock.root_type(block_type))
             if bloc_class is not None:
                 block_data = item["data"]
-                blocks.append(bloc_class.from_dict(block_data, block_type))
+                item_blocks.append(bloc_class.from_dict(block_data, block_type))
             else:
                 raise ValueError(f"invalid item type {block_type}")
 
@@ -76,7 +84,7 @@ class DialogItem:
             timestamp=values["timestamp"],
             source_type=values["sourceType"],
             source=values["source"],
-            blocks=blocks,
+            blocks=item_blocks,
         )
 
     def to_dict(self) -> Dict[str, Any]:

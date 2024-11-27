@@ -46,7 +46,7 @@ class AgentConfig:
         return os.getenv(f"{self.prefix}AGENT_YAML_PATH")
 
     def __str__(self):
-        return f"Address: {self.address}, Public key:{self.public_key.to_hex()}"
+        return f"Address: {self.address}, Public key:0x{self.public_key.to_hex()}"
 
 
 class Agent:
@@ -128,7 +128,7 @@ class Agent:
             raise AgentConfigurationSchemaError(e.message) from e
 
     def __str__(self):
-        return f"Address: {self.config.address}, Public key: {self.config.public_key}"
+        return f"Address: {self.config.address}, Public key: 0x{self.config.public_key.to_hex()}"
 
     @property
     def public_key(self) -> str:
