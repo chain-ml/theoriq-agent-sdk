@@ -69,7 +69,9 @@ def test_send_execute_request(
         assert response_body.blocks[0].data.text == "My name is John Doe"
 
 
-def test_send_execute_request_without_biscuit_returns_401(agent_kp, agent_config: AgentDeploymentConfiguration, client: FlaskClient):
+def test_send_execute_request_without_biscuit_returns_401(
+    agent_kp, agent_config: AgentDeploymentConfiguration, client: FlaskClient
+):
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
         request_body_bytes = _build_request_body_bytes("My name is John Doe", AgentAddress.one())
         response = client.post("/api/v1alpha2/execute", data=request_body_bytes)
@@ -113,7 +115,9 @@ def test_send_execute_request_when_execute_fn_fails_returns_500(
         assert response.status_code == 500
 
 
-def test_send_chat_completion_request(theoriq_private_key: PrivateKey, agent_config: AgentDeploymentConfiguration, client: FlaskClient):
+def test_send_chat_completion_request(
+    theoriq_private_key: PrivateKey, agent_config: AgentDeploymentConfiguration, client: FlaskClient
+):
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
         from_address = AgentAddress.random()
         req_body_bytes = _build_request_body_bytes("My name is John Doe", from_address)

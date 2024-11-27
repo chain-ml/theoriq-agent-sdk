@@ -125,7 +125,7 @@ def apply_configuration(agent_id: str) -> Response:
     agent = agent_var.get()
     try:
         agent.validate_configuration(payload)
-        #TODO Add Apply logic
+        # TODO Add Apply logic
         return Response(status=200)
     except Exception as err:
         return build_error_payload(
