@@ -11,7 +11,7 @@ from theoriq import ExecuteRuntimeError
 from theoriq.agent import Agent, AgentDeploymentConfiguration
 from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
-from theoriq.biscuit import AgentAddress, TheoriqBiscuitError
+from theoriq.biscuit import TheoriqBiscuitError
 from theoriq.extra.globals import agent_var
 
 from ..common import (
@@ -70,12 +70,10 @@ def execute_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Resp
         protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
         request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
         execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit)
+
         try:
             execute_request_body = ExecuteRequestBody.model_validate(request.json)
-            configuration = execute_request_body.configuration
-            if configuration is not None:
-                agent.virtual_address = AgentAddress(configuration.fromRef.id)
-
+            execute_context.set_configuration(execute_request_body.configuration)
             # Execute user's function
             try:
                 execute_response = execute_request_function(execute_context, execute_request_body)

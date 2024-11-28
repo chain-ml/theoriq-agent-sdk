@@ -46,15 +46,17 @@ class ProtocolClient:
             data = response.json()
             return [AgentResponse(**item) for item in data["items"]]
 
-    def get_configuration(self, request_biscuit: RequestBiscuit, agent_address: AgentAddress) -> Dict[str, Any]:
-        key = agent_address.address
+    def get_configuration(
+        self, request_biscuit: RequestBiscuit, agent_address: AgentAddress, configuration_hash: str
+    ) -> Dict[str, Any]:
+        key = f"{agent_address.address}_{configuration_hash}"
         if key in self._config_cache:
             self._config_cache.move_to_end(key)
             return self._config_cache[key]
 
         headers = request_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
-            response = client.get(url=f"{self._uri}/agents/{key}/configuration", headers=headers)
+            response = client.get(url=f"{self._uri}/agents/{agent_address.address}/configuration", headers=headers)
             response.raise_for_status()
             configuration = response.json()
 

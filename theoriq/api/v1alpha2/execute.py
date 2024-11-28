@@ -9,14 +9,14 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from theoriq.agent import Agent
-from theoriq.biscuit import RequestBiscuit, TheoriqBudget
+from theoriq.biscuit import AgentAddress, RequestBiscuit, TheoriqBudget
 from theoriq.biscuit.facts import TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
 from theoriq.types import Metric
 
 from ..common import ExecuteContextBase, ExecuteResponse
 from .protocol.protocol_client import ProtocolClient
-from .schemas.request import ExecuteRequestBody
+from .schemas.request import Configuration, ExecuteRequestBody
 
 
 class ExecuteContext(ExecuteContextBase):
@@ -35,6 +35,7 @@ class ExecuteContext(ExecuteContextBase):
         """
         super().__init__(agent, request_biscuit)
         self._protocol_client = protocol_client
+        self._configuration_hash: Optional[str] = None
 
     def send_event(self, message: str) -> None:
         """
@@ -85,14 +86,23 @@ class ExecuteContext(ExecuteContextBase):
         response = self._protocol_client.post_request(request_biscuit=request_biscuit, content=body, to_addr=to_addr)
         return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
 
+    def set_configuration(self, configuration: Optional[Configuration]) -> None:
+        if not configuration:
+            return
+
+        self._agent.virtual_address = AgentAddress(configuration.fromRef.id)
+        self._configuration_hash = configuration.fromRef.hash
+
     @property
     def agent_configuration(self) -> Optional[Dict[str, Any]]:
         virtual_address = self._agent.virtual_address
-        if virtual_address.is_null:
+        if virtual_address.is_null or not self._configuration_hash:
             return None
         try:
             return self._protocol_client.get_configuration(
-                request_biscuit=self._request_biscuit, agent_address=virtual_address
+                request_biscuit=self._request_biscuit,
+                agent_address=virtual_address,
+                configuration_hash=self._configuration_hash,
             )
         except RuntimeError:
             return {}
