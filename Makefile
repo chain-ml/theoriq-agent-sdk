@@ -16,7 +16,7 @@ lint:
 	black . --check
 	mypy . --disable-error-code=attr-defined
 	ruff check .
-	pylint theoriq/. --max-line-length 120 --disable=R,C,I,W1203,W0107 --fail-under=9
+	pylint theoriq/. --max-line-length 120 --disable=R,C,I,E0401,W1203,W0107 --fail-under=9
 	isort . --check-only
 
 test:

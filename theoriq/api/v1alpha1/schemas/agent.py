@@ -25,9 +25,3 @@ class AgentResponse(BaseModel):
 
     def __str__(self):
         return f"AgentResponse(id={self.id}, name={self.name})"
-
-
-class PublicKeyResponse(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
-    public_key: str
-    key_type: str

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import os
+from typing import Any, Dict, Optional
 
 import biscuit_auth
 from biscuit_auth import Biscuit, KeyPair, PrivateKey  # pylint: disable=E0611
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from jsonschema import ValidationError
+from jsonschema.validators import Draft7Validator
 
 from .biscuit import (
     AgentAddress,
@@ -18,23 +21,32 @@ from .biscuit import (
 from .biscuit.payload_hash import PayloadHash
 
 
-class AgentConfig:
-    """Expected configuration for a 'Theoriq' agent."""
+class AgentConfigurationSchemaError(Exception):
+    pass
 
-    def __init__(self, private_key: PrivateKey) -> None:
+
+class AgentDeploymentConfiguration:
+    """Expected configuration for a deployment of a 'Theoriq' agent."""
+
+    def __init__(self, private_key: PrivateKey, prefix: str = "") -> None:
         agent_kp = KeyPair.from_private_key(private_key)
         self.private_key: PrivateKey = private_key
         self.address = AgentAddress.from_public_key(agent_kp.public_key)
         self.public_key = agent_kp.public_key
+        self.prefix = prefix
 
     @classmethod
-    def from_env(cls) -> AgentConfig:
-        private_key = os.environ["AGENT_PRIVATE_KEY"]
+    def from_env(cls, env_prefix: str = "") -> AgentDeploymentConfiguration:
+        private_key = os.environ[f"{env_prefix}AGENT_PRIVATE_KEY"]
         agent_private_key = PrivateKey.from_hex(private_key.removeprefix("0x"))
-        return cls(agent_private_key)
+        return cls(agent_private_key, prefix=env_prefix)
+
+    @property
+    def agent_yaml_path(self) -> Optional[str]:
+        return os.getenv(f"{self.prefix}AGENT_YAML_PATH")
 
     def __str__(self):
-        return f"Address: {self.address}, Public key:{self.public_key.to_hex()}"
+        return f"Address: {self.address}, Public key:0x{self.public_key.to_hex()}"
 
 
 class Agent:
@@ -44,11 +56,22 @@ class Agent:
     This class helps with the integration with biscuits and theoriq signing challenge.
 
     Attributes:
-        config (AgentConfig): Agent configuration.
+        config (AgentDeploymentConfiguration): Agent configuration.
+        schema (Optional[Dict]): Configuration Schema for the agent.
     """
 
-    def __init__(self, config: AgentConfig) -> None:
-        self.config = config
+    def __init__(self, config: AgentDeploymentConfiguration, schema: Optional[Dict] = None) -> None:
+        self._config = config
+        self._schema = schema
+        self.virtual_address: AgentAddress = AgentAddress.null()
+
+    @property
+    def config(self) -> AgentDeploymentConfiguration:
+        return self._config
+
+    @property
+    def schema(self) -> Optional[Dict]:
+        return self._schema
 
     def verify_biscuit(self, request_biscuit: RequestBiscuit, body: bytes) -> None:
         """
@@ -94,6 +117,19 @@ class Agent:
         private_key = Ed25519PrivateKey.from_private_bytes(private_key_bytes)
         return private_key.sign(challenge)
 
+    def validate_configuration(self, values: Any) -> None:
+        if self.schema is None:
+            return
+
+        validator = Draft7Validator(self.schema)
+        try:
+            validator.validate(values)
+        except ValidationError as e:
+            raise AgentConfigurationSchemaError(e.message) from e
+
+    def __str__(self):
+        return f"Address: {self.config.address}, Public key: 0x{self.config.public_key.to_hex()}"
+
     @property
     def public_key(self) -> str:
         pk = self.config.public_key.to_hex()
@@ -101,5 +137,10 @@ class Agent:
 
     @classmethod
     def from_env(cls) -> Agent:
-        config = AgentConfig.from_env()
+        config = AgentDeploymentConfiguration.from_env()
         return cls(config)
+
+    @classmethod
+    def validate_schema(cls, schema: Optional[Dict]):
+        if schema is not None:
+            Draft7Validator.check_schema(schema)

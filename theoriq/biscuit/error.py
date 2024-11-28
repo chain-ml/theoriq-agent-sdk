@@ -1,7 +1,7 @@
 """
 error.py
 
-Errors returned by the theoriq SDK
+Errors returned by the Theoriq SDK
 """
 
 

@@ -1,4 +1,5 @@
 import pytest
+
 from theoriq.biscuit import PayloadHash
 
 

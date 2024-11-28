@@ -9,11 +9,12 @@ from typing import Optional
 from uuid import UUID
 
 from biscuit_auth import Fact  # pylint: disable=E0611
-from theoriq.types.currency import Currency
-from theoriq.utils import verify_address
+
+from theoriq.types import Currency
 
 from .agent_address import AgentAddress
 from .payload_hash import PayloadHash
+from .utils import verify_address
 
 
 class FactConvertibleBase(abc.ABC):

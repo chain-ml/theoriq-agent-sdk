@@ -6,7 +6,8 @@ from typing import Optional
 import pytest
 from biscuit_auth import KeyPair, PrivateKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-from theoriq.agent import AgentConfig
+
+from theoriq.agent import AgentDeploymentConfiguration
 
 
 @pytest.fixture(scope="function")
@@ -25,7 +26,7 @@ def agent_kp() -> KeyPair:
 
 
 @pytest.fixture
-def agent_config(agent_kp: Optional[KeyPair]) -> AgentConfig:
+def agent_config(agent_kp: Optional[KeyPair]) -> AgentDeploymentConfiguration:
     """
     Fixture creating an `AgentConfig` for testing purposes
 
@@ -34,11 +35,11 @@ def agent_config(agent_kp: Optional[KeyPair]) -> AgentConfig:
     """
 
     agent_kp = KeyPair() if agent_kp is None else agent_kp
-    return AgentConfig(private_key=agent_kp.private_key)
+    return AgentDeploymentConfiguration(private_key=agent_kp.private_key)
 
 
 @pytest.fixture
-def agent_public_key(agent_config: AgentConfig) -> Ed25519PublicKey:
+def agent_public_key(agent_config: AgentDeploymentConfiguration) -> Ed25519PublicKey:
     agent_keypair = KeyPair.from_private_key(agent_config.private_key)
     public_key_bytes = bytes(agent_keypair.public_key.to_bytes())
     return Ed25519PublicKey.from_public_bytes(public_key_bytes)

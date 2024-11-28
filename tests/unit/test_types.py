@@ -1,4 +1,5 @@
 import pytest
+
 from theoriq.biscuit import AgentAddress
 from theoriq.types import SourceType
 

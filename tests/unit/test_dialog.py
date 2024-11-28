@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from theoriq.biscuit import AgentAddress
-from theoriq.schemas import Dialog
+from theoriq.dialog import Dialog
 from theoriq.types import SourceType
 
 dialog_payload = {
@@ -13,7 +13,16 @@ dialog_payload = {
             "blocks": [{"data": {"text": "Give me the trending tokens in the last 24 hours"}, "type": "text"}],
             "requestId": [uuid4()],
             "sse": [],
-        }
+        },
+        {
+            "sourceType": str(SourceType.Agent),
+            "source": AgentAddress.random(),
+            "timestamp": "2024-11-27T00:57:29.725500Z",
+            "blocks": [{"data": {"text": "The trending tokens in the last 24 hours are ...."}, "type": "text"}],
+            "requestId": [],
+            "dialogId": "7f105329-a491-4f6f-8882-67627acce6bb",
+            "sse": [],
+        },
     ]
 }
 

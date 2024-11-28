@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Type
+from typing import Any, Callable, Dict, Iterable, List, Sequence, Type
 
 from pydantic import BaseModel, field_serializer, field_validator
 
@@ -10,10 +11,10 @@ from .code import CodeItemBlock
 from .custom import CustomItemBlock
 from .data import DataItemBlock
 from .image import ImageItemBlock
+from .item_block import ItemBlock
 from .metrics import MetricsItemBlock
 from .router import RouteItem, RouterItemBlock
 from .runtime_error import ErrorItemBlock
-from .schemas import ItemBlock
 from .text import TextItemBlock
 
 block_classes: Dict[str, Type[ItemBlock]] = {
@@ -52,7 +53,10 @@ class DialogItem:
     @classmethod
     def _datetime_from_str(cls, value: str) -> datetime:
         try:
-            result = datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+            if re.search(r"\.\d+Z$", value):
+                result = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ")
+            else:
+                result = datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
         except ValueError:
             result = datetime.fromisoformat(value)
         return result.replace(tzinfo=timezone.utc) if result.tzinfo is None else result
@@ -62,13 +66,17 @@ class DialogItem:
         if values is None:
             raise ValueError("Cannot create a DialogItem from None")
 
-        blocks: List[ItemBlock[Any]] = []
-        for item in values["blocks"]:
+        if not isinstance(values, dict):
+            raise ValueError(f"Expect a dictionary, got {type(values)}")
+
+        item_blocks: List[ItemBlock[Any]] = []
+        blocs = values.get("blocks", [])
+        for item in blocs:
             block_type: str = item["type"]
             bloc_class = block_classes.get(ItemBlock.root_type(block_type))
             if bloc_class is not None:
                 block_data = item["data"]
-                blocks.append(bloc_class.from_dict(block_data, block_type))
+                item_blocks.append(bloc_class.from_dict(block_data, block_type))
             else:
                 raise ValueError(f"invalid item type {block_type}")
 
@@ -76,7 +84,7 @@ class DialogItem:
             timestamp=values["timestamp"],
             source_type=values["sourceType"],
             source=values["source"],
-            blocks=blocks,
+            blocks=item_blocks,
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -121,64 +129,6 @@ class DialogItem:
         )
 
 
-class Configuration(BaseModel):
-    """
-    Represents the expected payload for a configuration request.
-    """
-
-
-class ExecuteRequestBody(BaseModel):
-    """
-    A class representing the body of an execute request. Inherits from BaseModel.
-    """
-
-    configuration: Optional[Configuration] = None
-    dialog: Dialog
-
-    @property
-    def last_item(self) -> Optional[DialogItem]:
-        """
-        Returns the last dialog item contained in the request based on the timestamp.
-
-        Returns:
-            Optional[DialogItem]: The dialog item with the most recent timestamp, or None if there are no items.
-        """
-        if len(self.dialog.items) == 0:
-            return None
-        # Finds and returns the dialog item with the latest timestamp.
-        return max(self.dialog.items, key=lambda obj: obj.timestamp)
-
-    def last_item_from(self, source_type: SourceType) -> Optional[DialogItem]:
-        """
-        Returns the last dialog item from a specific source type based on the timestamp.
-
-        Args:
-            source_type (SourceType): The source type to filter the dialog items.
-
-        Returns:
-            Optional[DialogItem]: The dialog item with the most recent timestamp from the specified source type,
-                                  or None if no items match the source type.
-        """
-        # Filters items by source type and finds the one with the latest timestamp.
-        return self.last_item_predicate(lambda item: item.source_type == source_type)
-
-    def last_item_predicate(self, predicate: DialogItemPredicate) -> Optional[DialogItem]:
-        """
-        Returns the last dialog item that matches the given predicate based on the timestamp.
-
-        Args:
-            predicate (DialogItemPredicate): A function that takes a DialogItem and returns a boolean.
-
-            Returns:
-                Optional[DialogItem]: The dialog item that matches the predicate and has the latest timestamp,
-                                       or None if no items match the predicate.
-        """
-
-        # Filters items matching the given predicate and finds the one with the latest timestamp.
-        items = (item for item in self.dialog.items if predicate(item))
-        return max(items, key=lambda obj: obj.timestamp) if items else None
-
-
 DialogItemPredicate = Callable[[DialogItem], bool]
 
 
@@ -205,6 +155,8 @@ class Dialog(BaseModel):
                 try:
                     dialog_item = DialogItem.from_dict(item)
                     items.append(dialog_item)
+                except ValueError:
+                    raise
                 except Exception as e:
                     raise ValueError from e
 

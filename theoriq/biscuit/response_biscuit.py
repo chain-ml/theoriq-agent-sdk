@@ -3,6 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from biscuit_auth import Authorizer, Biscuit, BlockBuilder, Rule  # pylint: disable=E0611
+
 from theoriq.biscuit import PayloadHash, TheoriqCost, TheoriqResponse
 from theoriq.types.currency import Currency
 

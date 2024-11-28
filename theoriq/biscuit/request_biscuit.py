@@ -42,11 +42,16 @@ class RequestFacts:
         authorizer.add_token(biscuit)
         facts = authorizer.query(rule)
 
-        [req_id, body_hash, from_addr, to_addr, amount, currency, voucher] = facts[0].terms
-        theoriq_request = TheoriqRequest(body_hash=body_hash, from_addr=from_addr, to_addr=to_addr)
-        theoriq_budget = TheoriqBudget(amount=amount, currency=Currency.from_value(currency), voucher=voucher)
+        if len(facts) == 0:
+            raise ValueError("No facts found in current biscuit")
 
-        return RequestFacts(req_id, theoriq_request, theoriq_budget)
+        try:
+            [req_id, body_hash, from_addr, to_addr, amount, currency, voucher] = facts[0].terms
+            theoriq_request = TheoriqRequest(body_hash=body_hash, from_addr=from_addr, to_addr=to_addr)
+            theoriq_budget = TheoriqBudget(amount=amount, currency=Currency.from_value(currency), voucher=voucher)
+            return RequestFacts(req_id, theoriq_request, theoriq_budget)
+        except Exception as e:
+            raise ValueError("Missing information") from e
 
     @staticmethod
     def generate_new_biscuit(body: bytes, *, from_addr: str, to_addr: str) -> Biscuit:
@@ -79,7 +84,7 @@ class RequestFacts:
 
 
 class RequestBiscuit:
-    """Request biscuit used by the `theoriq` protocol"""
+    """Request biscuit used by the `Theoriq` protocol"""
 
     def __init__(self, biscuit: Biscuit) -> None:
         self.biscuit: Biscuit = biscuit

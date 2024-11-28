@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, Optional
 
-from .schemas import BaseData, ItemBlock
+from .item_block import BaseData, ItemBlock
 
 
 class CustomData(BaseData):

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
+import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from biscuit_auth import Authorizer, Biscuit, BiscuitBuilder, Check, Policy, PublicKey, Rule  # pylint: disable=E0611
-from theoriq.utils import verify_address
 
-from .utils import hash_public_key
+from .utils import hash_public_key, verify_address
 
 
 class AgentAddress:
@@ -92,5 +93,18 @@ class AgentAddress:
         return cls.from_int(1)
 
     @classmethod
+    def random(cls) -> AgentAddress:
+        random_bytes = os.urandom(32)
+        keccak_hash = hashlib.sha3_256(random_bytes).hexdigest()
+        return cls(keccak_hash)
+
+    @classmethod
     def null(cls) -> AgentAddress:
         return cls.from_int(0)
+
+    @property
+    def is_null(self) -> bool:
+        return self.address == AgentAddress.null()
+
+    def __hash__(self) -> int:
+        return hash(self.address)
