@@ -104,7 +104,7 @@ class AgentAddress:
 
     @property
     def is_null(self) -> bool:
-        return self.address == AgentAddress.null()
+        return self == AgentAddress.null()
 
     def __hash__(self) -> int:
         return hash(self.address)
