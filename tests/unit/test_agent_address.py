@@ -17,3 +17,8 @@ def test_agent_address_from_public_key():
 def test_agent_random():
     add = AgentAddress.random()
     assert isinstance(add, AgentAddress)
+
+
+def test_agent_null():
+    add = AgentAddress.null()
+    assert add.is_null

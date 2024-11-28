@@ -113,7 +113,7 @@ class ExecuteContextBase:
         Returns:
             str: The agent's address as a string.
         """
-        if self._agent.virtual_address is None:
+        if self._agent.virtual_address.is_null:
             return str(self._agent.config.address)
         return str(self._agent.virtual_address)
 
