@@ -149,6 +149,10 @@ class ExecuteContextBase:
         return self._request_biscuit.request_facts.request.from_addr
 
     @property
+    def sender_kind(self) -> SourceType:
+        return SourceType.from_address(self._request_biscuit.request_facts.request.from_addr)
+
+    @property
     def budget(self) -> TheoriqBudget:
         """
         Returns the budget for the request from the request biscuit.
