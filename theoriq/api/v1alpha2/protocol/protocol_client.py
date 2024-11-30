@@ -19,12 +19,12 @@ from ..schemas.metrics import MetricsRequestBody
 
 class ProtocolClient:
     _config_cache: OrderedDict[str, Dict[str, Any]] = OrderedDict()
+    _public_key: Optional[str] = None
 
     def __init__(self, uri: str, timeout: Optional[int] = 120, max_retries: Optional[int] = None):
         self._uri = f"{uri}/api/v1alpha2"
         self._timeout = timeout
         self._max_retries = max_retries or 0
-        self._public_key: Optional[str] = None
 
     @property
     def public_key(self) -> str:
@@ -38,6 +38,12 @@ class ProtocolClient:
             response.raise_for_status()
             data = response.json()
             return PublicKeyResponse(**data)
+
+    def get_agent(self, agent_id: str) -> AgentResponse:
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.get(url=f"{self._uri}/agents/0x{agent_id}")
+            response.raise_for_status()
+            return AgentResponse.model_validate(response.json())
 
     def get_agents(self) -> Sequence[AgentResponse]:
         with httpx.Client(timeout=self._timeout) as client:
