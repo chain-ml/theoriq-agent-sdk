@@ -13,6 +13,10 @@ class AgentUrls:
         self.icon = icon
 
     @classmethod
+    def Undefined(cls) -> AgentUrls:
+        return AgentUrls(end_point="", icon="")
+
+    @classmethod
     def from_dict(cls, values: Mapping[str, Any]) -> AgentUrls:
         end_point = values.get("endPoint", "")
         icon = values.get("icon", "")
@@ -43,30 +47,29 @@ class AgentDescriptions:
         return f"{self.short} - {self.long}"
 
 
-class AgentSpec(DataObjectSpecBase):
+class AgentMetadata:
     def __init__(
         self,
-        urls: AgentUrls,
+        name: str,
         descriptions: AgentDescriptions,
         tags: Sequence[str],
         examples: Sequence[str],
         cost_card: str,
     ) -> None:
-        self.urls = urls
+        self.name = name
         self.descriptions = descriptions
         self.tags = tags
         self.examples = examples
         self.cost_card = cost_card
 
     @classmethod
-    def from_dict(cls, values: Mapping[str, Any]) -> AgentSpec:
-        urls = AgentUrls.from_dict(values.get("urls", {}))
+    def from_dict(cls, values: Mapping[str, Any]) -> AgentMetadata:
         tags = [value for value in values.get("tags", [])]
         descriptions = AgentDescriptions.from_dict(values.get("descriptions", {}))
         examples = [value for value in values.get("examplePrompts", [])]
         cost_card = values.get("costCard", "")
 
-        return AgentSpec(urls, descriptions, tags, examples, cost_card)
+        return AgentMetadata(descriptions, tags, examples, cost_card)
 
     def to_dict(self) -> Dict[str, Any]:
         result = {
@@ -75,6 +78,22 @@ class AgentSpec(DataObjectSpecBase):
             "costCard": self.cost_card,
         }
         result |= {**self.descriptions.to_dict()}
+        return result
+
+
+class AgentSpec(DataObjectSpecBase):
+    def __init__(self, metadata: AgentMetadata, urls: AgentUrls) -> None:
+        self._metadata = metadata
+        self.urls = urls
+
+    @classmethod
+    def from_dict(cls, values: Mapping[str, Any]) -> AgentSpec:
+        metadata = AgentMetadata.from_dict(values.get("metadata", {}))
+        urls = AgentUrls.from_dict(values.get("urls", {}))
+        return AgentSpec(metadata, urls=urls)
+
+    def to_dict(self) -> Dict[str, Any]:
+        result = self._metadata.to_dict()
         result |= {"imageUrl": self.urls.icon}
         return result
 

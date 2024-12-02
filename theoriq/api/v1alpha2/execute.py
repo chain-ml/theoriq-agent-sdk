@@ -12,8 +12,9 @@ from theoriq.agent import Agent
 from theoriq.biscuit import AgentAddress, RequestBiscuit, TheoriqBudget
 from theoriq.biscuit.facts import TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
-from theoriq.types import Metric
+from theoriq.types import AgentMetadata, Metric
 
+from ...types.agent_data import AgentDescriptions
 from ..common import ExecuteContextBase, ExecuteResponse
 from .protocol.protocol_client import ProtocolClient
 from .schemas.request import Configuration, ExecuteRequestBody
@@ -106,6 +107,18 @@ class ExecuteContext(ExecuteContextBase):
             )
         except RuntimeError:
             return {}
+
+    def _sender_metadata(self, agent_id: str) -> AgentMetadata:
+        agent_response = self._protocol_client.get_agent(agent_id=agent_id)
+        metadata = agent_response.metadata
+        descriptions = AgentDescriptions(short=metadata.short_description, long=metadata.long_description)
+        return AgentMetadata(
+            name=metadata.name,
+            descriptions=descriptions,
+            tags=metadata.tags,
+            examples=metadata.example_prompts,
+            cost_card=metadata.cost_card,
+        )
 
 
 ExecuteRequestFn = Callable[[ExecuteContext, ExecuteRequestBody], ExecuteResponse]
