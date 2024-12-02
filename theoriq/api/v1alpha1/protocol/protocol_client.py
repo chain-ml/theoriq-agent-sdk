@@ -39,7 +39,7 @@ class ProtocolClient:
 
     def get_agent(self, agent_id: str) -> AgentResponse:
         with httpx.Client(timeout=self._timeout) as client:
-            response = client.get(url=f"{self._uri}/agents/0x{agent_id}")
+            response = client.get(url=f'{self._uri}/agents/0x{agent_id.removeprefix("0x")}')
             response.raise_for_status()
             return AgentResponse.model_validate(response.json())
 

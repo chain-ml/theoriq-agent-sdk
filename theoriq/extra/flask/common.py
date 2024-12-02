@@ -60,8 +60,8 @@ def agent_data() -> Response:
             agent_data = AgentDataObject.from_yaml(path)
             data = agent_data.to_dict()
             metadata = data["spec"] | {"name": agent_data.metadata.name}
-        except Exception:
-            pass
+        except Exception as err:
+            logger.error(f"error loading metadata file: {path}, error: {err} ")
 
     result = {"system": result} | {"metadata": metadata}
     return jsonify(result)

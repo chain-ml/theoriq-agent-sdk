@@ -11,8 +11,9 @@ from typing import Callable, List, Sequence
 from theoriq.agent import Agent
 from theoriq.biscuit import RequestBiscuit, TheoriqBudget, TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
-from theoriq.types import Metric
+from theoriq.types import AgentMetadata, Metric
 
+from ...types.agent_data import AgentDescriptions
 from ..common import ExecuteContextBase, ExecuteResponse
 from .protocol.protocol_client import ProtocolClient
 from .schemas.request import ExecuteRequestBody
@@ -83,6 +84,17 @@ class ExecuteContext(ExecuteContextBase):
         request_biscuit = self._request_biscuit.attenuate_for_request(theoriq_request, budget, config.private_key)
         response = self._protocol_client.post_request(request_biscuit=request_biscuit, content=body, to_addr=to_addr)
         return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
+
+    def _sender_metadata(self, agent_id: str) -> AgentMetadata:
+        agent_response = self._protocol_client.get_agent(agent_id=agent_id)
+        descriptions = AgentDescriptions(short=agent_response.short_description, long=agent_response.long_description)
+        return AgentMetadata(
+            name=agent_response.name,
+            descriptions=descriptions,
+            tags=agent_response.tags,
+            examples=agent_response.example_prompts,
+            cost_card=agent_response.cost_card,
+        )
 
 
 ExecuteRequestFn = Callable[[ExecuteContext, ExecuteRequestBody], ExecuteResponse]

@@ -1,4 +1,4 @@
-from theoriq.api import AgentResponseV1alpha1, AgentResponseV1alpha2, ProtocolClientV1alpha1, ProtocolClientV1alpha2
+from theoriq.api import AgentResponseV1alpha1, ProtocolClientV1alpha1
 
 
 def test_get_agent():
@@ -8,12 +8,12 @@ def test_get_agent():
 
 
 def test_get_agents():
-    pc = ProtocolClientV1alpha2("http://localhost:8080")
+    pc = ProtocolClientV1alpha1("http://localhost:8080")
     agents = pc.get_agents()
 
     assert len(agents) > 0
     for agent in agents:
-        assert isinstance(agent, AgentResponseV1alpha2)
+        assert isinstance(agent, AgentResponseV1alpha1)
 
 
 def test_get_public_key():

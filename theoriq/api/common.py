@@ -7,13 +7,16 @@ from theoriq import Agent
 
 from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
 from ..dialog import DialogItem, ErrorItemBlock, ItemBlock
-from ..types import Currency, SourceType
+from ..types import AgentMetadata, Currency, SourceType
+from ..utils import TTLCache
 
 
 class ExecuteContextBase:
     """
     Represents the context for executing a request, managing interactions with the agent and protocol client.
     """
+
+    _metadata_cache: TTLCache[AgentMetadata] = TTLCache(ttl=30, max_size=20)
 
     def __init__(self, agent: Agent, request_biscuit: RequestBiscuit) -> None:
         """
@@ -161,6 +164,24 @@ class ExecuteContextBase:
             TheoriqBudget: The budget associated with the request.
         """
         return self._request_biscuit.request_facts.budget
+
+    @property
+    def sender_metadata(self) -> Optional[AgentMetadata]:
+        if self.sender_kind.is_user:
+            return None
+
+        key = self._request_biscuit.request_facts.request.from_addr
+        result = self._metadata_cache.get(key)
+        if result is not None:
+            return result
+
+        result = self._sender_metadata(key)
+        self._metadata_cache.set(key, result)
+        return result
+
+    @abc.abstractmethod
+    def _sender_metadata(self, agent_id: str) -> AgentMetadata:
+        pass
 
 
 class ExecuteResponse:
