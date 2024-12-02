@@ -8,5 +8,7 @@ class SystemHealthFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         message = record.getMessage()
         if "/system/livez" in message and "200" in message and "GET" in message:
-            return False
+            record.levelno = logging.DEBUG
+            record.levelname = "DEBUG"
+            return logging.getLogger().isEnabledFor(logging.DEBUG)
         return True
