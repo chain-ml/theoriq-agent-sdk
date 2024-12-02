@@ -49,17 +49,14 @@ def sign_challenge() -> Response:
 def agent_data() -> Response:
     """Agent data endpoint"""
     agent = agent_var.get()
-    path = (
-        os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), agent.config.agent_yaml_path))
-        if agent.config.agent_yaml_path
-        else None
-    )
+    path = agent.config.agent_yaml_path
     result: Dict[str, Any] = {"publicKey": agent.public_key}
     metadata = {}
 
-    logger.debug(f"loading metadata file: {path}")
     if path:
         try:
+            path = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), path))
+            logger.debug(f"loading metadata file: {path}")
             agent_data = AgentDataObject.from_yaml(path)
             data = agent_data.to_dict()
             metadata = data["spec"] | {"name": agent_data.metadata.name}
