@@ -1,3 +1,6 @@
+import logging
+import os
+import sys
 from datetime import datetime, timezone
 from typing import Any, Dict
 
@@ -12,6 +15,8 @@ from theoriq.extra import start_time
 from theoriq.extra.globals import agent_var
 from theoriq.types import AgentDataObject
 from theoriq.utils import is_protocol_secured
+
+logger = logging.getLogger(__name__)
 
 
 def theoriq_system_blueprint() -> Blueprint:
@@ -44,10 +49,15 @@ def sign_challenge() -> Response:
 def agent_data() -> Response:
     """Agent data endpoint"""
     agent = agent_var.get()
-    path = agent.config.agent_yaml_path
+    path = (
+        os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), agent.config.agent_yaml_path))
+        if agent.config.agent_yaml_path
+        else None
+    )
     result: Dict[str, Any] = {"publicKey": agent.public_key}
     metadata = {}
 
+    logger.debug(f"loading metadata file: {path}")
     if path:
         try:
             agent_data = AgentDataObject.from_yaml(path)
