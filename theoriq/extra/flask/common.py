@@ -1,3 +1,6 @@
+import logging
+import os
+import sys
 from datetime import datetime, timezone
 from typing import Any, Dict
 
@@ -12,6 +15,8 @@ from theoriq.extra import start_time
 from theoriq.extra.globals import agent_var
 from theoriq.types import AgentDataObject
 from theoriq.utils import is_protocol_secured
+
+logger = logging.getLogger(__name__)
 
 
 def theoriq_system_blueprint() -> Blueprint:
@@ -50,6 +55,8 @@ def agent_data() -> Response:
 
     if path:
         try:
+            path = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), path))
+            logger.debug(f"loading metadata file: {path}")
             agent_data = AgentDataObject.from_yaml(path)
             data = agent_data.to_dict()
             metadata = data["spec"] | {"name": agent_data.metadata.name}
