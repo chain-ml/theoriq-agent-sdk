@@ -69,7 +69,7 @@ class AgentMetadata:
         examples = [value for value in values.get("examplePrompts", [])]
         cost_card = values.get("costCard", "")
 
-        return AgentMetadata(descriptions, tags, examples, cost_card)
+        return AgentMetadata("", descriptions, tags, examples, cost_card)
 
     def to_dict(self) -> Dict[str, Any]:
         result = {
@@ -88,7 +88,7 @@ class AgentSpec(DataObjectSpecBase):
 
     @classmethod
     def from_dict(cls, values: Mapping[str, Any]) -> AgentSpec:
-        metadata = AgentMetadata.from_dict(values.get("metadata", {}))
+        metadata = AgentMetadata.from_dict(values)
         urls = AgentUrls.from_dict(values.get("urls", {}))
         return AgentSpec(metadata, urls=urls)
 
