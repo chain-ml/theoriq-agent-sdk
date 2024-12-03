@@ -21,6 +21,7 @@ from ..common import (
     process_biscuit_request,
     theoriq_system_blueprint,
 )
+from ...logging.execute_context import ExecuteLogContext
 
 logger = logging.getLogger(__name__)
 
@@ -70,24 +71,24 @@ def execute_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Resp
         protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
         request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
         execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit)
-
-        try:
-            execute_request_body = ExecuteRequestBody.model_validate(request.json)
-            execute_context.set_configuration(execute_request_body.configuration)
-            # Execute user's function
+        with ExecuteLogContext(execute_context):
             try:
-                execute_response = execute_request_function(execute_context, execute_request_body)
-            except ExecuteRuntimeError as err:
-                execute_response = execute_context.runtime_error_response(err)
+                execute_request_body = ExecuteRequestBody.model_validate(request.json)
+                execute_context.set_configuration(execute_request_body.configuration)
+                # Execute user's function
+                try:
+                    execute_response = execute_request_function(execute_context, execute_request_body)
+                except ExecuteRuntimeError as err:
+                    execute_response = execute_context.runtime_error_response(err)
 
-            response = jsonify(execute_response.body.to_dict())
-            response_biscuit = execute_context.new_response_biscuit(response.get_data(), execute_response.theoriq_cost)
-            response = add_biscuit_to_response(response, response_biscuit)
-        except pydantic.ValidationError as err:
-            response = new_error_response(execute_context, err, 400)
-        except Exception as err:
-            logger.exception(err)
-            response = new_error_response(execute_context, err, 500)
+                response = jsonify(execute_response.body.to_dict())
+                response_biscuit = execute_context.new_response_biscuit(response.get_data(), execute_response.theoriq_cost)
+                response = add_biscuit_to_response(response, response_biscuit)
+            except pydantic.ValidationError as err:
+                response = new_error_response(execute_context, err, 400)
+            except Exception as err:
+                logger.exception(err)
+                response = new_error_response(execute_context, err, 500)
     except TheoriqBiscuitError as err:
         # Process the request biscuit. If not present, return a 401 error
         return build_error_payload(
