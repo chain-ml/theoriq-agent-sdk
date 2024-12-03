@@ -9,6 +9,7 @@ import logging
 x_request_id_var: ContextVar[Optional[str]] = ContextVar("x_request_id", default=None)
 logger = logging.getLogger(__name__)
 
+
 def before_request():
     x_request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
     x_request_id_var.set(x_request_id)
