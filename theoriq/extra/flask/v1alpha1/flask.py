@@ -13,6 +13,7 @@ from theoriq.api.v1alpha1.schemas import ExecuteRequestBody as ExecuteRequestBod
 from theoriq.biscuit import TheoriqBiscuitError
 from theoriq.extra.globals import agent_var
 
+from ...logging.execute_context import ExecuteLogContext
 from ..common import (
     add_biscuit_to_response,
     build_error_payload,
@@ -20,7 +21,6 @@ from ..common import (
     process_biscuit_request,
     theoriq_system_blueprint,
 )
-from ...logging.execute_context import ExecuteLogContext
 
 logger = logging.getLogger(__name__)
 
