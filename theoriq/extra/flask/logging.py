@@ -3,9 +3,8 @@ from typing import Optional
 
 from flask import Flask
 
-from .system_health_filter import SystemHealthFilter
-from ...logging import init
-from ...logging import http_request_context
+from ..logging import init
+from ..logging import http_request_context
 
 
 def init_logging(app: Flask, level: Optional[str] = None):
@@ -15,3 +14,9 @@ def init_logging(app: Flask, level: Optional[str] = None):
 
     flask_logger = logging.getLogger("werkzeug")
     flask_logger.setLevel(logging.WARNING)
+
+def list_routes(app: Flask):
+    logging.info(f"registered endpoints:")
+    for rule in app.url_map.iter_rules():
+        logging.info(f'path="{rule.rule}" methods="{",".join(rule.methods)}"')
+
