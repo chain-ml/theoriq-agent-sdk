@@ -3,8 +3,7 @@ from typing import Optional
 
 from flask import Flask
 
-from ..logging import init
-from ..logging import http_request_context
+from ..logging import http_request_context, init
 
 
 def init_logging(app: Flask, level: Optional[str] = None):
@@ -17,6 +16,7 @@ def init_logging(app: Flask, level: Optional[str] = None):
 
 
 def list_routes(app: Flask):
-    logging.info(f"registered endpoints:")
+    logging.info("registered endpoints:")
     for rule in app.url_map.iter_rules():
-        logging.info(f'path="{rule.rule}" methods="{",".join(rule.methods)}"')
+        methods = ",".join(rule.methods) if rule.methods else None
+        logging.info(f'path="{rule.rule}" methods="{methods}"')

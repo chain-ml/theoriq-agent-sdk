@@ -1,10 +1,9 @@
+import logging
 import uuid
 from contextvars import ContextVar
 from typing import Optional
 
 from flask import Response, request
-
-import logging
 
 x_request_id_var: ContextVar[Optional[str]] = ContextVar("x_request_id", default=None)
 logger = logging.getLogger(__name__)
