@@ -61,3 +61,6 @@ class Metric:
             result["customLabels"] = self._custom_labels
 
         return result
+
+    def __str__(self) -> str:
+        return f"Metric(name={self.name}, value={self.value})"
