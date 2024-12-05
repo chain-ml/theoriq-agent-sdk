@@ -28,9 +28,9 @@ class ProtocolClient:
 
     @property
     def public_key(self) -> str:
-        if self._public_key is None:
-            self._public_key = self.get_public_key().public_key
-        return self._public_key
+        if ProtocolClient._public_key is None:
+            ProtocolClient._public_key = self.get_public_key().public_key
+        return ProtocolClient._public_key
 
     def get_public_key(self) -> PublicKeyResponse:
         with httpx.Client(timeout=self._timeout) as client:

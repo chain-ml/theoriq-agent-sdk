@@ -16,7 +16,7 @@ class ExecuteContextBase:
     Represents the context for executing a request, managing interactions with the agent and protocol client.
     """
 
-    _metadata_cache: TTLCache[AgentMetadata] = TTLCache(ttl=30, max_size=20)
+    _metadata_cache: TTLCache[AgentMetadata] = TTLCache(ttl=180, max_size=40)
 
     def __init__(self, agent: Agent, request_biscuit: RequestBiscuit) -> None:
         """

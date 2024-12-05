@@ -26,9 +26,9 @@ class ProtocolClient:
 
     @property
     def public_key(self) -> str:
-        if self._public_key is None:
-            self._public_key = self.get_public_key().public_key
-        return self._public_key
+        if ProtocolClient._public_key is None:
+            ProtocolClient._public_key = self.get_public_key().public_key
+        return ProtocolClient._public_key
 
     def get_public_key(self) -> PublicKeyResponse:
         with httpx.Client(timeout=self._timeout) as client:
@@ -43,12 +43,16 @@ class ProtocolClient:
             response.raise_for_status()
             return AgentResponse.model_validate(response.json())
 
-    def get_agents(self) -> Sequence[AgentResponse]:
+    def get_agents(self, owner_address: Optional[str] = None) -> Sequence[AgentResponse]:
         with httpx.Client(timeout=self._timeout) as client:
             response = client.get(url=f"{self._uri}/agents")
             response.raise_for_status()
             data = response.json()
-            return [AgentResponse(**item) for item in data["items"]]
+            return [
+                AgentResponse(**item)
+                for item in data["items"]
+                if not owner_address or item["ownerAddress"] == owner_address
+            ]
 
     def post_request(self, request_biscuit: RequestBiscuit, content: bytes, to_addr: str):
         url = f'{self._uri}/agents/{to_addr.removeprefix("0x")}/execute'
@@ -104,5 +108,5 @@ class ProtocolClient:
             timeout=int(os.getenv("THEORIQ_TIMEOUT", "120")),
             max_retries=int(os.getenv("THEORIQ_MAX_RETRIES", "0")),
         )
-        result._public_key = os.getenv("THEORIQ_PUBLIC_KEY")
+        cls._public_key = os.getenv("THEORIQ_PUBLIC_KEY")
         return result
