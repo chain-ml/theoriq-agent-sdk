@@ -28,7 +28,10 @@ logger = logging.getLogger(__name__)
 
 
 def theoriq_blueprint(
-    agent_config: AgentDeploymentConfiguration, execute_fn: ExecuteRequestFnV1alpha2, schema: Optional[Dict] = None, configure_fn: Optional[ConfigureFn] = None
+    agent_config: AgentDeploymentConfiguration,
+    execute_fn: ExecuteRequestFnV1alpha2,
+    schema: Optional[Dict] = None,
+    configure_fn: Optional[ConfigureFn] = None,
 ) -> Blueprint:
     """
     Theoriq blueprint
@@ -51,11 +54,17 @@ def theoriq_configuration_blueprint(configure_fn: Optional[ConfigureFn]) -> Blue
     blueprint = Blueprint("theoriq_configuration", __name__, url_prefix="/configuration")
     blueprint.add_url_rule("/schema", view_func=get_configuration_schema, methods=["GET"])
     blueprint.add_url_rule("/<string:agent_id>/validate", view_func=validate_configuration, methods=["POST"])
-    blueprint.add_url_rule("/<string:agent_id>/apply", view_func=lambda agent_id: apply_configuration(agent_id, configure_fn), methods=["POST"])
+    blueprint.add_url_rule(
+        "/<string:agent_id>/apply",
+        view_func=lambda agent_id: apply_configuration(agent_id, configure_fn),
+        methods=["POST"],
+    )
     return blueprint
 
 
-def _build_v1alpha2_blueprint(execute_fn: ExecuteRequestFnV1alpha2, configure_fn: Optional[ConfigureFn] = None) -> Blueprint:
+def _build_v1alpha2_blueprint(
+    execute_fn: ExecuteRequestFnV1alpha2, configure_fn: Optional[ConfigureFn] = None
+) -> Blueprint:
     v1alpha2_blueprint = Blueprint("v1alpha2", __name__, url_prefix="/api/v1alpha2")
     v1alpha2_blueprint.add_url_rule("/execute", view_func=lambda: execute_v1alpha2(execute_fn), methods=["POST"])
     v1alpha2_blueprint.register_blueprint(theoriq_system_blueprint())

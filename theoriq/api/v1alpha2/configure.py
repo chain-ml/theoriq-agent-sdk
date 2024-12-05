@@ -2,7 +2,7 @@ from typing import Any, Callable
 
 from theoriq import Agent
 from theoriq.api.v1alpha2 import AgentResponse, ProtocolClient
-from theoriq.biscuit import AgentAddress, RequestBiscuit
+from theoriq.biscuit import AgentAddress
 
 
 class ConfigureContext:
@@ -21,5 +21,6 @@ class ConfigureContext:
     @property
     def virtual_agent(self) -> AgentResponse:
         return self._protocol_client.get_agent(self._agent.virtual_address.address)
+
 
 ConfigureFn = Callable[[ConfigureContext, Any], None]
