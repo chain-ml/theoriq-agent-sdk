@@ -108,9 +108,7 @@ def execute_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Resp
                 execute_response = execute_context.runtime_error_response(err)
 
             response = jsonify(execute_response.body.to_dict())
-            response_biscuit = execute_context.new_response_biscuit(
-                response.get_data(), execute_response.theoriq_cost
-            )
+            response_biscuit = execute_context.new_response_biscuit(response.get_data(), execute_response.theoriq_cost)
             response = add_biscuit_to_response(response, response_biscuit)
             return response
         except pydantic.ValidationError as err:
