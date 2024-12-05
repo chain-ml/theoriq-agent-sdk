@@ -45,9 +45,26 @@ def theoriq_blueprint(
     def set_context():
         agent_var.set(Agent(agent_config, schema))
 
+    configure_error_handlers(main_blueprint)
+
     v1alpha2_blueprint = _build_v1alpha2_blueprint(execute_fn, configure_fn)
     main_blueprint.register_blueprint(v1alpha2_blueprint)
     return main_blueprint
+
+
+def configure_error_handlers(main_blueprint):
+    @main_blueprint.errorhandler(Exception)
+    def handle_exception(e: Exception):
+        logging.exception(e)
+        return build_error_payload(
+            agent_address=str(agent_var.get().config.address), request_id="", err=str(e), status_code=500
+        )
+
+    @main_blueprint.errorhandler(TheoriqBiscuitError)
+    def handle_biscuit_exception(e: TheoriqBiscuitError):
+        return build_error_payload(
+            agent_address=str(agent_var.get().config.address), request_id="", err=str(e), status_code=401
+        )
 
 
 def theoriq_configuration_blueprint(configure_fn: Optional[ConfigureFn]) -> Blueprint:
@@ -77,41 +94,28 @@ def execute_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Resp
     """Execute endpoint"""
     logger.debug("Executing request")
     agent = agent_var.get()
-    try:
-        protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
-        request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
-        execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit)
-        with ExecuteLogContext(execute_context):
+    protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
+    request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
+    execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit)
+    with ExecuteLogContext(execute_context):
+        try:
+            execute_request_body = ExecuteRequestBody.model_validate(request.json)
+            execute_context.set_configuration(execute_request_body.configuration)
+            # Execute user's function
             try:
-                execute_request_body = ExecuteRequestBody.model_validate(request.json)
-                execute_context.set_configuration(execute_request_body.configuration)
-                # Execute user's function
-                try:
-                    execute_response = execute_request_function(execute_context, execute_request_body)
-                except ExecuteRuntimeError as err:
-                    execute_response = execute_context.runtime_error_response(err)
+                execute_response = execute_request_function(execute_context, execute_request_body)
+            except ExecuteRuntimeError as err:
+                execute_response = execute_context.runtime_error_response(err)
 
-                response = jsonify(execute_response.body.to_dict())
-                response_biscuit = execute_context.new_response_biscuit(
-                    response.get_data(), execute_response.theoriq_cost
-                )
-                response = add_biscuit_to_response(response, response_biscuit)
-            except pydantic.ValidationError as err:
-                response = new_error_response(execute_context, err, 400)
-            except Exception as err:
-                logger.exception(err)
-                response = new_error_response(execute_context, err, 500)
-    except TheoriqBiscuitError as err:
-        # Process the request biscuit. If not present, return a 401 error
-        return build_error_payload(
-            agent_address=str(agent.config.address), request_id="", err=str(err), status_code=401
-        )
-    except Exception as err:
-        return build_error_payload(
-            agent_address=str(agent.config.address), request_id="", err=str(err), status_code=500
-        )
-    else:
-        return response
+            response = jsonify(execute_response.body.to_dict())
+            response_biscuit = execute_context.new_response_biscuit(response.get_data(), execute_response.theoriq_cost)
+            response = add_biscuit_to_response(response, response_biscuit)
+            return response
+        except pydantic.ValidationError as err:
+            return new_error_response(execute_context, err, 400)
+        except Exception as err:
+            logger.exception(err)
+            return new_error_response(execute_context, err, 500)
 
 
 def get_configuration_schema() -> Response:
@@ -122,27 +126,17 @@ def get_configuration_schema() -> Response:
 def validate_configuration(agent_id: str) -> Response:
     payload = request.json
     agent = agent_var.get()
-    try:
-        agent.validate_configuration(payload)
-        return Response(status=200)
-    except Exception as err:
-        return build_error_payload(
-            agent_address=str(agent.config.address), request_id="", err=str(err), status_code=401
-        )
+    agent.validate_configuration(payload)
+    return Response(status=200)
 
 
 def apply_configuration(agent_id: str, configure_fn: Optional[ConfigureFn]) -> Response:
     payload = request.json
     agent = agent_var.get()
-    try:
-        agent.validate_configuration(payload)
-        protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
-        context = ConfigureContext(agent, protocol_client)
-        context.set_virtual_address(agent_id)
-        if configure_fn:
-            configure_fn(context, payload)
-        return Response(status=200)
-    except Exception as err:
-        return build_error_payload(
-            agent_address=str(agent.config.address), request_id="", err=str(err), status_code=401
-        )
+    agent.validate_configuration(payload)
+    protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
+    context = ConfigureContext(agent, protocol_client)
+    context.set_virtual_address(agent_id)
+    if configure_fn:
+        configure_fn(context, payload)
+    return Response(status=200)
