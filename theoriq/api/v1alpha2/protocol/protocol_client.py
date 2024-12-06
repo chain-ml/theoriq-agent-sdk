@@ -28,9 +28,9 @@ class ProtocolClient:
 
     @property
     def public_key(self) -> str:
-        if self._public_key is None:
-            self._public_key = self.get_public_key().public_key
-        return self._public_key
+        if ProtocolClient._public_key is None:
+            ProtocolClient._public_key = self.get_public_key().public_key
+        return ProtocolClient._public_key
 
     def get_public_key(self) -> PublicKeyResponse:
         with httpx.Client(timeout=self._timeout) as client:
@@ -125,5 +125,5 @@ class ProtocolClient:
             timeout=int(os.getenv("THEORIQ_TIMEOUT", "120")),
             max_retries=int(os.getenv("THEORIQ_MAX_RETRIES", "0")),
         )
-        result._public_key = os.getenv("THEORIQ_PUBLIC_KEY")
+        ProtocolClient._public_key = os.getenv("THEORIQ_PUBLIC_KEY")
         return result
