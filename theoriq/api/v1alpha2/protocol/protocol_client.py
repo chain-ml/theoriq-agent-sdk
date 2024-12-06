@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -9,7 +8,7 @@ import httpx
 
 from theoriq.biscuit import AgentAddress, RequestBiscuit
 from theoriq.types import Metric
-from theoriq.utils import is_protocol_secured
+from theoriq.utils import TTLCache, is_protocol_secured
 
 from ..schemas.agent import AgentResponse
 from ..schemas.api import PublicKeyResponse
@@ -18,8 +17,8 @@ from ..schemas.metrics import MetricsRequestBody
 
 
 class ProtocolClient:
-    _config_cache: OrderedDict[str, Dict[str, Any]] = OrderedDict()
-    _public_key: Optional[str] = None
+    _config_cache: TTLCache[Dict[str, Any]] = TTLCache()
+    _public_key_cache: TTLCache[PublicKeyResponse] = TTLCache(ttl=None, max_size=5)
 
     def __init__(self, uri: str, timeout: Optional[int] = 120, max_retries: Optional[int] = None):
         self._uri = f"{uri}/api/v1alpha2"
@@ -28,9 +27,11 @@ class ProtocolClient:
 
     @property
     def public_key(self) -> str:
-        if ProtocolClient._public_key is None:
-            ProtocolClient._public_key = self.get_public_key().public_key
-        return ProtocolClient._public_key
+        key = self._public_key_cache.get(self._uri)
+        if key is None:
+            key = self.get_public_key()
+            self._public_key_cache.set(self._uri, key)
+        return key.public_key
 
     def get_public_key(self) -> PublicKeyResponse:
         with httpx.Client(timeout=self._timeout) as client:
@@ -56,20 +57,17 @@ class ProtocolClient:
         self, request_biscuit: RequestBiscuit, agent_address: AgentAddress, configuration_hash: str
     ) -> Dict[str, Any]:
         key = f"{agent_address.address}_{configuration_hash}"
-        if key in self._config_cache:
-            self._config_cache.move_to_end(key)
-            return self._config_cache[key]
+        cached_response = self._config_cache.get(key)
+        if cached_response:
+            return cached_response
 
         headers = request_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
             response = client.get(url=f"{self._uri}/agents/{agent_address.address}/configuration", headers=headers)
             response.raise_for_status()
             configuration = response.json()
-
-            if len(self._config_cache) >= 128:
-                self._config_cache.popitem(last=False)
-            self._config_cache[key] = configuration
-            self._config_cache.move_to_end(key)
+            if configuration is not None:
+                self._config_cache.set(key, configuration)
             return configuration
 
     def post_request(self, request_biscuit: RequestBiscuit, content: bytes, to_addr: str):
@@ -125,5 +123,10 @@ class ProtocolClient:
             timeout=int(os.getenv("THEORIQ_TIMEOUT", "120")),
             max_retries=int(os.getenv("THEORIQ_MAX_RETRIES", "0")),
         )
-        ProtocolClient._public_key = os.getenv("THEORIQ_PUBLIC_KEY")
+        public_key = os.getenv("THEORIQ_PUBLIC_KEY")
+        if public_key:
+            cls._public_key_cache.set(
+                f"{uri}/api/v1alpha2", PublicKeyResponse(**{"publicKey": public_key, "keyType": ""})
+            )
+
         return result

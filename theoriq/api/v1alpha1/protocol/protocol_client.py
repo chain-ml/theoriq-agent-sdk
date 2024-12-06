@@ -8,7 +8,7 @@ import httpx
 
 from theoriq.biscuit import RequestBiscuit
 from theoriq.types import Metric
-from theoriq.utils import is_protocol_secured
+from theoriq.utils import TTLCache, is_protocol_secured
 
 from ..schemas.agent import AgentResponse
 from ..schemas.api import PublicKeyResponse
@@ -17,7 +17,7 @@ from ..schemas.metrics import MetricsRequestBody
 
 
 class ProtocolClient:
-    _public_key: Optional[str] = None
+    _public_key_cache: TTLCache[PublicKeyResponse] = TTLCache(ttl=None, max_size=5)
 
     def __init__(self, uri: str, timeout: Optional[int] = 120, max_retries: Optional[int] = None):
         self._uri = f"{uri}/api/v1alpha1"
@@ -26,9 +26,11 @@ class ProtocolClient:
 
     @property
     def public_key(self) -> str:
-        if ProtocolClient._public_key is None:
-            ProtocolClient._public_key = self.get_public_key().public_key
-        return ProtocolClient._public_key
+        key = self._public_key_cache.get(self._uri)
+        if key is None:
+            key = self.get_public_key()
+            self._public_key_cache.set(self._uri, key)
+        return key.public_key
 
     def get_public_key(self) -> PublicKeyResponse:
         with httpx.Client(timeout=self._timeout) as client:
@@ -108,5 +110,9 @@ class ProtocolClient:
             timeout=int(os.getenv("THEORIQ_TIMEOUT", "120")),
             max_retries=int(os.getenv("THEORIQ_MAX_RETRIES", "0")),
         )
-        cls._public_key = os.getenv("THEORIQ_PUBLIC_KEY")
+        public_key = os.getenv("THEORIQ_PUBLIC_KEY")
+        if public_key:
+            cls._public_key_cache.set(
+                f"{uri}/api/v1alpha1", PublicKeyResponse(**{"publicKey": public_key, "keyType": ""})
+            )
         return result
