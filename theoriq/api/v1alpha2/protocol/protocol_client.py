@@ -125,5 +125,5 @@ class ProtocolClient:
             timeout=int(os.getenv("THEORIQ_TIMEOUT", "120")),
             max_retries=int(os.getenv("THEORIQ_MAX_RETRIES", "0")),
         )
-        result._public_key = os.getenv("THEORIQ_PUBLIC_KEY")
+        ProtocolClient._public_key = os.getenv("THEORIQ_PUBLIC_KEY")
         return result
