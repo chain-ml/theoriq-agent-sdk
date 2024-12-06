@@ -15,7 +15,7 @@ T = TypeVar("T")
 
 
 class TTLCache(Generic[T]):
-    def __init__(self, ttl: int, max_size: int):
+    def __init__(self, *, ttl: Optional[int] = None, max_size: int = 100):
         """
         Initialize the cache with a specific time-to-live (TTL) and maximum size.
 
@@ -24,7 +24,7 @@ class TTLCache(Generic[T]):
         """
         self.ttl = ttl
         self.max_size = max_size
-        self.cache: OrderedDict[str, tuple[T, float]] = OrderedDict()  # Cache storing (value, expiry_time)
+        self.cache: OrderedDict[str, tuple[T, Optional[float]]] = OrderedDict()  # Cache storing (value, expiry_time)
 
     def set(self, key: str, value: T) -> None:
         """
@@ -36,7 +36,7 @@ class TTLCache(Generic[T]):
         if key in self.cache:
             del self.cache[key]
 
-        expiry_time = time.time() + self.ttl
+        expiry_time = time.time() + self.ttl if self.ttl is not None else None
         self.cache[key] = (value, expiry_time)
 
         if len(self.cache) > self.max_size:
@@ -51,7 +51,7 @@ class TTLCache(Generic[T]):
         """
         if key in self.cache:
             value, expiry_time = self.cache[key]
-            if time.time() < expiry_time:
+            if expiry_time is None or time.time() < expiry_time:
                 return value
             else:
                 del self.cache[key]
