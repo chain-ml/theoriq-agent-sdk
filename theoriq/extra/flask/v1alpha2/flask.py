@@ -14,7 +14,9 @@ from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
 from theoriq.api.v1alpha2 import ConfigureContext
 from theoriq.api.v1alpha2.configure import AgentConfigurator
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
-from theoriq.biscuit import TheoriqBiscuitError, PayloadHash
+from theoriq.biscuit import PayloadHash, TheoriqBiscuitError
+from theoriq.biscuit.theoriq_biscuit import RequestFact, ResponseFact, TheoriqBiscuit
+from theoriq.extra.flask.common import get_bearer_token
 from theoriq.extra.globals import agent_var
 
 from ...logging.execute_context import ExecuteLogContext
@@ -25,9 +27,6 @@ from ..common import (
     process_biscuit_request,
     theoriq_system_blueprint,
 )
-from theoriq.extra.flask.common import get_bearer_token
-from theoriq.biscuit.theoriq_biscuit import TheoriqBiscuit, ResponseFact
-from theoriq.biscuit.theoriq_biscuit import RequestFact
 
 logger = logging.getLogger(__name__)
 

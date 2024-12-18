@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import abc
 from uuid import UUID
+
 from biscuit_auth import Authorizer, Biscuit, BlockBuilder, Fact, KeyPair, PrivateKey, PublicKey, Rule
 
-from theoriq.biscuit.agent_address import AgentAddress
-from theoriq.biscuit.utils import verify_address, from_base64_token
 from theoriq.biscuit import PayloadHash
+from theoriq.biscuit.agent_address import AgentAddress
+from theoriq.biscuit.utils import from_base64_token, verify_address
 
 
 class TheoriqFact(abc.ABC):
