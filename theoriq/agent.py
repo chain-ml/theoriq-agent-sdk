@@ -19,6 +19,7 @@ from .biscuit import (
     VerificationError,
 )
 from .biscuit.payload_hash import PayloadHash
+from .biscuit.theoriq_biscuit import TheoriqBiscuit, TheoriqFact
 
 
 class AgentConfigurationSchemaError(Exception):
@@ -82,7 +83,7 @@ class Agent:
         :raises ParseBiscuitError: if the biscuit could not be parsed.
         :raises VerificationError: if the biscuit is not valid.
         """
-        self._authorize_biscuit(request_biscuit.biscuit)
+        self.authorize_biscuit(request_biscuit.biscuit)
         self._verify_biscuit_facts(request_biscuit.request_facts, body)
 
     def attenuate_biscuit_for_response(
@@ -90,7 +91,10 @@ class Agent:
     ) -> ResponseBiscuit:
         return req_biscuit.attenuate_for_response(body, cost, self.config.private_key)
 
-    def _authorize_biscuit(self, biscuit: Biscuit):
+    def attenuate_biscuit(self, biscuit: TheoriqBiscuit, fact: TheoriqFact) -> TheoriqBiscuit:
+        return biscuit.attenuate(self.config.private_key, fact)
+
+    def authorize_biscuit(self, biscuit: Biscuit):
         """Runs the authorization checks and policies on the given biscuit."""
         authorizer = self.config.address.default_authorizer()
         authorizer.add_token(biscuit)

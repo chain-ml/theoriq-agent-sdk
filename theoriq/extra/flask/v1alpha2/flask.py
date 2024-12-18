@@ -14,7 +14,8 @@ from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
 from theoriq.api.v1alpha2 import ConfigureContext
 from theoriq.api.v1alpha2.configure import AgentConfigurator
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
-from theoriq.biscuit import TheoriqBiscuitError
+from theoriq.biscuit import PayloadHash, RequestFact, ResponseFact, TheoriqBiscuit, TheoriqBiscuitError
+from theoriq.extra.flask.common import get_bearer_token
 from theoriq.extra.globals import agent_var
 
 from ...logging.execute_context import ExecuteLogContext
@@ -133,12 +134,30 @@ def validate_configuration(agent_id: str) -> Response:
 def apply_configuration(agent_id: str, agent_configurator: AgentConfigurator) -> Response:
     payload = request.json  # <-- TODO: The payload should be fetched instead of relying on the one received.
     agent = agent_var.get()
-    agent.validate_configuration(payload)
     protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
+
+    # Validate configuration
+    agent.validate_configuration(payload)
     context = ConfigureContext(agent, protocol_client)
     context.set_virtual_address(agent_id)
 
+    # Authorize biscuit
+    token = get_bearer_token(request)
+    theoriq_biscuit = TheoriqBiscuit.from_token(token, protocol_client.public_key)
+    agent.authorize_biscuit(theoriq_biscuit.biscuit)
+
+    # Extract facts
+    request_fact = RequestFact.from_biscuit(theoriq_biscuit)
+    request_id = request_fact.request_id
+
     if agent_configurator.is_long_running_fn(context, payload):
+        body = bytes()  # Compute the real body we are sending to the backend
+        body_hash = PayloadHash(body)
+        response_fact = ResponseFact(request_id, body_hash, request_fact.from_addr)
+
+        # TODO: Use this biscuit to complete the request.
+        _theoriq_biscuit = agent.attenuate_biscuit(theoriq_biscuit, response_fact)
+
         # TODO: Once the `configure_fn` finishes, send a request to theoriq to complete the request.
         thread = threading.Thread(target=agent_configurator.configure_fn, args=(context, payload))
         thread.start()
