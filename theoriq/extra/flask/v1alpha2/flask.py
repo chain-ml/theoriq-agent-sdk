@@ -81,9 +81,7 @@ def theoriq_configuration_blueprint(agent_configurator: AgentConfigurator) -> Bl
     return blueprint
 
 
-def _build_v1alpha2_blueprint(
-    execute_fn: ExecuteRequestFnV1alpha2, agent_configurator: AgentConfigurator
-) -> Blueprint:
+def _build_v1alpha2_blueprint(execute_fn: ExecuteRequestFnV1alpha2, agent_configurator: AgentConfigurator) -> Blueprint:
     v1alpha2_blueprint = Blueprint("v1alpha2", __name__, url_prefix="/api/v1alpha2")
     v1alpha2_blueprint.add_url_rule("/execute", view_func=lambda: execute_v1alpha2(execute_fn), methods=["POST"])
     v1alpha2_blueprint.register_blueprint(theoriq_system_blueprint())

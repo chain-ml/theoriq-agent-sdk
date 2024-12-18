@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Any, Callable
 
 from theoriq import Agent
@@ -19,7 +18,7 @@ class ConfigureContext:
         return self._agent.virtual_address
 
 
-ConfigureFn = Callable[[ConfigureContext, ...], None]
+ConfigureFn = Callable[[ConfigureContext, Any], None]
 """A callable type for the configuration function.
 
 The function accepts:
@@ -27,7 +26,7 @@ The function accepts:
 - Additional keyword arguments to build the configuration.
 """
 
-IsLongRunningFn = Callable[[ConfigureContext, ...], bool]
+IsLongRunningFn = Callable[[ConfigureContext, Any], bool]
 """A callable type for checking if a configuration is long-running.
 
 :param
@@ -54,7 +53,11 @@ class AgentConfigurator:
         Creates a default instance of AgentConfigurator.
         Useful when the agent does not require any configuration.
         """
-        def default_configure_fn(context, config): return None
-        def default_is_long_running_fn(context, config): return False
+
+        def default_configure_fn(context, config):
+            return None
+
+        def default_is_long_running_fn(context, config):
+            return False
 
         return cls(default_configure_fn, default_is_long_running_fn)
