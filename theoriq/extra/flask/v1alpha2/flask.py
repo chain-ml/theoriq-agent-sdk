@@ -1,6 +1,7 @@
 """Helpers to write agent using a flask web app."""
 
 import logging
+import threading
 from typing import Dict, Optional
 
 import pydantic
@@ -10,7 +11,8 @@ import theoriq
 from theoriq import ExecuteRuntimeError
 from theoriq.agent import Agent, AgentDeploymentConfiguration
 from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
-from theoriq.api.v1alpha2 import ConfigureContext, ConfigureFn
+from theoriq.api.v1alpha2 import ConfigureContext
+from theoriq.api.v1alpha2.configure import AgentConfigurator
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
 from theoriq.biscuit import TheoriqBiscuitError
 from theoriq.extra.globals import agent_var
@@ -31,7 +33,7 @@ def theoriq_blueprint(
     agent_config: AgentDeploymentConfiguration,
     execute_fn: ExecuteRequestFnV1alpha2,
     schema: Optional[Dict] = None,
-    configure_fn: Optional[ConfigureFn] = None,
+    agent_configurator: AgentConfigurator = AgentConfigurator.default(),
 ) -> Blueprint:
     """
     Theoriq blueprint
@@ -47,7 +49,7 @@ def theoriq_blueprint(
 
     configure_error_handlers(main_blueprint)
 
-    v1alpha2_blueprint = _build_v1alpha2_blueprint(execute_fn, configure_fn)
+    v1alpha2_blueprint = _build_v1alpha2_blueprint(execute_fn, agent_configurator)
     main_blueprint.register_blueprint(v1alpha2_blueprint)
     return main_blueprint
 
@@ -67,25 +69,25 @@ def configure_error_handlers(main_blueprint):
         )
 
 
-def theoriq_configuration_blueprint(configure_fn: Optional[ConfigureFn]) -> Blueprint:
+def theoriq_configuration_blueprint(agent_configurator: AgentConfigurator) -> Blueprint:
     blueprint = Blueprint("theoriq_configuration", __name__, url_prefix="/configuration")
     blueprint.add_url_rule("/schema", view_func=get_configuration_schema, methods=["GET"])
     blueprint.add_url_rule("/<string:agent_id>/validate", view_func=validate_configuration, methods=["POST"])
     blueprint.add_url_rule(
         "/<string:agent_id>/apply",
-        view_func=lambda agent_id: apply_configuration(agent_id, configure_fn),
+        view_func=lambda agent_id: apply_configuration(agent_id, agent_configurator),
         methods=["POST"],
     )
     return blueprint
 
 
 def _build_v1alpha2_blueprint(
-    execute_fn: ExecuteRequestFnV1alpha2, configure_fn: Optional[ConfigureFn] = None
+    execute_fn: ExecuteRequestFnV1alpha2, agent_configurator: AgentConfigurator
 ) -> Blueprint:
     v1alpha2_blueprint = Blueprint("v1alpha2", __name__, url_prefix="/api/v1alpha2")
     v1alpha2_blueprint.add_url_rule("/execute", view_func=lambda: execute_v1alpha2(execute_fn), methods=["POST"])
     v1alpha2_blueprint.register_blueprint(theoriq_system_blueprint())
-    v1alpha2_blueprint.register_blueprint(theoriq_configuration_blueprint(configure_fn))
+    v1alpha2_blueprint.register_blueprint(theoriq_configuration_blueprint(agent_configurator))
 
     return v1alpha2_blueprint
 
@@ -130,13 +132,19 @@ def validate_configuration(agent_id: str) -> Response:
     return Response(status=200)
 
 
-def apply_configuration(agent_id: str, configure_fn: Optional[ConfigureFn]) -> Response:
-    payload = request.json
+def apply_configuration(agent_id: str, agent_configurator: AgentConfigurator) -> Response:
+    payload = request.json  # <-- TODO: The payload should be fetched instead of relying on the one received.
     agent = agent_var.get()
     agent.validate_configuration(payload)
     protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
     context = ConfigureContext(agent, protocol_client)
     context.set_virtual_address(agent_id)
-    if configure_fn:
-        configure_fn(context, payload)
-    return Response(status=200)
+
+    if agent_configurator.is_long_running_fn(context, payload):
+        # TODO: Once the `configure_fn` finishes, send a request to theoriq to complete the request.
+        thread = threading.Thread(target=agent_configurator.configure_fn, args=(context, payload))
+        thread.start()
+        return Response(status=202)
+    else:
+        agent_configurator.configure_fn(context, payload)
+        return Response(status=200)
