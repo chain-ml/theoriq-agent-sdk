@@ -14,8 +14,7 @@ from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
 from theoriq.api.v1alpha2 import ConfigureContext
 from theoriq.api.v1alpha2.configure import AgentConfigurator
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
-from theoriq.biscuit import PayloadHash, TheoriqBiscuitError
-from theoriq.biscuit.theoriq_biscuit import RequestFact, ResponseFact, TheoriqBiscuit
+from theoriq.biscuit import PayloadHash, RequestFact, ResponseFact, TheoriqBiscuit, TheoriqBiscuitError
 from theoriq.extra.flask.common import get_bearer_token
 from theoriq.extra.globals import agent_var
 

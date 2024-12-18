@@ -14,7 +14,7 @@ class TheoriqFact(abc.ABC):
     """Base class for facts contained in a biscuit"""
 
     @classmethod
-    def from_biscuit(cls, theoriq_biscuit: TheoriqBiscuit) -> "TheoriqFact":
+    def from_biscuit(cls, theoriq_biscuit: TheoriqBiscuit) -> TheoriqFact:
         """Extract facts from a biscuit"""
         rule = cls.biscuit_rule()
 
@@ -37,13 +37,19 @@ class TheoriqFact(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def from_fact(cls, fact: Fact) -> "TheoriqFact":
+    def from_fact(cls, fact: Fact) -> TheoriqFact:
         pass
 
     @abc.abstractmethod
+    def get_fact(self) -> Fact:
+        pass
+
     def to_block_builder(self) -> BlockBuilder:
         """Convert facts to a biscuit block"""
-        pass
+        fact = self.get_fact()
+        block_builder = BlockBuilder("")
+        block_builder.add_fact(fact)
+        return block_builder
 
 
 class RequestFact(TheoriqFact):
@@ -63,12 +69,12 @@ class RequestFact(TheoriqFact):
         )
 
     @classmethod
-    def from_fact(cls, fact: Fact) -> "TheoriqFact":
+    def from_fact(cls, fact: Fact) -> TheoriqFact:
         [req_id, body_hash, from_addr, to_addr] = fact.terms
         return cls(req_id, body_hash, from_addr, to_addr)
 
-    def to_block_builder(self) -> BlockBuilder:
-        fact = Fact(
+    def get_fact(self) -> Fact:
+        return Fact(
             "theoriq:request({req_id}, {body_hash}, {from_addr}, {to_addr})",
             {
                 "req_id": str(self.request_id),
@@ -77,10 +83,6 @@ class RequestFact(TheoriqFact):
                 "to_addr": self.to_addr,
             },
         )
-
-        block_builder = BlockBuilder("")
-        block_builder.add_fact(fact)
-        return block_builder
 
 
 class ResponseFact(TheoriqFact):
@@ -97,19 +99,15 @@ class ResponseFact(TheoriqFact):
         return Rule("data($req_id, $body_hash, $target_addr) <- theoriq:response($req_id, $body_hash, $target_addr)")
 
     @classmethod
-    def from_fact(cls, fact: Fact) -> "TheoriqFact":
+    def from_fact(cls, fact: Fact) -> TheoriqFact:
         [req_id, body_hash, to_addr] = fact.terms
         return cls(req_id, body_hash, to_addr)
 
-    def to_block_builder(self) -> BlockBuilder:
-        fact = Fact(
+    def get_fact(self) -> Fact:
+        return Fact(
             "theoriq:response({req_id}, {body_hash}, {to_addr})",
             {"req_id": str(self.request_id), "body_hash": str(self._body_hash), "to_addr": self.to_addr},
         )
-
-        block_builder = BlockBuilder("")
-        block_builder.add_fact(fact)
-        return block_builder
 
 
 class TheoriqBiscuit:
@@ -119,7 +117,7 @@ class TheoriqBiscuit:
         self.biscuit = biscuit
 
     @classmethod
-    def from_token(cls, token: str, public_key: str) -> "TheoriqBiscuit":
+    def from_token(cls, token: str, public_key: str) -> TheoriqBiscuit:
         public_key = public_key.removeprefix("0x")
         biscuit = from_base64_token(token, PublicKey.from_hex(public_key))
         return cls(biscuit)
@@ -127,7 +125,7 @@ class TheoriqBiscuit:
     def to_base64(self) -> str:
         return self.biscuit.to_base64()
 
-    def attenuate(self, agent_pk: PrivateKey, fact: TheoriqFact) -> "TheoriqBiscuit":
+    def attenuate(self, agent_pk: PrivateKey, fact: TheoriqFact) -> TheoriqBiscuit:
         agent_kp = KeyPair.from_private_key(agent_pk)
         block_builder = fact.to_block_builder()
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, block_builder)  # type: ignore
