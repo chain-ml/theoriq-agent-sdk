@@ -6,7 +6,6 @@ from biscuit_auth import Authorizer, Biscuit, BlockBuilder, Fact, KeyPair, Priva
 
 from theoriq.biscuit.agent_address import AgentAddress
 from theoriq.biscuit.utils import verify_address, from_base64_token
-from theoriq.types.currency import Currency
 from theoriq.biscuit import PayloadHash
 
 
@@ -14,12 +13,12 @@ class TheoriqFact(abc.ABC):
     """Base class for facts contained in a biscuit"""
 
     @classmethod
-    def from_biscuit(cls, biscuit: Biscuit) -> "TheoriqFact":
+    def from_biscuit(cls, theoriq_biscuit: TheoriqBiscuit) -> "TheoriqFact":
         """Extract facts from a biscuit"""
         rule = cls.biscuit_rule()
 
         authorizer = Authorizer()
-        authorizer.add_token(biscuit)
+        authorizer.add_token(theoriq_biscuit.biscuit)
         facts = authorizer.query(rule)
 
         if len(facts) == 0:
@@ -58,7 +57,9 @@ class RequestFact(TheoriqFact):
 
     @classmethod
     def biscuit_rule(cls) -> Rule:
-        return Rule("data($req_id, $body_hash, $from_addr, $target_addr) <- theoriq:request($req_id, $body_hash, $from_addr, $target_addr)")
+        return Rule(
+            "data($req_id, $body_hash, $from_addr, $target_addr) <- theoriq:request($req_id, $body_hash, $from_addr, $target_addr)"
+        )
 
     @classmethod
     def from_fact(cls, fact: Fact) -> "TheoriqFact":
@@ -73,42 +74,6 @@ class RequestFact(TheoriqFact):
                 "body_hash": str(self.body_hash),
                 "from_addr": self.from_addr,
                 "to_addr": self.to_addr,
-            },
-        )
-
-        block_builder = BlockBuilder("")
-        block_builder.add_fact(fact)
-        return block_builder
-
-class BudgetFact(TheoriqFact):
-    """`theoriq:budget` fact"""
-
-    def __init__(self, request_id: UUID, amount: str | int, currency: Currency, voucher: str):
-        super().__init__()
-        self.request_id = request_id
-        self.amount = str(amount)
-        if len(self.amount) > 0 and currency is None:
-            raise ValueError("Invalid budget: currency must be specified if amount is specified")
-        self.currency = currency
-        self.voucher = voucher
-
-    @classmethod
-    def biscuit_rule(cls) -> Rule:
-        return Rule("data($req_id, $amount, $currency, $voucher) <- theoriq:budget($req_id, $amount, $currency, $voucher)")
-
-    @classmethod
-    def from_fact(cls, fact: Fact) -> "TheoriqFact":
-        [req_id, amount, currency, voucher] = fact.terms
-        return cls(req_id, amount, currency, voucher)
-
-    def to_block_builder(self) -> BlockBuilder:
-        fact = Fact(
-            "theoriq:budget({req_id}, {amount}, {currency}, {voucher})",
-            {
-                "req_id": self.request_id,
-                "amount": self.amount,
-                "currency": self.currency.value if self.currency else "",
-                "voucher": self.voucher,
             },
         )
 
@@ -138,44 +103,7 @@ class ResponseFact(TheoriqFact):
     def to_block_builder(self) -> BlockBuilder:
         fact = Fact(
             "theoriq:response({req_id}, {body_hash}, {to_addr})",
-            {
-                "req_id": str(self.request_id),
-                "body_hash": str(self._body_hash),
-                "to_addr": self.to_addr
-            },
-        )
-
-        block_builder = BlockBuilder("")
-        block_builder.add_fact(fact)
-        return block_builder
-
-
-class CostFact(TheoriqFact):
-    """`theoriq:cost` fact"""
-
-    def __init__(self, request_id: UUID, amount: str | int, currency: Currency) -> None:
-        super().__init__()
-        self.request_id = request_id
-        self.amount = str(amount)
-        self.currency = currency
-
-    @classmethod
-    def biscuit_rule(cls) -> Rule:
-        return Rule("data($req_id, $amount, $currency) <- theoriq:cost($req_id, $amount, $currency)")
-
-    @classmethod
-    def from_fact(cls, fact: Fact) -> "TheoriqFact":
-        [req_id, amount, currency] = fact.terms
-        return cls(req_id, amount, currency)
-
-    def to_block_builder(self) -> BlockBuilder:
-        fact = Fact(
-            "theoriq:cost({req_id}, {amount}, {currency})",
-            {
-                "req_id": str(self.request_id),
-                "amount": self.amount,
-                "currency": self.currency.value
-            },
+            {"req_id": str(self.request_id), "body_hash": str(self._body_hash), "to_addr": self.to_addr},
         )
 
         block_builder = BlockBuilder("")
