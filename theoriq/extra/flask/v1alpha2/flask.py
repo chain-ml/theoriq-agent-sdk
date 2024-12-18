@@ -25,6 +25,9 @@ from ..common import (
     process_biscuit_request,
     theoriq_system_blueprint,
 )
+from theoriq.extra.flask.common import get_bearer_token
+from theoriq.biscuit.theoriq_biscuit import TheoriqBiscuit
+from theoriq.biscuit.theoriq_biscuit import RequestFact
 
 logger = logging.getLogger(__name__)
 
@@ -133,8 +136,20 @@ def validate_configuration(agent_id: str) -> Response:
 def apply_configuration(agent_id: str, agent_configurator: AgentConfigurator) -> Response:
     payload = request.json  # <-- TODO: The payload should be fetched instead of relying on the one received.
     agent = agent_var.get()
-    agent.validate_configuration(payload)
     protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
+
+    # Authorize biscuit
+    biscuit = get_bearer_token(request)
+    theoriq_biscuit = TheoriqBiscuit.from_token(biscuit, protocol_client.public_key)
+    print("agent address", agent.config.address)
+    print("theoriq_biscuit", theoriq_biscuit.biscuit)
+    agent._authorize_biscuit(theoriq_biscuit.biscuit)
+
+    # Extract facts
+    request_fact = RequestFact.from_biscuit(theoriq_biscuit.biscuit)
+    print(request_fact.request_id)
+
+    agent.validate_configuration(payload)
     context = ConfigureContext(agent, protocol_client)
     context.set_virtual_address(agent_id)
 
