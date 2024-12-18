@@ -19,3 +19,45 @@ class ConfigureContext:
 
 
 ConfigureFn = Callable[[ConfigureContext, Any], None]
+"""A callable type for the configuration function.
+
+The function accepts:
+- A `ConfigureContext` instance to provide the configuration context.
+- Additional keyword arguments to build the configuration.
+"""
+
+IsLongRunningFn = Callable[[ConfigureContext, Any], bool]
+"""A callable type for checking if a configuration is long-running.
+
+:param
+- A `ConfigureContext` instance to provide the configuration context.
+- Additional keyword arguments to build the configuration.
+
+:returns
+- A boolean indicating whether the configuration is long-running.
+"""
+
+
+class AgentConfigurator:
+    """
+    A class to manage and execute configuration for agents.
+    """
+
+    def __init__(self, configure_fn: ConfigureFn, is_long_running_fn: IsLongRunningFn) -> None:
+        self.configure_fn = configure_fn
+        self.is_long_running_fn = is_long_running_fn
+
+    @classmethod
+    def default(cls) -> "AgentConfigurator":
+        """
+        Creates a default instance of AgentConfigurator.
+        Useful when the agent does not require any configuration.
+        """
+
+        def default_configure_fn(context, config):
+            return None
+
+        def default_is_long_running_fn(context, config):
+            return False
+
+        return cls(default_configure_fn, default_is_long_running_fn)
