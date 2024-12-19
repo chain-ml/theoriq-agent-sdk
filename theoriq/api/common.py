@@ -3,12 +3,21 @@ from __future__ import annotations
 import abc
 from typing import Any, Dict, Optional, Sequence
 
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
+
 from theoriq import Agent
 
 from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
 from ..dialog import DialogItem, ErrorItemBlock, ItemBlock
 from ..types import AgentMetadata, Currency, SourceType
 from ..utils import TTLCache
+
+
+class PublicKeyResponse(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+    public_key: str
+    key_type: str
 
 
 class ExecuteContextBase:

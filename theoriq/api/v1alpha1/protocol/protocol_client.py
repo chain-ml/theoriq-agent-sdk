@@ -14,36 +14,17 @@ from ..schemas.agent import AgentResponse
 from ..schemas.api import PublicKeyResponse
 from ..schemas.event_request import EventRequestBody
 from ..schemas.metrics import MetricsRequestBody
+from ...protocol_client_base import ProtocolClientBase
 
 
-class ProtocolClient:
-    _public_key_cache: TTLCache[PublicKeyResponse] = TTLCache(ttl=None, max_size=5)
+class ProtocolClient(ProtocolClientBase):
 
     def __init__(self, uri: str, timeout: Optional[int] = 120, max_retries: Optional[int] = None):
-        self._uri = f"{uri}/api/v1alpha1"
-        self._timeout = timeout
-        self._max_retries = max_retries or 0
-
-    @property
-    def public_key(self) -> str:
-        key = self._public_key_cache.get(self._uri)
-        if key is None:
-            key = self.get_public_key()
-            self._public_key_cache.set(self._uri, key)
-        return key.public_key
-
-    def get_public_key(self) -> PublicKeyResponse:
-        with httpx.Client(timeout=self._timeout) as client:
-            response = client.get(url=f"{self._uri}/auth/biscuits/public-key")
-            response.raise_for_status()
-            data = response.json()
-            return PublicKeyResponse(**data)
+        super().__init__(uri, "v1alpha1", timeout, max_retries)
 
     def get_agent(self, agent_id: str) -> AgentResponse:
-        with httpx.Client(timeout=self._timeout) as client:
-            response = client.get(url=f'{self._uri}/agents/0x{agent_id.removeprefix("0x")}')
-            response.raise_for_status()
-            return AgentResponse.model_validate(response.json())
+        response = self._make_request("get", f'agents/{agent_id.removeprefix("0x")}')
+        return AgentResponse.model_validate(response.json())
 
     def get_agents(self, owner_address: Optional[str] = None) -> Sequence[AgentResponse]:
         with httpx.Client(timeout=self._timeout) as client:

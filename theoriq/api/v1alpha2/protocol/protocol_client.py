@@ -14,24 +14,14 @@ from ..schemas.agent import AgentResponse
 from ..schemas.api import PublicKeyResponse
 from ..schemas.event_request import EventRequestBody
 from ..schemas.metrics import MetricsRequestBody
+from ...protocol_client_base import ProtocolClientBase
 
 
-class ProtocolClient:
+class ProtocolClient(ProtocolClientBase):
     _config_cache: TTLCache[Dict[str, Any]] = TTLCache()
-    _public_key_cache: TTLCache[PublicKeyResponse] = TTLCache(ttl=None, max_size=5)
 
     def __init__(self, uri: str, timeout: Optional[int] = 120, max_retries: Optional[int] = None):
-        self._uri = f"{uri}/api/v1alpha2"
-        self._timeout = timeout
-        self._max_retries = max_retries or 0
-
-    @property
-    def public_key(self) -> str:
-        key = self._public_key_cache.get(self._uri)
-        if key is None:
-            key = self.get_public_key()
-            self._public_key_cache.set(self._uri, key)
-        return key.public_key
+        super().__init__(uri, "v1alpha2", timeout, max_retries)
 
     def get_public_key(self) -> PublicKeyResponse:
         with httpx.Client(timeout=self._timeout) as client:
@@ -46,12 +36,15 @@ class ProtocolClient:
             response.raise_for_status()
             return AgentResponse.model_validate(response.json())
 
-    def get_agents(self) -> Sequence[AgentResponse]:
-        with httpx.Client(timeout=self._timeout) as client:
-            response = client.get(url=f"{self._uri}/agents")
-            response.raise_for_status()
-            data = response.json()
-            return [AgentResponse(**item) for item in data["items"]]
+    def get_agents(self, show_banned: Optional[bool] = None, sort: Optional[str] = None) -> Sequence[AgentResponse]:
+        params = {}
+        if show_banned is not None:
+            params["showBanned"] = show_banned
+        if sort is not None:
+            params["sort"] = sort
+
+        response = self._make_request("get", "agents", params=params)
+        return [AgentResponse(**item) for item in response.json()["items"]]
 
     def get_configuration(
         self, request_biscuit: RequestBiscuit, agent_address: AgentAddress, configuration_hash: str
