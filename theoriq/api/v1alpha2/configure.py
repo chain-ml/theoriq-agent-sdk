@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import Any, Callable
 
@@ -54,28 +56,18 @@ class AgentConfigurator:
 
     def __call__(self, configure_context: ConfigureContext, payload: Any, biscuit: TheoriqBiscuit, agent: Agent):
         client = configure_context._protocol_client
-        request_fact = RequestFact.from_biscuit(biscuit)
-        request_id = request_fact.request_id
 
         try:
             self.configure_fn(configure_context, payload)
         except Exception as e:
             logger.error(f"Failed to configure agent: {e}")
-            response = ConfigureResponse(response=str(e))
-            response_bytes = response.model_dump_json().encode()
-            response_fact = ResponseFact(request_id, PayloadHash(response_bytes), request_fact.from_addr)
-            biscuit = agent.attenuate_biscuit(biscuit, response_fact)
-            client.post_request_failure(biscuit, response_bytes, request_id)
+            client.post_request_failure(biscuit, str(e), agent)
             return
 
-        response = ConfigureResponse(response=None)
-        response_bytes = response.model_dump_json().encode()
-        response_fact = ResponseFact(request_id, PayloadHash(response_bytes), request_fact.from_addr)
-        biscuit = agent.attenuate_biscuit(biscuit, response_fact)
-        client.post_request_success(biscuit, response_bytes, request_id)
+        client.post_request_success(biscuit, None, agent)
 
     @classmethod
-    def default(cls) -> "AgentConfigurator":
+    def default(cls) -> AgentConfigurator:
         """
         Creates a default instance of AgentConfigurator.
         Useful when the agent does not require any configuration.
