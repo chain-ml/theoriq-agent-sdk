@@ -1,9 +1,12 @@
+import logging
 from typing import Any, Callable
 from uuid import UUID
 
 from theoriq import Agent
 from theoriq.api.v1alpha2 import ProtocolClient
 from theoriq.biscuit import AgentAddress, TheoriqBiscuit, RequestBiscuit
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigureContext:
@@ -53,11 +56,15 @@ class AgentConfigurator:
     ):
         client = configure_context._protocol_client
         request_biscuit = RequestBiscuit(biscuit.biscuit)
+
         try:
             self.configure_fn(configure_context, payload)
-            client.post_request_success(request_biscuit, body, request_id)
-        except:
+        except Exception as e:
+            logger.error(f"Failed to configure agent: {e}")
             client.post_request_failure(request_biscuit, body, request_id)
+            return
+
+        client.post_request_success(request_biscuit, body, request_id)
 
     @classmethod
     def default(cls) -> "AgentConfigurator":
