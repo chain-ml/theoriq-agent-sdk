@@ -4,7 +4,7 @@ from uuid import UUID
 
 from theoriq import Agent
 from theoriq.api.v1alpha2 import ProtocolClient
-from theoriq.biscuit import AgentAddress, TheoriqBiscuit, RequestBiscuit
+from theoriq.biscuit import AgentAddress, RequestBiscuit, TheoriqBiscuit
 
 logger = logging.getLogger(__name__)
 
