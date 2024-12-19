@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from theoriq import Agent
 from theoriq.api.v1alpha2 import ProtocolClient
-from theoriq.biscuit import AgentAddress, PayloadHash, RequestFact, ResponseFact, TheoriqBiscuit
+from theoriq.biscuit import AgentAddress, TheoriqBiscuit
 
 logger = logging.getLogger(__name__)
 
