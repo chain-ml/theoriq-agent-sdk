@@ -48,7 +48,9 @@ class AgentConfigurator:
         self.configure_fn = configure_fn
         self.is_long_running_fn = is_long_running_fn
 
-    def __call__(self, configure_context: ConfigureContext, payload: Any, biscuit: TheoriqBiscuit, body: bytes, request_id: UUID):
+    def __call__(
+        self, configure_context: ConfigureContext, payload: Any, biscuit: TheoriqBiscuit, body: bytes, request_id: UUID
+    ):
         client = configure_context._protocol_client
         biscuit = RequestBiscuit(biscuit.biscuit)
         try:
