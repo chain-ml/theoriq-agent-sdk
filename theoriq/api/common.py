@@ -33,7 +33,6 @@ class ExecuteContextBase:
 
         Args:
             agent (Agent): The agent responsible for handling the execution.
-            protocol_client (ProtocolClient): The client responsible for communicating with the protocol.
             request_biscuit (RequestBiscuit): The biscuit associated with the request, containing metadata and permissions.
         """
         self._agent = agent
@@ -120,7 +119,7 @@ class ExecuteContextBase:
     def agent_address(self) -> str:
         """
         Returns the address of the agent.
-        If the agent is virtual return the virtual address
+        If the agent is virtual, return the virtual address. Otherwise, return the agent's address.
 
         Returns:
             str: The agent's address as a string.
