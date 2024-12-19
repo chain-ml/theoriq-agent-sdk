@@ -92,7 +92,9 @@ class ProtocolClient:
     def post_request_failure(self, theoriq_biscuit: TheoriqBiscuit, response: Optional[str], agent: Agent) -> None:
         self._post_request_complete(theoriq_biscuit, response, agent, RequestStatus.FAILURE)
 
-    def _post_request_complete(self, biscuit: TheoriqBiscuit, response: Optional[str], agent: Agent, status: RequestStatus):
+    def _post_request_complete(
+        self, biscuit: TheoriqBiscuit, response: Optional[str], agent: Agent, status: RequestStatus
+    ):
         request_fact = RequestFact.from_biscuit(biscuit)
         request_id = request_fact.request_id
         from_addr = request_fact.from_addr
