@@ -1,8 +1,15 @@
+from __future__ import annotations
+
+import logging
 from typing import Any, Callable
+
+from pydantic import BaseModel
 
 from theoriq import Agent
 from theoriq.api.v1alpha2 import ProtocolClient
-from theoriq.biscuit import AgentAddress
+from theoriq.biscuit import AgentAddress, PayloadHash, RequestFact, ResponseFact, TheoriqBiscuit
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigureContext:
@@ -47,8 +54,20 @@ class AgentConfigurator:
         self.configure_fn = configure_fn
         self.is_long_running_fn = is_long_running_fn
 
+    def __call__(self, configure_context: ConfigureContext, payload: Any, biscuit: TheoriqBiscuit, agent: Agent):
+        client = configure_context._protocol_client
+
+        try:
+            self.configure_fn(configure_context, payload)
+        except Exception as e:
+            logger.error(f"Failed to configure agent: {e}")
+            client.post_request_failure(biscuit, str(e), agent)
+            return
+
+        client.post_request_success(biscuit, None, agent)
+
     @classmethod
-    def default(cls) -> "AgentConfigurator":
+    def default(cls) -> AgentConfigurator:
         """
         Creates a default instance of AgentConfigurator.
         Useful when the agent does not require any configuration.
@@ -61,3 +80,7 @@ class AgentConfigurator:
             return False
 
         return cls(default_configure_fn, default_is_long_running_fn)
+
+
+class ConfigureResponse(BaseModel):
+    response: Any
