@@ -10,11 +10,11 @@ from theoriq.biscuit import AgentAddress, RequestBiscuit
 from theoriq.types import Metric
 from theoriq.utils import TTLCache, is_protocol_secured
 
+from ...common import PublicKeyResponse
+from ...protocol_client_base import ProtocolClientBase
 from ..schemas.agent import AgentResponse
 from ..schemas.event_request import EventRequestBody
 from ..schemas.metrics import MetricsRequestBody
-from ...common import PublicKeyResponse
-from ...protocol_client_base import ProtocolClientBase
 
 
 class ProtocolClient(ProtocolClientBase):
