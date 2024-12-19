@@ -52,12 +52,12 @@ class AgentConfigurator:
         self, configure_context: ConfigureContext, payload: Any, biscuit: TheoriqBiscuit, body: bytes, request_id: UUID
     ):
         client = configure_context._protocol_client
-        biscuit = RequestBiscuit(biscuit.biscuit)
+        request_biscuit = RequestBiscuit(biscuit.biscuit)
         try:
             self.configure_fn(configure_context, payload)
-            client.post_request_success(biscuit, body, request_id)
+            client.post_request_success(request_biscuit, body, request_id)
         except:
-            client.post_request_failure(biscuit, body, request_id)
+            client.post_request_failure(request_biscuit, body, request_id)
 
     @classmethod
     def default(cls) -> "AgentConfigurator":
