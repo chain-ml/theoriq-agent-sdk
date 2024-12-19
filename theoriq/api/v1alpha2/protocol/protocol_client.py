@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Sequence
+from uuid import UUID
 
 import httpx
 
@@ -77,14 +78,14 @@ class ProtocolClient:
             response = client.post(url=url, content=content, headers=headers)
             return response.json()
 
-    def post_request_success(self, request_biscuit: RequestBiscuit, content: bytes, request_id: str):
+    def post_request_success(self, request_biscuit: RequestBiscuit, content: bytes, request_id: UUID):
         url = f'{self._uri}/requests/{request_id}/success'
         headers = request_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
             response = client.post(url=url, content=content, headers=headers)
             return response.json()
 
-    def post_request_failure(self, request_biscuit: RequestBiscuit, content: bytes, request_id: str):
+    def post_request_failure(self, request_biscuit: RequestBiscuit, content: bytes, request_id: UUID):
         url = f'{self._uri}/requests/{request_id}/failure'
         headers = request_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:

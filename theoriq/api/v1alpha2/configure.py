@@ -1,8 +1,9 @@
 from typing import Any, Callable
+from uuid import UUID
 
 from theoriq import Agent
 from theoriq.api.v1alpha2 import ProtocolClient
-from theoriq.biscuit import AgentAddress
+from theoriq.biscuit import AgentAddress, TheoriqBiscuit, RequestBiscuit
 
 
 class ConfigureContext:
@@ -46,6 +47,15 @@ class AgentConfigurator:
     def __init__(self, configure_fn: ConfigureFn, is_long_running_fn: IsLongRunningFn) -> None:
         self.configure_fn = configure_fn
         self.is_long_running_fn = is_long_running_fn
+
+    def __call__(self, configure_context: ConfigureContext, payload: Any, biscuit: TheoriqBiscuit, body: bytes, request_id: UUID):
+        client = configure_context._protocol_client
+        biscuit = RequestBiscuit(biscuit.biscuit)
+        try:
+            self.configure_fn(configure_context, payload)
+            client.post_request_success(biscuit, body, request_id)
+        except:
+            client.post_request_failure(biscuit, body, request_id)
 
     @classmethod
     def default(cls) -> "AgentConfigurator":

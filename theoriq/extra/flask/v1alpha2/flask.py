@@ -154,12 +154,8 @@ def apply_configuration(agent_id: str, agent_configurator: AgentConfigurator) ->
         body = bytes()  # Compute the real body we are sending to the backend
         body_hash = PayloadHash(body)
         response_fact = ResponseFact(request_id, body_hash, request_fact.from_addr)
-
-        # TODO: Use this biscuit to complete the request.
-        _theoriq_biscuit = agent.attenuate_biscuit(theoriq_biscuit, response_fact)
-
-        # TODO: Once the `configure_fn` finishes, send a request to theoriq to complete the request.
-        thread = threading.Thread(target=agent_configurator.configure_fn, args=(context, payload))
+        theoriq_biscuit = agent.attenuate_biscuit(theoriq_biscuit, response_fact)
+        thread = threading.Thread(target=agent_configurator, args=(context, payload, theoriq_biscuit, body, request_id))
         thread.start()
         return Response(status=202)
     else:
