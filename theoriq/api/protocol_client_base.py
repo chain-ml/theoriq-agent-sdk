@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-import os
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 import httpx
 
-from theoriq.biscuit import AgentAddress, RequestBiscuit
-from theoriq.types import Metric
-from theoriq.utils import TTLCache, is_protocol_secured
+from theoriq.api.common import PublicKeyResponse
+from theoriq.utils import TTLCache
 
 
 class ProtocolClientBase:
-    _public_key_cache: TTLCache[Any] = TTLCache(ttl=None, max_size=5)
+    _public_key_cache: TTLCache[PublicKeyResponse] = TTLCache(ttl=None, max_size=5)
 
     def __init__(self, uri: str, api_version: str, timeout: Optional[int] = 120, max_retries: Optional[int] = None):
         self._uri = f"{uri}/api/{api_version}"

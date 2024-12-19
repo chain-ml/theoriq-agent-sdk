@@ -1,7 +1,7 @@
 kind: TheoriqAgent
 version: 0.1
 metadata:
-  name: AwesumSum
+  name: AwesomeSum
   labels:
     author: ChainML Labs
 spec:
@@ -13,6 +13,7 @@ spec:
       long: An awsome Agent that compute a Sum
     tags:
       - math
+      - addition
     examplePrompts:
       - "1 + 1"
       - "4 + 2"

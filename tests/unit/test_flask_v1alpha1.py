@@ -105,7 +105,7 @@ def test_send_execute_request_when_execute_fn_fails_returns_500(
     theoriq_private_key, agent_config: AgentDeploymentConfiguration, client: FlaskClient
 ):
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
-        from_address = AgentAddress("012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01")
+        from_address = AgentAddress.random()
         req_body_bytes = _build_request_body_bytes("My name is John Doe should fail", from_address)
 
         # Generate a request biscuit
@@ -120,7 +120,7 @@ def test_send_chat_completion_request(
     theoriq_private_key: PrivateKey, agent_config: AgentDeploymentConfiguration, client: FlaskClient
 ):
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
-        from_address = AgentAddress("012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01")
+        from_address = AgentAddress.random()
         req_body_bytes = _build_request_body_bytes("My name is John Doe", from_address)
         request_facts = new_request_facts(req_body_bytes, from_address, agent_config.address, 10)
         req_biscuit = new_biscuit_for_request(request_facts, theoriq_private_key)

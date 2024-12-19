@@ -8,12 +8,12 @@ import httpx
 
 from theoriq.biscuit import RequestBiscuit
 from theoriq.types import Metric
-from theoriq.utils import TTLCache, is_protocol_secured
+from theoriq.utils import is_protocol_secured
 
 from ..schemas.agent import AgentResponse
-from ..schemas.api import PublicKeyResponse
 from ..schemas.event_request import EventRequestBody
 from ..schemas.metrics import MetricsRequestBody
+from ...common import PublicKeyResponse
 from ...protocol_client_base import ProtocolClientBase
 
 

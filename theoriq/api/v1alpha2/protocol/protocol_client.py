@@ -11,9 +11,9 @@ from theoriq.types import Metric
 from theoriq.utils import TTLCache, is_protocol_secured
 
 from ..schemas.agent import AgentResponse
-from ..schemas.api import PublicKeyResponse
 from ..schemas.event_request import EventRequestBody
 from ..schemas.metrics import MetricsRequestBody
+from ...common import PublicKeyResponse
 from ...protocol_client_base import ProtocolClientBase
 
 
@@ -23,23 +23,14 @@ class ProtocolClient(ProtocolClientBase):
     def __init__(self, uri: str, timeout: Optional[int] = 120, max_retries: Optional[int] = None):
         super().__init__(uri, "v1alpha2", timeout, max_retries)
 
-    def get_public_key(self) -> PublicKeyResponse:
-        with httpx.Client(timeout=self._timeout) as client:
-            response = client.get(url=f"{self._uri}/auth/biscuits/public-key")
-            response.raise_for_status()
-            data = response.json()
-            return PublicKeyResponse(**data)
-
     def get_agent(self, agent_id: str) -> AgentResponse:
-        with httpx.Client(timeout=self._timeout) as client:
-            response = client.get(url=f'{self._uri}/agents/0x{agent_id.removeprefix("0x")}')
-            response.raise_for_status()
-            return AgentResponse.model_validate(response.json())
+        response = self._make_request("get", f'agents/0x{agent_id.removeprefix("0x")}')
+        return AgentResponse.model_validate(response.json())
 
     def get_agents(self, show_banned: Optional[bool] = None, sort: Optional[str] = None) -> Sequence[AgentResponse]:
-        params = {}
+        params: Dict[str, str] = {}
         if show_banned is not None:
-            params["showBanned"] = show_banned
+            params["showBanned"] = "true" if show_banned else "false"
         if sort is not None:
             params["sort"] = sort
 
