@@ -7,7 +7,7 @@ from uuid import UUID
 
 import httpx
 
-from theoriq.biscuit import AgentAddress, RequestBiscuit
+from theoriq.biscuit import AgentAddress, RequestBiscuit, TheoriqBiscuit
 from theoriq.types import Metric
 from theoriq.utils import TTLCache, is_protocol_secured
 
@@ -78,16 +78,17 @@ class ProtocolClient:
             response = client.post(url=url, content=content, headers=headers)
             return response.json()
 
-    def post_request_success(self, request_biscuit: RequestBiscuit, content: bytes, request_id: UUID):
+    def post_request_success(self, theoriq_biscuit: TheoriqBiscuit, content: bytes, request_id: UUID):
         url = f"{self._uri}/requests/{request_id}/success"
-        headers = request_biscuit.to_headers()
+        headers = theoriq_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
-            response = client.post(url=url, content=content, headers=headers)
+            response = client.post(url=url, json=content, headers=headers)
+            print(response)
             return response.json()
 
-    def post_request_failure(self, request_biscuit: RequestBiscuit, content: bytes, request_id: UUID):
+    def post_request_failure(self, theoriq_biscuit: TheoriqBiscuit, content: bytes, request_id: UUID):
         url = f"{self._uri}/requests/{request_id}/failure"
-        headers = request_biscuit.to_headers()
+        headers = theoriq_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
             response = client.post(url=url, content=content, headers=headers)
             return response.json()

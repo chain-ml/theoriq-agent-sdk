@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import abc
+from typing import Any, Dict
 from uuid import UUID
 
 from biscuit_auth import Authorizer, Biscuit, BlockBuilder, Fact, KeyPair, PrivateKey, PublicKey, Rule
@@ -124,6 +125,12 @@ class TheoriqBiscuit:
 
     def to_base64(self) -> str:
         return self.biscuit.to_base64()
+
+    def to_headers(self) -> Dict[str, Any]:
+        return {
+            "Content-Type": "application/json",
+            "Authorization": "bearer " + self.biscuit.to_base64(),
+        }
 
     def attenuate(self, agent_pk: PrivateKey, fact: TheoriqFact) -> TheoriqBiscuit:
         agent_kp = KeyPair.from_private_key(agent_pk)

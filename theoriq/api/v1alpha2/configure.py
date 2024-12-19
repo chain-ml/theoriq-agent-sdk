@@ -1,10 +1,11 @@
 import logging
 from typing import Any, Callable
-from uuid import UUID
+
+from pydantic import BaseModel
 
 from theoriq import Agent
 from theoriq.api.v1alpha2 import ProtocolClient
-from theoriq.biscuit import AgentAddress, RequestBiscuit, TheoriqBiscuit
+from theoriq.biscuit import AgentAddress, PayloadHash, RequestFact, ResponseFact, TheoriqBiscuit
 
 logger = logging.getLogger(__name__)
 
@@ -51,20 +52,27 @@ class AgentConfigurator:
         self.configure_fn = configure_fn
         self.is_long_running_fn = is_long_running_fn
 
-    def __call__(
-        self, configure_context: ConfigureContext, payload: Any, biscuit: TheoriqBiscuit, body: bytes, request_id: UUID
-    ):
+    def __call__(self, configure_context: ConfigureContext, payload: Any, biscuit: TheoriqBiscuit, agent: Agent):
         client = configure_context._protocol_client
-        request_biscuit = RequestBiscuit(biscuit.biscuit)
+        request_fact = RequestFact.from_biscuit(biscuit)
+        request_id = request_fact.request_id
 
         try:
             self.configure_fn(configure_context, payload)
         except Exception as e:
             logger.error(f"Failed to configure agent: {e}")
-            client.post_request_failure(request_biscuit, body, request_id)
+            response = ConfigureResponse(response=str(e))
+            response_bytes = response.model_dump_json().encode()
+            response_fact = ResponseFact(request_id, PayloadHash(response_bytes), request_fact.from_addr)
+            biscuit = agent.attenuate_biscuit(biscuit, response_fact)
+            client.post_request_failure(biscuit, response_bytes, request_id)
             return
 
-        client.post_request_success(request_biscuit, body, request_id)
+        response = ConfigureResponse(response=None)
+        response_bytes = response.model_dump_json().encode()
+        response_fact = ResponseFact(request_id, PayloadHash(response_bytes), request_fact.from_addr)
+        biscuit = agent.attenuate_biscuit(biscuit, response_fact)
+        client.post_request_success(biscuit, response_bytes, request_id)
 
     @classmethod
     def default(cls) -> "AgentConfigurator":
@@ -80,3 +88,7 @@ class AgentConfigurator:
             return False
 
         return cls(default_configure_fn, default_is_long_running_fn)
+
+
+class ConfigureResponse(BaseModel):
+    response: Any
