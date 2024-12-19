@@ -62,9 +62,8 @@ class AgentConfigurator:
         except Exception as e:
             logger.error(f"Failed to configure agent: {e}")
             client.post_request_failure(biscuit, str(e), agent)
-            return
-
-        client.post_request_success(biscuit, None, agent)
+        else:
+            client.post_request_success(biscuit, None, agent)
 
     @classmethod
     def default(cls) -> AgentConfigurator:

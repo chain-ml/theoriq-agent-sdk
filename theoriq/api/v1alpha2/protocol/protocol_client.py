@@ -29,7 +29,7 @@ class ProtocolClient:
     _config_cache: TTLCache[Dict[str, Any]] = TTLCache()
     _public_key_cache: TTLCache[PublicKeyResponse] = TTLCache(ttl=None, max_size=5)
 
-    def __init__(self, uri: str, timeout: Optional[int] = 120, max_retries: Optional[int] = None):
+    def __init__(self, uri: str, timeout: Optional[int] = 120, max_retries: Optional[int] = None) -> None:
         self._uri = f"{uri}/api/v1alpha2"
         self._timeout = timeout
         self._max_retries = max_retries or 0
@@ -94,7 +94,7 @@ class ProtocolClient:
 
     def _post_request_complete(
         self, biscuit: TheoriqBiscuit, response: Optional[str], agent: Agent, status: RequestStatus
-    ):
+    ) -> None:
         request_fact = RequestFact.from_biscuit(biscuit)
         request_id = request_fact.request_id
         from_addr = request_fact.from_addr
@@ -102,8 +102,8 @@ class ProtocolClient:
         biscuit = self.attenuate_for_response(biscuit, response, request_id, from_addr, agent)
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
-            response = client.post(url=url, json=response, headers=headers)
-            response.raise_for_status()
+            r = client.post(url=url, json=response, headers=headers)
+            r.raise_for_status()
 
     def post_event(self, request_biscuit: RequestBiscuit, message: str) -> None:
         retry_delay = 1
@@ -163,8 +163,8 @@ class ProtocolClient:
     def attenuate_for_response(
         biscuit: TheoriqBiscuit, response: Optional[str], request_id: UUID, from_addr: str, agent: Agent
     ) -> TheoriqBiscuit:
-        response = ConfigureResponse(response=response)
-        response_bytes = response.model_dump_json().encode()
+        config_response = ConfigureResponse(response=response)
+        response_bytes = config_response.model_dump_json().encode()
         response_fact = ResponseFact(request_id, PayloadHash(response_bytes), from_addr)
         biscuit = agent.attenuate_biscuit(biscuit, response_fact)
         return biscuit
