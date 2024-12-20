@@ -166,7 +166,7 @@ class ProtocolClient:
 
     @staticmethod
     def attenuate_for_response(
-        biscuit: TheoriqBiscuit, response: dict[str : str | None], request_id: UUID, from_addr: str, agent: Agent
+        biscuit: TheoriqBiscuit, response: Dict[str, Any], request_id: UUID, from_addr: str, agent: Agent
     ) -> TheoriqBiscuit:
         config_response = ConfigureResponse(response=response)
         response_bytes = config_response.model_dump_json().encode()
