@@ -4,7 +4,7 @@ import logging
 from typing import Any, Callable
 
 from theoriq import Agent
-from theoriq.biscuit import AgentAddress, TheoriqBiscuit
+from theoriq.biscuit import AgentAddress, TheoriqBiscuit, RequestFact
 
 from .protocol import ProtocolClient
 
@@ -62,7 +62,11 @@ class AgentConfigurator:
             logger.error(f"Failed to configure agent: {e}")
             client.post_request_failure(biscuit, str(e), agent)
         else:
-            client.post_request_success(biscuit, None, agent)
+            request_fact = RequestFact.from_biscuit(biscuit)
+            configured_agent_id = request_fact.from_addr
+            message = f"Successfully configured agent {configured_agent_id}"
+            logger.info(message)
+            client.post_request_success(biscuit, message, agent)
 
     @classmethod
     def default(cls) -> AgentConfigurator:

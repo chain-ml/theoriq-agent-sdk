@@ -103,10 +103,13 @@ class ProtocolClient:
         request_id = request_fact.request_id
         from_addr = request_fact.from_addr
         url = f"{self._uri}/requests/{request_id}/{status.value}"
-        biscuit = self.attenuate_for_response(biscuit, response, request_id, from_addr, agent)
+        body = {
+            "response": response
+        }
+        biscuit = self.attenuate_for_response(biscuit, body, request_id, from_addr, agent)
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
-            r = client.post(url=url, json=response, headers=headers)
+            r = client.post(url=url, json=body, headers=headers)
             r.raise_for_status()
 
     def post_event(self, request_biscuit: RequestBiscuit, message: str) -> None:
@@ -165,7 +168,7 @@ class ProtocolClient:
 
     @staticmethod
     def attenuate_for_response(
-        biscuit: TheoriqBiscuit, response: Optional[str], request_id: UUID, from_addr: str, agent: Agent
+        biscuit: TheoriqBiscuit, response: dict[str:str|None], request_id: UUID, from_addr: str, agent: Agent
     ) -> TheoriqBiscuit:
         config_response = ConfigureResponse(response=response)
         response_bytes = config_response.model_dump_json().encode()
