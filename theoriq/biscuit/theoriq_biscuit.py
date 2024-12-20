@@ -59,7 +59,7 @@ class TheoriqFactBase(abc.ABC, Generic[T]):
 class RequestFact(TheoriqFactBase):
     """`theoriq:request` fact"""
 
-    def __init__(self, request_id: UUID, body_hash, from_addr: str | AgentAddress, to_addr: str) -> None:
+    def __init__(self, request_id: UUID, body_hash: PayloadHash, from_addr: str | AgentAddress, to_addr: str) -> None:
         super().__init__()
         self.request_id = request_id
         self.body_hash = body_hash
@@ -121,7 +121,7 @@ class TheoriqBiscuit:
         self.biscuit = biscuit
 
     @classmethod
-    def from_token(cls, token: str, public_key: str) -> TheoriqBiscuit:
+    def from_token(cls, *, token: str, public_key: str) -> TheoriqBiscuit:
         public_key = public_key.removeprefix("0x")
         biscuit = from_base64_token(token, PublicKey.from_hex(public_key))
         return cls(biscuit)

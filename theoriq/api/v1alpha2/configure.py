@@ -23,6 +23,12 @@ class ConfigureContext:
     def virtual_address(self) -> AgentAddress:
         return self._agent.virtual_address
 
+    def post_request_success(self, biscuit: TheoriqBiscuit, message: str | None) -> None:
+        self._protocol_client.post_request_success(biscuit, message, self._agent)
+
+    def post_request_failure(self, biscuit: TheoriqBiscuit, message: str | None) -> None:
+        self._protocol_client.post_request_failure(biscuit, message, self._agent)
+
 
 ConfigureFn = Callable[[ConfigureContext, Any], None]
 """A callable type for the configuration function.
@@ -54,19 +60,17 @@ class AgentConfigurator:
         self.is_long_running_fn = is_long_running_fn
 
     def __call__(self, configure_context: ConfigureContext, payload: Any, biscuit: TheoriqBiscuit, agent: Agent):
-        client = configure_context._protocol_client
-
         try:
             self.configure_fn(configure_context, payload)
         except Exception as e:
             logger.error(f"Failed to configure agent: {e}")
-            client.post_request_failure(biscuit, str(e), agent)
+            configure_context.post_request_failure(biscuit, str(e))
         else:
             request_fact = RequestFact.from_biscuit(biscuit)
             configured_agent_id = request_fact.from_addr
             message = f"Successfully configured agent {configured_agent_id}"
             logger.info(message)
-            client.post_request_success(biscuit, message, agent)
+            configure_context.post_request_failure(biscuit, message)
 
     @classmethod
     def default(cls) -> AgentConfigurator:
@@ -75,10 +79,10 @@ class AgentConfigurator:
         Useful when the agent does not require any configuration.
         """
 
-        def default_configure_fn(context, config):
+        def default_configure_fn(_context: ConfigureContext, _config: Any) -> None:
             return None
 
-        def default_is_long_running_fn(context, config):
+        def default_is_long_running_fn(_context: ConfigureContext, _config: Any) -> bool:
             return False
 
         return cls(default_configure_fn, default_is_long_running_fn)

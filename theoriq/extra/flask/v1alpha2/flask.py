@@ -143,7 +143,7 @@ def apply_configuration(agent_id: str, agent_configurator: AgentConfigurator) ->
 
     # Authorize biscuit
     token = get_bearer_token(request)
-    theoriq_biscuit = TheoriqBiscuit.from_token(token, protocol_client.public_key)
+    theoriq_biscuit = TheoriqBiscuit.from_token(token=token, public_key=protocol_client.public_key)
     agent.authorize_biscuit(theoriq_biscuit.biscuit)
 
     if agent_configurator.is_long_running_fn(context, payload):
