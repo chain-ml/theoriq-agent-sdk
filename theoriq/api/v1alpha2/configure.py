@@ -4,7 +4,7 @@ import logging
 from typing import Any, Callable
 
 from theoriq import Agent
-from theoriq.biscuit import AgentAddress, TheoriqBiscuit, RequestFact
+from theoriq.biscuit import AgentAddress, RequestFact, TheoriqBiscuit
 
 from .protocol import ProtocolClient
 
