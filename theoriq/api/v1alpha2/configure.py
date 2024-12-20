@@ -1,8 +1,14 @@
+from __future__ import annotations
+
+import logging
 from typing import Any, Callable
 
 from theoriq import Agent
-from theoriq.api.v1alpha2 import ProtocolClient
-from theoriq.biscuit import AgentAddress
+from theoriq.biscuit import AgentAddress, RequestFact, TheoriqBiscuit
+
+from .protocol import ProtocolClient
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigureContext:
@@ -47,8 +53,23 @@ class AgentConfigurator:
         self.configure_fn = configure_fn
         self.is_long_running_fn = is_long_running_fn
 
+    def __call__(self, configure_context: ConfigureContext, payload: Any, biscuit: TheoriqBiscuit, agent: Agent):
+        client = configure_context._protocol_client
+
+        try:
+            self.configure_fn(configure_context, payload)
+        except Exception as e:
+            logger.error(f"Failed to configure agent: {e}")
+            client.post_request_failure(biscuit, str(e), agent)
+        else:
+            request_fact = RequestFact.from_biscuit(biscuit)
+            configured_agent_id = request_fact.from_addr
+            message = f"Successfully configured agent {configured_agent_id}"
+            logger.info(message)
+            client.post_request_success(biscuit, message, agent)
+
     @classmethod
-    def default(cls) -> "AgentConfigurator":
+    def default(cls) -> AgentConfigurator:
         """
         Creates a default instance of AgentConfigurator.
         Useful when the agent does not require any configuration.

@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timezone
+from enum import Enum
 from typing import Any, Dict, List, Optional, Sequence
+from uuid import UUID
 
 import httpx
+from pydantic import BaseModel
 
-from theoriq.biscuit import AgentAddress, RequestBiscuit
+from theoriq import Agent
+from theoriq.biscuit import AgentAddress, PayloadHash, RequestBiscuit, RequestFact, ResponseFact, TheoriqBiscuit
 from theoriq.types import Metric
 from theoriq.utils import TTLCache, is_protocol_secured
 
@@ -16,11 +20,20 @@ from ..schemas.event_request import EventRequestBody
 from ..schemas.metrics import MetricsRequestBody
 
 
+class ConfigureResponse(BaseModel):
+    response: Any
+
+
+class RequestStatus(Enum):
+    SUCCESS = "success"
+    FAILURE = "failure"
+
+
 class ProtocolClient:
     _config_cache: TTLCache[Dict[str, Any]] = TTLCache()
     _public_key_cache: TTLCache[PublicKeyResponse] = TTLCache(ttl=None, max_size=5)
 
-    def __init__(self, uri: str, timeout: Optional[int] = 120, max_retries: Optional[int] = None):
+    def __init__(self, uri: str, timeout: Optional[int] = 120, max_retries: Optional[int] = None) -> None:
         self._uri = f"{uri}/api/v1alpha2"
         self._timeout = timeout
         self._max_retries = max_retries or 0
@@ -77,6 +90,26 @@ class ProtocolClient:
             response = client.post(url=url, content=content, headers=headers)
             return response.json()
 
+    def post_request_success(self, theoriq_biscuit: TheoriqBiscuit, response: Optional[str], agent: Agent) -> None:
+        self._post_request_complete(theoriq_biscuit, response, agent, RequestStatus.SUCCESS)
+
+    def post_request_failure(self, theoriq_biscuit: TheoriqBiscuit, response: Optional[str], agent: Agent) -> None:
+        self._post_request_complete(theoriq_biscuit, response, agent, RequestStatus.FAILURE)
+
+    def _post_request_complete(
+        self, biscuit: TheoriqBiscuit, response: Optional[str], agent: Agent, status: RequestStatus
+    ) -> None:
+        request_fact = RequestFact.from_biscuit(biscuit)
+        request_id = request_fact.request_id
+        from_addr = request_fact.from_addr
+        url = f"{self._uri}/requests/{request_id}/{status.value}"
+        body = {"response": response}
+        biscuit = self.attenuate_for_response(biscuit, body, request_id, from_addr, agent)
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            r = client.post(url=url, json=body, headers=headers)
+            r.raise_for_status()
+
     def post_event(self, request_biscuit: RequestBiscuit, message: str) -> None:
         retry_delay = 1
         retry_count = 0
@@ -130,3 +163,13 @@ class ProtocolClient:
             )
 
         return result
+
+    @staticmethod
+    def attenuate_for_response(
+        biscuit: TheoriqBiscuit, response: Dict[str, Any], request_id: UUID, from_addr: str, agent: Agent
+    ) -> TheoriqBiscuit:
+        config_response = ConfigureResponse(response=response)
+        response_bytes = config_response.model_dump_json().encode()
+        response_fact = ResponseFact(request_id, PayloadHash(response_bytes), from_addr)
+        biscuit = agent.attenuate_biscuit(biscuit, response_fact)
+        return biscuit

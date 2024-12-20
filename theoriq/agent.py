@@ -19,7 +19,7 @@ from .biscuit import (
     VerificationError,
 )
 from .biscuit.payload_hash import PayloadHash
-from .biscuit.theoriq_biscuit import TheoriqBiscuit, TheoriqFact
+from .biscuit.theoriq_biscuit import TheoriqBiscuit, TheoriqFactBase
 
 
 class AgentConfigurationSchemaError(Exception):
@@ -91,7 +91,7 @@ class Agent:
     ) -> ResponseBiscuit:
         return req_biscuit.attenuate_for_response(body, cost, self.config.private_key)
 
-    def attenuate_biscuit(self, biscuit: TheoriqBiscuit, fact: TheoriqFact) -> TheoriqBiscuit:
+    def attenuate_biscuit(self, biscuit: TheoriqBiscuit, fact: TheoriqFactBase) -> TheoriqBiscuit:
         return biscuit.attenuate(self.config.private_key, fact)
 
     def authorize_biscuit(self, biscuit: Biscuit):
