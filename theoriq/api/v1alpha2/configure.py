@@ -3,11 +3,10 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable
 
-from pydantic import BaseModel
-
 from theoriq import Agent
-from theoriq.api.v1alpha2 import ProtocolClient
 from theoriq.biscuit import AgentAddress, TheoriqBiscuit
+
+from .protocol import ProtocolClient
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +78,3 @@ class AgentConfigurator:
             return False
 
         return cls(default_configure_fn, default_is_long_running_fn)
-
-
-class ConfigureResponse(BaseModel):
-    response: Any

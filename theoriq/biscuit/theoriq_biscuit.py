@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, Dict
+from typing import Any, Dict, Generic, TypeVar
 from uuid import UUID
 
 from biscuit_auth import Authorizer, Biscuit, BlockBuilder, Fact, KeyPair, PrivateKey, PublicKey, Rule
@@ -10,12 +10,15 @@ from theoriq.biscuit import PayloadHash
 from theoriq.biscuit.agent_address import AgentAddress
 from theoriq.biscuit.utils import from_base64_token, verify_address
 
+# Define a type variable
+T = TypeVar("T")
 
-class TheoriqFact(abc.ABC):
+
+class TheoriqFactBase(abc.ABC, Generic[T]):
     """Base class for facts contained in a biscuit"""
 
     @classmethod
-    def from_biscuit(cls, theoriq_biscuit: TheoriqBiscuit) -> TheoriqFact:
+    def from_biscuit(cls, theoriq_biscuit: TheoriqBiscuit) -> T:
         """Extract facts from a biscuit"""
         rule = cls.biscuit_rule()
 
@@ -38,22 +41,22 @@ class TheoriqFact(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def from_fact(cls, fact: Fact) -> TheoriqFact:
+    def from_fact(cls, fact: Fact) -> T:
         pass
 
     @abc.abstractmethod
-    def get_fact(self) -> Fact:
+    def to_fact(self) -> Fact:
         pass
 
     def to_block_builder(self) -> BlockBuilder:
         """Convert facts to a biscuit block"""
-        fact = self.get_fact()
+        fact = self.to_fact()
         block_builder = BlockBuilder("")
         block_builder.add_fact(fact)
         return block_builder
 
 
-class RequestFact(TheoriqFact):
+class RequestFact(TheoriqFactBase):
     """`theoriq:request` fact"""
 
     def __init__(self, request_id: UUID, body_hash, from_addr: str | AgentAddress, to_addr: str) -> None:
@@ -70,11 +73,11 @@ class RequestFact(TheoriqFact):
         )
 
     @classmethod
-    def from_fact(cls, fact: Fact) -> TheoriqFact:
+    def from_fact(cls, fact: Fact) -> RequestFact:
         [req_id, body_hash, from_addr, to_addr] = fact.terms
         return cls(req_id, body_hash, from_addr, to_addr)
 
-    def get_fact(self) -> Fact:
+    def to_fact(self) -> Fact:
         return Fact(
             "theoriq:request({req_id}, {body_hash}, {from_addr}, {to_addr})",
             {
@@ -86,7 +89,7 @@ class RequestFact(TheoriqFact):
         )
 
 
-class ResponseFact(TheoriqFact):
+class ResponseFact(TheoriqFactBase):
     """`theoriq:response` fact"""
 
     def __init__(self, request_id: UUID, body_hash: PayloadHash, to_addr: str) -> None:
@@ -100,11 +103,11 @@ class ResponseFact(TheoriqFact):
         return Rule("data($req_id, $body_hash, $target_addr) <- theoriq:response($req_id, $body_hash, $target_addr)")
 
     @classmethod
-    def from_fact(cls, fact: Fact) -> TheoriqFact:
+    def from_fact(cls, fact: Fact) -> ResponseFact:
         [req_id, body_hash, to_addr] = fact.terms
         return cls(req_id, body_hash, to_addr)
 
-    def get_fact(self) -> Fact:
+    def to_fact(self) -> Fact:
         return Fact(
             "theoriq:response({req_id}, {body_hash}, {to_addr})",
             {"req_id": str(self.request_id), "body_hash": str(self._body_hash), "to_addr": self.to_addr},
@@ -132,7 +135,7 @@ class TheoriqBiscuit:
             "Authorization": "bearer " + self.biscuit.to_base64(),
         }
 
-    def attenuate(self, agent_pk: PrivateKey, fact: TheoriqFact) -> TheoriqBiscuit:
+    def attenuate(self, agent_pk: PrivateKey, fact: TheoriqFactBase) -> TheoriqBiscuit:
         agent_kp = KeyPair.from_private_key(agent_pk)
         block_builder = fact.to_block_builder()
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, block_builder)  # type: ignore

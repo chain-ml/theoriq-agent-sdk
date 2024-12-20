@@ -7,17 +7,21 @@ from typing import Any, Dict, List, Optional, Sequence
 from uuid import UUID
 
 import httpx
+from pydantic import BaseModel
 
 from theoriq import Agent
 from theoriq.biscuit import AgentAddress, PayloadHash, RequestBiscuit, RequestFact, ResponseFact, TheoriqBiscuit
 from theoriq.types import Metric
 from theoriq.utils import TTLCache, is_protocol_secured
 
-from ..configure import ConfigureResponse
 from ..schemas.agent import AgentResponse
 from ..schemas.api import PublicKeyResponse
 from ..schemas.event_request import EventRequestBody
 from ..schemas.metrics import MetricsRequestBody
+
+
+class ConfigureResponse(BaseModel):
+    response: Any
 
 
 class RequestStatus(StrEnum):
