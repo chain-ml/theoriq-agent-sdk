@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timezone
-from enum import StrEnum
+from enum import Enum
 from typing import Any, Dict, List, Optional, Sequence
 from uuid import UUID
 
@@ -24,7 +24,7 @@ class ConfigureResponse(BaseModel):
     response: Any
 
 
-class RequestStatus(StrEnum):
+class RequestStatus(Enum):
     SUCCESS = "success"
     FAILURE = "failure"
 
@@ -102,7 +102,7 @@ class ProtocolClient:
         request_fact = RequestFact.from_biscuit(biscuit)
         request_id = request_fact.request_id
         from_addr = request_fact.from_addr
-        url = f"{self._uri}/requests/{request_id}/{status}"
+        url = f"{self._uri}/requests/{request_id}/{status.value}"
         biscuit = self.attenuate_for_response(biscuit, response, request_id, from_addr, agent)
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
