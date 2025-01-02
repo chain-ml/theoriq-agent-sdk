@@ -70,7 +70,7 @@ class AgentConfigurator:
             configured_agent_id = request_fact.from_addr
             message = f"Successfully configured agent {configured_agent_id}"
             logger.info(message)
-            configure_context.post_request_failure(biscuit, message)
+            configure_context.post_request_success(biscuit, message)
 
     @classmethod
     def default(cls) -> AgentConfigurator:
