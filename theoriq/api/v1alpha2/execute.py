@@ -9,14 +9,14 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from theoriq.agent import Agent
-from theoriq.biscuit import AgentAddress, RequestBiscuit, TheoriqBudget
+from theoriq.biscuit import AgentAddress, RequestBiscuit, ResponseBiscuit, TheoriqBiscuit, TheoriqBudget
 from theoriq.biscuit.facts import TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
 from theoriq.types import AgentMetadata, Metric
 
 from ...types.agent_data import AgentDescriptions
 from ..common import ExecuteContextBase, ExecuteResponse
-from .protocol.protocol_client import ProtocolClient
+from .protocol.protocol_client import ProtocolClient, RequestStatus
 from .schemas.request import Configuration, ExecuteRequestBody
 
 
@@ -86,6 +86,13 @@ class ExecuteContext(ExecuteContextBase):
         request_biscuit = self._request_biscuit.attenuate_for_request(theoriq_request, budget, config.private_key)
         response = self._protocol_client.post_request(request_biscuit=request_biscuit, content=body, to_addr=to_addr)
         return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
+
+    def complete_request(self, response_biscuit: ResponseBiscuit, body: bytes):
+        biscuit = TheoriqBiscuit(response_biscuit.biscuit)
+        request_id = response_biscuit.resp_facts.req_id
+        self._protocol_client.post_request_complete(
+            request_id=request_id, biscuit=biscuit, body=body, status=RequestStatus.SUCCESS
+        )
 
     def set_configuration(self, configuration: Optional[Configuration]) -> None:
         if not configuration:

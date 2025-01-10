@@ -1,5 +1,6 @@
 """Helpers to write agent using a flask web app."""
 
+import json
 import logging
 import threading
 from typing import Dict, Optional
@@ -14,9 +15,10 @@ from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
 from theoriq.api.v1alpha2 import ConfigureContext
 from theoriq.api.v1alpha2.configure import AgentConfigurator
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
-from theoriq.biscuit import TheoriqBiscuit, TheoriqBiscuitError
+from theoriq.biscuit import TheoriqBiscuit, TheoriqBiscuitError, TheoriqCost
 from theoriq.extra.flask.common import get_bearer_token
 from theoriq.extra.globals import agent_var
+from theoriq.types import Currency
 
 from ...logging.execute_context import ExecuteLogContext
 from ..common import (
@@ -82,9 +84,24 @@ def theoriq_configuration_blueprint(agent_configurator: AgentConfigurator) -> Bl
     return blueprint
 
 
+def theoriq_execute_blueprint(execute_fn: ExecuteRequestFnV1alpha2) -> Blueprint:
+    blueprint = Blueprint("theoriq_execute", __name__)
+    blueprint.add_url_rule(
+        "/execute", view_func=lambda: execute_v1alpha2(execute_fn), methods=["POST"], endpoint="execute"
+    )
+    blueprint.add_url_rule(
+        "/execute-async",
+        view_func=lambda: execute_async_v1alpha2(execute_fn),
+        methods=["POST"],
+        endpoint="execute-async",
+    )
+
+    return blueprint
+
+
 def _build_v1alpha2_blueprint(execute_fn: ExecuteRequestFnV1alpha2, agent_configurator: AgentConfigurator) -> Blueprint:
     v1alpha2_blueprint = Blueprint("v1alpha2", __name__, url_prefix="/api/v1alpha2")
-    v1alpha2_blueprint.add_url_rule("/execute", view_func=lambda: execute_v1alpha2(execute_fn), methods=["POST"])
+    v1alpha2_blueprint.register_blueprint(theoriq_execute_blueprint(execute_fn))
     v1alpha2_blueprint.register_blueprint(theoriq_system_blueprint())
     v1alpha2_blueprint.register_blueprint(theoriq_configuration_blueprint(agent_configurator))
 
@@ -117,6 +134,49 @@ def execute_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Resp
         except Exception as err:
             logger.exception(err)
             return new_error_response(execute_context, err, 500)
+
+
+def execute_async_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Response:
+    """Execute async endpoint"""
+    logger.debug("Execute async request")
+    agent = agent_var.get()
+    protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
+    request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
+    execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit)
+    with ExecuteLogContext(execute_context):
+        try:
+            execute_request_body = ExecuteRequestBody.model_validate(request.json)
+            execute_context.set_configuration(execute_request_body.configuration)
+
+            # Execute user's function
+            thread = threading.Thread(
+                target=_execute_async, args=(execute_request_function, execute_context, execute_request_body)
+            )
+            thread.start()
+            return Response(status=202)
+
+        except pydantic.ValidationError as err:
+            return new_error_response(execute_context, err, 400)
+        except Exception as err:
+            logger.exception(err)
+            return new_error_response(execute_context, err, 500)
+
+
+def _execute_async(
+    execute_fn: ExecuteRequestFnV1alpha2,
+    execute_context: ExecuteContextV1alpha2,
+    execute_request_body: ExecuteRequestBody,
+) -> None:
+    try:
+        execute_response = execute_fn(execute_context, execute_request_body)
+    except ExecuteRuntimeError as err:
+        execute_response = execute_context.runtime_error_response(err)
+
+    response_payload = {"response": execute_response.body.to_dict()}
+    response = Response(response=json.dumps(response_payload), content_type="application/json")
+    response_biscuit = execute_context.new_response_biscuit(response.get_data(), TheoriqCost.zero(Currency.USDT))
+
+    execute_context.complete_request(response_biscuit, response.get_data())
 
 
 def get_configuration_schema() -> Response:
