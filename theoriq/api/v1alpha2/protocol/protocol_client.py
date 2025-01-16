@@ -18,6 +18,7 @@ from theoriq.utils import TTLCache, is_protocol_secured
 
 from ..schemas.agent import AgentResponse
 from ..schemas.api import PublicKeyResponse
+from ..schemas.biscuit import BiscuitResponse
 from ..schemas.event_request import EventRequestBody
 from ..schemas.metrics import MetricsRequestBody
 
@@ -59,11 +60,11 @@ class ProtocolClient:
         url = f'{self._uri}/auth/biscuits/biscuit'
         headers = authentication_biscuit.to_headers()
         body = {
-            "publicKey": public_key
+            "publicKey": public_key.to_hex()
         }
         with httpx.Client(timeout=self._timeout) as client:
             response = client.post(url=url, json=body, headers=headers)
-            return response.json()
+            return BiscuitResponse.model_validate(response.json())
 
     def get_agent(self, agent_id: str) -> AgentResponse:
         with httpx.Client(timeout=self._timeout) as client:

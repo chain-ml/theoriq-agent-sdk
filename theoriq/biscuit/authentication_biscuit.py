@@ -4,25 +4,22 @@ from datetime import datetime, timezone, timedelta
 from typing import Dict, Any
 
 from biscuit_auth import Biscuit
+from biscuit_auth import PrivateKey
 
-from theoriq import Agent
 from theoriq.biscuit import AgentAddress
 
 
 class AuthenticationFacts:
     """Required facts inside the Agent authentication biscuit"""
 
-    def __init__(self, agent_address: AgentAddress):
-        self.agent_address = agent_address
+    def __init__(self, address: AgentAddress, private_key: PrivateKey):
+        self.agent_address = address
+        self.private_key = private_key
 
-    @staticmethod
-    def generate_new_biscuit(agent: Agent) -> AuthenticationBiscuit:
-        agent_address = agent.config.address
-        facts = AuthenticationFacts(agent_address)
+    def to_authentication_biscuit(self):
         expires_at = datetime.now(tz=timezone.utc) + timedelta(seconds=5)
-        builder = facts.agent_address.new_authority_builder(expires_at)
-        private_key = agent.config.private_key
-        biscuit = builder.build(private_key)
+        builder = self.agent_address.new_authority_builder(expires_at)
+        biscuit = builder.build(self.private_key)
         return AuthenticationBiscuit(biscuit)
 
     def __str__(self):
