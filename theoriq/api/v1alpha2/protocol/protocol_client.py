@@ -57,11 +57,9 @@ class ProtocolClient:
             return PublicKeyResponse(**data)
 
     def get_biscuit(self, authentication_biscuit: AuthenticationBiscuit, public_key: PublicKey):
-        url = f'{self._uri}/auth/biscuits/biscuit'
+        url = f"{self._uri}/auth/biscuits/biscuit"
         headers = authentication_biscuit.to_headers()
-        body = {
-            "publicKey": public_key.to_hex()
-        }
+        body = {"publicKey": public_key.to_hex()}
         with httpx.Client(timeout=self._timeout) as client:
             response = client.post(url=url, json=body, headers=headers)
             return BiscuitResponse.model_validate(response.json())

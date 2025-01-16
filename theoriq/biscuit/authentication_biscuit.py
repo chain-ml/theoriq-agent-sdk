@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Any
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict
 
-from biscuit_auth import Biscuit
-from biscuit_auth import PrivateKey
+from biscuit_auth import Biscuit, PrivateKey
 
 from theoriq.biscuit import AgentAddress
 
