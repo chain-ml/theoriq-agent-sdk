@@ -8,6 +8,7 @@ from biscuit_auth import Authorizer, Biscuit, BlockBuilder, Fact, KeyPair, Priva
 
 from theoriq.biscuit import PayloadHash
 from theoriq.biscuit.agent_address import AgentAddress
+from theoriq.biscuit.facts import FactConvertibleBase
 from theoriq.biscuit.utils import from_base64_token, verify_address
 from theoriq.types import Currency
 
@@ -55,39 +56,6 @@ class TheoriqFactBase(abc.ABC, Generic[T]):
         block_builder = BlockBuilder("")
         block_builder.add_fact(fact)
         return block_builder
-
-
-class BudgetFact(TheoriqFactBase):
-    """`theoriq:budget` fact"""
-
-    def __init__(self, request_id: UUID, amount: str | int, currency: Currency, voucher: str) -> None:
-        super().__init__()
-        self.request_id = request_id
-        self.amount = str(amount)
-        self.currency = currency
-        self.voucher = voucher
-
-    @classmethod
-    def biscuit_rule(cls) -> Rule:
-        return Rule(
-            "data($req_id, $amount, $currency, $voucher) <- theoriq:budget($req_id, $amount, $currency, $voucher)"
-        )
-
-    @classmethod
-    def from_fact(cls, fact: Fact) -> BudgetFact:
-        [req_id, amount, currency, voucher] = fact.terms
-        return cls(req_id, amount, currency, voucher)
-
-    def to_fact(self) -> Fact:
-        return Fact(
-            "theoriq:budget({req_id}, {amount}, {currency}, {voucher})",
-            {
-                "req_id": str(self.request_id),
-                "amount": self.amount,
-                "currency": str(self.currency),
-                "voucher": self.voucher,
-            },
-        )
 
 
 class RequestFact(TheoriqFactBase):
@@ -175,10 +143,11 @@ class TheoriqBiscuit:
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, block_builder)  # type: ignore
         return TheoriqBiscuit(attenuated_biscuit)
 
-    def attenuate_multiple(self, agent_pk: PrivateKey, facts: list[TheoriqFactBase]) -> TheoriqBiscuit:
+    def attenuate_for_request(self, agent_pk: PrivateKey, request_id: UUID, facts: list[FactConvertibleBase]) -> TheoriqBiscuit:
         agent_kp = KeyPair.from_private_key(agent_pk)
+        request_id = str(request_id)
         block_builder = BlockBuilder("")
         for fact in facts:
-            block_builder.add_fact(fact.to_fact())
+            block_builder.add_fact(fact.to_fact(request_id))
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, block_builder)  # type: ignore
         return TheoriqBiscuit(attenuated_biscuit)
