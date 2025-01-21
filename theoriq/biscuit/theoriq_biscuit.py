@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from functools import reduce
-
 import abc
+from functools import reduce
 from typing import Any, Dict, Generic, TypeVar
 from uuid import UUID
 
@@ -70,7 +69,8 @@ class BudgetFact(TheoriqFactBase):
 
     @classmethod
     def biscuit_rule(cls) -> Rule:
-        return Rule("data($req_id, $amount, $currency, $voucher) <- theoriq:budget($req_id, $amount, $currency, $voucher)"
+        return Rule(
+            "data($req_id, $amount, $currency, $voucher) <- theoriq:budget($req_id, $amount, $currency, $voucher)"
         )
 
     @classmethod
@@ -88,6 +88,7 @@ class BudgetFact(TheoriqFactBase):
                 "voucher": self.voucher,
             },
         )
+
 
 class RequestFact(TheoriqFactBase):
     """`theoriq:request` fact"""
