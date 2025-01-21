@@ -110,6 +110,15 @@ class ProtocolClient:
             r = client.post(url=url, json=body, headers=headers)
             r.raise_for_status()
 
+    def post_request_complete(
+        self, request_id: UUID, biscuit: TheoriqBiscuit, body: bytes, status: RequestStatus
+    ) -> None:
+        url = f"{self._uri}/requests/{request_id}/{status.value}"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            r = client.post(url=url, content=body, headers=headers)
+            r.raise_for_status()
+
     def post_event(self, request_biscuit: RequestBiscuit, message: str) -> None:
         retry_delay = 1
         retry_count = 0
