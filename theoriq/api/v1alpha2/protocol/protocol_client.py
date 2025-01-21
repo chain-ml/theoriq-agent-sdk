@@ -83,7 +83,7 @@ class ProtocolClient:
                 self._config_cache.set(key, configuration)
             return configuration
 
-    def post_request(self, request_biscuit: RequestBiscuit, content: bytes, to_addr: str):
+    def post_request(self, request_biscuit: TheoriqBiscuit | RequestBiscuit, content: bytes, to_addr: str):
         url = f'{self._uri}/agents/{to_addr.removeprefix("0x")}/execute'
         headers = request_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
