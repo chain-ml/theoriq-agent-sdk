@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import abc
-from functools import reduce
 from typing import Any, Dict, Generic, TypeVar
 from uuid import UUID
 
@@ -10,6 +9,7 @@ from biscuit_auth import Authorizer, Biscuit, BlockBuilder, Fact, KeyPair, Priva
 from theoriq.biscuit import PayloadHash
 from theoriq.biscuit.agent_address import AgentAddress
 from theoriq.biscuit.utils import from_base64_token, verify_address
+from theoriq.types import Currency
 
 # Define a type variable
 T = TypeVar("T")
