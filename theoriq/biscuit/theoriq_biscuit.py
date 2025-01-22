@@ -147,9 +147,9 @@ class TheoriqBiscuit:
         self, agent_pk: PrivateKey, request_id: UUID, facts: list[FactConvertibleBase]
     ) -> TheoriqBiscuit:
         agent_kp = KeyPair.from_private_key(agent_pk)
-        request_id = str(request_id)
         block_builder = BlockBuilder("")
         for fact in facts:
-            block_builder.add_fact(fact.to_fact(request_id))
+            converted_fact = fact.to_fact(str(request_id))
+            block_builder.add_fact(converted_fact)
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, block_builder)  # type: ignore
         return TheoriqBiscuit(attenuated_biscuit)
