@@ -8,6 +8,7 @@ from biscuit_auth import Authorizer, Biscuit, BlockBuilder, Fact, KeyPair, Priva
 
 from theoriq.biscuit import PayloadHash
 from theoriq.biscuit.agent_address import AgentAddress
+from theoriq.biscuit.facts import FactConvertibleBase
 from theoriq.biscuit.utils import from_base64_token, verify_address
 
 # Define a type variable
@@ -138,5 +139,16 @@ class TheoriqBiscuit:
     def attenuate(self, agent_pk: PrivateKey, fact: TheoriqFactBase) -> TheoriqBiscuit:
         agent_kp = KeyPair.from_private_key(agent_pk)
         block_builder = fact.to_block_builder()
+        attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, block_builder)  # type: ignore
+        return TheoriqBiscuit(attenuated_biscuit)
+
+    def attenuate_for_request(
+        self, agent_pk: PrivateKey, request_id: UUID, facts: list[FactConvertibleBase]
+    ) -> TheoriqBiscuit:
+        agent_kp = KeyPair.from_private_key(agent_pk)
+        block_builder = BlockBuilder("")
+        for fact in facts:
+            converted_fact = fact.to_fact(str(request_id))
+            block_builder.add_fact(converted_fact)
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, block_builder)  # type: ignore
         return TheoriqBiscuit(attenuated_biscuit)
