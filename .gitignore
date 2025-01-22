@@ -3,4 +3,32 @@
 **/.venv
 .DS_Store
 
+
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Virtual environment
 **/.env
+venv/
+env/
+ENV/
+
+# Local development settings
+*.log
+*.sqlite3
+
+# IDE specific files
+.vscode/
+*.swp
+*.swo

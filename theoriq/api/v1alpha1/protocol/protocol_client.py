@@ -86,14 +86,14 @@ class ProtocolClient(ProtocolClientBase):
         if not uri.startswith("http"):
             raise ValueError(f"THEORIQ_URI `{uri}` is not a valid URI")
 
-        result = cls(
-            uri=uri,
-            timeout=int(os.getenv("THEORIQ_TIMEOUT", "120")),
-            max_retries=int(os.getenv("THEORIQ_MAX_RETRIES", "0")),
-        )
-        public_key = os.getenv("THEORIQ_PUBLIC_KEY")
-        if public_key:
+        timeout = int(os.getenv("THEORIQ_TIMEOUT", "120"))
+        max_retries = int(os.getenv("THEORIQ_MAX_RETRIES", "0"))
+        result = cls(uri=uri, timeout=timeout, max_retries=max_retries)
+
+        if public_key := os.getenv("THEORIQ_PUBLIC_KEY"):
             cls._public_key_cache.set(
-                f"{uri}/api/v1alpha1", PublicKeyResponse(**{"publicKey": public_key, "keyType": ""})
+                f"{uri}/api/v1alpha1",
+                PublicKeyResponse(publicKey=public_key, keyType="")
             )
+        
         return result

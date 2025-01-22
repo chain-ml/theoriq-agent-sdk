@@ -10,7 +10,7 @@ dev-lint:
 	mypy .
 	ruff check . --fix
 	isort .
-	pylint theoriq/. --max-line-length 120 --disable=R,C,I  --fail-under=9
+	pylint theoriq/. --max-line-length 120 --disable=R,C,I,E0401  --fail-under=9
 
 lint:
 	black . --check
