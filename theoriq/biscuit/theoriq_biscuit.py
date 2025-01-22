@@ -10,7 +10,6 @@ from theoriq.biscuit import PayloadHash
 from theoriq.biscuit.agent_address import AgentAddress
 from theoriq.biscuit.facts import FactConvertibleBase
 from theoriq.biscuit.utils import from_base64_token, verify_address
-from theoriq.types import Currency
 
 # Define a type variable
 T = TypeVar("T")
