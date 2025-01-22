@@ -18,6 +18,7 @@ from .biscuit import (
     TheoriqCost,
     VerificationError,
 )
+from .biscuit.authentication_biscuit import AuthenticationBiscuit, AuthenticationFacts
 from .biscuit.payload_hash import PayloadHash
 from .biscuit.theoriq_biscuit import TheoriqBiscuit, TheoriqFactBase
 
@@ -73,6 +74,10 @@ class Agent:
     @property
     def schema(self) -> Optional[Dict]:
         return self._schema
+
+    def authentication_biscuit(self) -> AuthenticationBiscuit:
+        facts = AuthenticationFacts(self.config.address, self.config.private_key)
+        return facts.to_authentication_biscuit()
 
     def verify_biscuit(self, request_biscuit: RequestBiscuit, body: bytes) -> None:
         """

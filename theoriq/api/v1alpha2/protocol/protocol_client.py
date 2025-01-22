@@ -7,15 +7,18 @@ from typing import Any, Dict, List, Optional, Sequence
 from uuid import UUID
 
 import httpx
+from biscuit_auth import PublicKey
 from pydantic import BaseModel
 
 from theoriq import Agent
 from theoriq.biscuit import AgentAddress, PayloadHash, RequestBiscuit, RequestFact, ResponseFact, TheoriqBiscuit
+from theoriq.biscuit.authentication_biscuit import AuthenticationBiscuit
 from theoriq.types import Metric
 from theoriq.utils import TTLCache, is_protocol_secured
 
 from ..schemas.agent import AgentResponse
 from ..schemas.api import PublicKeyResponse
+from ..schemas.biscuit import BiscuitResponse
 from ..schemas.event_request import EventRequestBody
 from ..schemas.metrics import MetricsRequestBody
 
@@ -52,6 +55,14 @@ class ProtocolClient:
             response.raise_for_status()
             data = response.json()
             return PublicKeyResponse(**data)
+
+    def get_biscuit(self, authentication_biscuit: AuthenticationBiscuit, public_key: PublicKey):
+        url = f"{self._uri}/auth/biscuits/biscuit"
+        headers = authentication_biscuit.to_headers()
+        body = {"publicKey": public_key.to_hex()}
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, json=body, headers=headers)
+            return BiscuitResponse.model_validate(response.json())
 
     def get_agent(self, agent_id: str) -> AgentResponse:
         with httpx.Client(timeout=self._timeout) as client:
