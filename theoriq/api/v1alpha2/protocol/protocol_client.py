@@ -101,6 +101,14 @@ class ProtocolClient:
             response = client.post(url=url, content=content, headers=headers)
             return response.json()
 
+    def post_configure(self, biscuit: TheoriqBiscuit, to_addr: str):
+        url = f'{self._uri}/agents/{to_addr.removeprefix("0x")}/configure'
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, headers=headers)
+            response.raise_for_status()
+            return response.json()
+
     def post_request_success(self, theoriq_biscuit: TheoriqBiscuit, response: Optional[str], agent: Agent) -> None:
         self._post_request_complete(theoriq_biscuit, response, agent, RequestStatus.SUCCESS)
 
