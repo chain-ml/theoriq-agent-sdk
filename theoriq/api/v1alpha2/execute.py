@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
+import biscuit_auth
+
 from theoriq.agent import Agent
 from theoriq.biscuit import AgentAddress, RequestBiscuit, ResponseBiscuit, TheoriqBiscuit, TheoriqBudget
 from theoriq.biscuit.facts import TheoriqRequest
@@ -65,6 +67,16 @@ class ExecuteContext(ExecuteContextBase):
         """
         self._protocol_client.post_metrics(request_biscuit=self._request_biscuit, metrics=[metric])
 
+    def send_notification(self, biscuit: TheoriqBiscuit, notification: bytes):
+        """
+        Sends agent notifications via the protocol client.
+
+        Args:
+            biscuit (TheoriqBiscuit): The agent's biscuit.
+            notification (bytes): The payload of the notification.
+        """
+        self._protocol_client.post_notification(biscuit=biscuit, agent_id=self.agent_address, notification=notification)
+
     def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
         """
         Sends a request to another address, attenuating the biscuit for the request and handling the response.
@@ -114,6 +126,17 @@ class ExecuteContext(ExecuteContextBase):
             )
         except RuntimeError:
             return {}
+
+    def agent_biscuit(self) -> TheoriqBiscuit:
+        authentication_biscuit = self._agent.authentication_biscuit()
+        agent_public_key = self._agent.config.public_key
+        biscuit_str = self._protocol_client.get_biscuit(authentication_biscuit, public_key=agent_public_key).biscuit
+
+        # Convert base64 string into biscuit
+        theoriq_public_key = biscuit_auth.PublicKey.from_hex(self._protocol_client.public_key.removeprefix("0x"))
+        biscuit = biscuit_auth.Biscuit.from_base64(biscuit_str, theoriq_public_key)
+
+        return TheoriqBiscuit(biscuit)
 
     def _sender_metadata(self, agent_id: str) -> AgentMetadata:
         agent_response = self._protocol_client.get_agent(agent_id=agent_id)
