@@ -203,3 +203,8 @@ Once registered, the agent will be available for testing. It will only be visibl
 ## Result
 
 ![Result in Infinity Studio](./doc/HellowWorld%20Session.png)
+
+
+# Deprecation
+
+2025-02-27: Support for V1Alpha1 API is removed. Use V1Alpha2 instead
