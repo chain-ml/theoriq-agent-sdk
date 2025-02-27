@@ -3,21 +3,21 @@
 GIT_ROOT ?= $(shell git rev-parse --show-toplevel)
 
 format:
-	black .
+	poetry run black .
 
 dev-lint:
-	black .
-	mypy .
-	ruff check . --fix
-	isort .
-	pylint theoriq/. --max-line-length 120 --disable=R,C,I  --fail-under=9
+	poetry run black .
+	poetry run mypy .
+	poetry run ruff check . --fix
+	poetry run isort .
+	poetry run pylint theoriq/. --max-line-length 120 --disable=R,C,I  --fail-under=9
 
 lint:
-	black . --check
-	mypy . --disable-error-code=attr-defined
-	ruff check .
-	pylint theoriq/. --max-line-length 120 --disable=R,C,I,E0401,W1203,W0107 --fail-under=9
-	isort . --check-only
+	poetry run black . --check
+	poetry run mypy . --disable-error-code=attr-defined
+	poetry run ruff check .
+	poetry run pylint theoriq/. --max-line-length 120 --disable=R,C,I,E0401,W1203,W0107 --fail-under=9
+	poetry run isort . --check-only
 
 test:
-	pytest tests
+	poetry run pytest tests
