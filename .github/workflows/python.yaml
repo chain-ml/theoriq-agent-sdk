@@ -16,7 +16,6 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           python-version: "3.12"
-          rust-version: "1.80.0"
 
       - name: Run linter
         run: make lint
@@ -34,7 +33,6 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           python-version: ${{ matrix.python-version }}
-          rust-version: "1.80.0"
 
       - name: Run testing
         run: pytest tests/unit
