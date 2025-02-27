@@ -21,3 +21,6 @@ lint:
 
 test:
 	poetry run pytest tests
+
+ci-test:
+	poetry run pytest tests/unit
