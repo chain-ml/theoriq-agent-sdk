@@ -27,7 +27,7 @@ dialog_payload = {
 }
 
 
-def test_dialog_deserialization():
+def test_dialog_deserialization() -> None:
     d: Dialog = Dialog.model_validate(dialog_payload)
     assert isinstance(d, Dialog)
     assert d.items[0].source_type == SourceType.User

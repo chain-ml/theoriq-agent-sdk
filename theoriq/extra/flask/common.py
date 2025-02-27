@@ -9,7 +9,7 @@ from flask import Blueprint, Request, Response, jsonify, request
 
 from theoriq import Agent
 from theoriq.api.common import ExecuteContextBase
-from theoriq.api.v1alpha1.schemas import ChallengeRequestBody
+from theoriq.api.v1alpha2.schemas import ChallengeRequestBody
 from theoriq.biscuit import RequestBiscuit, RequestFacts, ResponseBiscuit, TheoriqBiscuitError
 from theoriq.extra import start_time
 from theoriq.extra.globals import agent_var
