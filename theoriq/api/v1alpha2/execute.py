@@ -65,14 +65,20 @@ class ExecuteContext(ExecuteContextBase):
         """
         self._protocol_client.post_metrics(request_biscuit=self._request_biscuit, metrics=[metric])
 
-    def send_notification(self, biscuit: TheoriqBiscuit, notification: bytes):
+    def send_notification(self, notification: bytes, biscuit: TheoriqBiscuit | None = None):
         """
-        Sends agent notifications via the protocol client.
+        Sends agent notification via the protocol client.
+
+        If no `biscuit` is provided, the method defaults to using the request's biscuit.
 
         Args:
-            biscuit (TheoriqBiscuit): The agent's biscuit.
-            notification (bytes): The payload of the notification.
+            biscuit (TheoriqBiscuit | None): The authentication token for the agent.
+                If `None`, the request's biscuit is used.
+            notification (bytes): The binary payload of the notification to be sent.
         """
+        if biscuit is None:
+            biscuit = TheoriqBiscuit(self._request_biscuit.biscuit)
+
         self._protocol_client.post_notification(biscuit=biscuit, agent_id=self.agent_address, notification=notification)
 
     def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
