@@ -95,7 +95,7 @@ To confirm that Rust is correctly installed in your environment, run the followi
 To install the required dependencies for the SDK, run the following command:
 
 ```shell
-pip install -r requirements.txt
+poetry install --with flask
 ```
 
 # Example
