@@ -5,12 +5,11 @@ import uuid
 from typing import Any, Dict
 from uuid import UUID
 
-from biscuit_auth import Authorizer, Biscuit, BlockBuilder, KeyPair, Rule  # pylint: disable=E0611
+from biscuit_auth import Biscuit, BlockBuilder, KeyPair  # pylint: disable=E0611
 from biscuit_auth.biscuit_auth import PrivateKey, PublicKey  # type: ignore
 
-from ..types.currency import Currency
-from . import AgentAddress
-from .facts import TheoriqBudget, TheoriqCost, TheoriqRequest, TheoriqResponse
+from . import AgentAddress, TheoriqBiscuit
+from .facts import ExecuteRequestFacts, TheoriqBudget, TheoriqCost, TheoriqRequest, TheoriqResponse
 from .response_biscuit import ResponseBiscuit, ResponseFacts
 from .utils import from_base64_token
 
@@ -31,27 +30,12 @@ class RequestFacts:
     @staticmethod
     def from_biscuit(biscuit: Biscuit) -> RequestFacts:
         """Read request facts from biscuit"""
-
-        rule = Rule(
-            """
-            data($req_id, $body_hash, $from_addr, $target_addr, $amount, $currency, $voucher) <- theoriq:request($req_id, $body_hash, $from_addr, $target_addr), theoriq:budget($req_id, $amount, $currency, $voucher)
-            """
-        )
-
-        authorizer = Authorizer()
-        authorizer.add_token(biscuit)
-        facts = authorizer.query(rule)
-
-        if len(facts) == 0:
-            raise ValueError("No facts found in current biscuit")
-
-        try:
-            [req_id, body_hash, from_addr, to_addr, amount, currency, voucher] = facts[0].terms
-            theoriq_request = TheoriqRequest(body_hash=body_hash, from_addr=from_addr, to_addr=to_addr)
-            theoriq_budget = TheoriqBudget(amount=amount, currency=Currency.from_value(currency), voucher=voucher)
-            return RequestFacts(req_id, theoriq_request, theoriq_budget)
-        except Exception as e:
-            raise ValueError("Missing information") from e
+        theoriq_biscuit = TheoriqBiscuit(biscuit)
+        biscuit_facts = theoriq_biscuit.read_fact(ExecuteRequestFacts)
+        request_id = biscuit_facts.request.request_id
+        theoriq_request = TheoriqRequest.from_theoriq_fact(biscuit_facts.request)
+        theoriq_budget = TheoriqBudget.from_theoriq_fact(biscuit_facts.budget)
+        return RequestFacts(request_id, theoriq_request, theoriq_budget)
 
     @staticmethod
     def generate_new_biscuit(body: bytes, *, from_addr: str, to_addr: str) -> Biscuit:
@@ -67,11 +51,12 @@ class RequestFacts:
 
     def to_block_builder(self) -> BlockBuilder:
         """Construct a biscuit block builder using the facts"""
-        block_builder = BlockBuilder("")
-        request_id = str(self.req_id)
-        block_builder.add_fact(self.request.to_fact(request_id))
-        block_builder.add_fact(self.budget.to_fact(request_id))
+        request_fact = self.request.to_theoriq_fact(self.req_id)
+        budget_fact = self.budget.to_theoriq_fact(self.req_id)
 
+        block_builder = BlockBuilder("")
+        block_builder.merge(request_fact.to_block_builder())
+        block_builder.merge(budget_fact.to_block_builder())
         return block_builder
 
     def __str__(self):
