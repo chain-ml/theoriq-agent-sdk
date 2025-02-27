@@ -204,6 +204,6 @@ class ProtocolClient:
     ) -> TheoriqBiscuit:
         config_response = ConfigureResponse(response=response)
         response_bytes = config_response.model_dump_json().encode()
-        response_fact = ResponseFact(request_id, PayloadHash(response_bytes), from_addr)
+        response_fact = ResponseFact(request_id=request_id, body_hash=PayloadHash(response_bytes), to_addr=from_addr)
         biscuit = agent.attenuate_biscuit(biscuit, response_fact)
         return biscuit
