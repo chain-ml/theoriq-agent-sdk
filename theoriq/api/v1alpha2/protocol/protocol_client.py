@@ -173,6 +173,12 @@ class ProtocolClient:
         with httpx.Client(timeout=self._timeout) as client:
             client.post(url=url, json=request.to_dict(), headers=headers)
 
+    def post_notification(self, biscuit: TheoriqBiscuit, agent_id: str, notification: bytes) -> None:
+        url = f"{self._uri}/agents/{agent_id}/notifications"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            client.post(url=url, content=notification, headers=headers)
+
     @classmethod
     def from_env(cls) -> ProtocolClient:
         uri: str = os.getenv("THEORIQ_URI", "") if is_protocol_secured() else "http://not_secured/test_only"

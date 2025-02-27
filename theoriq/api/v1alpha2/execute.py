@@ -65,6 +65,13 @@ class ExecuteContext(ExecuteContextBase):
         """
         self._protocol_client.post_metrics(request_biscuit=self._request_biscuit, metrics=[metric])
 
+    def send_notification(self, notification: bytes):
+        """
+        Sends agent notification via the protocol client.
+        """
+        biscuit = TheoriqBiscuit(self._request_biscuit.biscuit)
+        self._protocol_client.post_notification(biscuit=biscuit, agent_id=self.agent_address, notification=notification)
+
     def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
         """
         Sends a request to another address, attenuating the biscuit for the request and handling the response.
@@ -114,6 +121,14 @@ class ExecuteContext(ExecuteContextBase):
             )
         except RuntimeError:
             return {}
+
+    def agent_biscuit(self) -> TheoriqBiscuit:
+        authentication_biscuit = self._agent.authentication_biscuit()
+        agent_public_key = self._agent.config.public_key
+        biscuit_response = self._protocol_client.get_biscuit(authentication_biscuit, agent_public_key)
+
+        protocol_public_key = self._protocol_client.public_key
+        return TheoriqBiscuit.from_token(token=biscuit_response.biscuit, public_key=protocol_public_key)
 
     def _sender_metadata(self, agent_id: str) -> AgentMetadata:
         agent_response = self._protocol_client.get_agent(agent_id=agent_id)
