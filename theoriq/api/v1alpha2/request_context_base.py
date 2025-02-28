@@ -8,17 +8,16 @@ from theoriq import Agent
 from ...biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
 from ...dialog import DialogItem, ErrorItemBlock, ItemBlock
 from ...types import AgentMetadata, Currency, SourceType
-from ...utils import TTLCache
+from . import ProtocolClient
+from .context_base import ContextBase
 
 
-class RequestContextBase:
+class RequestContextBase(ContextBase):
     """
     Represents the context for executing a request, managing interactions with the agent and protocol client.
     """
 
-    _metadata_cache: TTLCache[AgentMetadata] = TTLCache(ttl=180, max_size=40)
-
-    def __init__(self, agent: Agent, request_biscuit: RequestBiscuit) -> None:
+    def __init__(self, agent: Agent, protocol_client: ProtocolClient, request_biscuit: RequestBiscuit) -> None:
         """
         Initializes an ExecuteContext instance.
 
@@ -26,7 +25,8 @@ class RequestContextBase:
             agent (Agent): The agent responsible for handling the execution.
             request_biscuit (RequestBiscuit): The biscuit associated with the request, containing metadata and permissions.
         """
-        self._agent = agent
+
+        super().__init__(agent, protocol_client)
         self._request_biscuit = request_biscuit
 
     def new_response_biscuit(self, body: bytes, cost: TheoriqCost) -> ResponseBiscuit:
@@ -169,18 +169,8 @@ class RequestContextBase:
         if self.sender_kind.is_user:
             return None
 
-        key = self._request_biscuit.request_facts.request.from_addr
-        result = self._metadata_cache.get(key)
-        if result is not None:
-            return result
-
-        result = self._sender_metadata(key)
-        self._metadata_cache.set(key, result)
-        return result
-
-    @abc.abstractmethod
-    def _sender_metadata(self, agent_id: str) -> AgentMetadata:
-        pass
+        agent_id = self._request_biscuit.request_facts.request.from_addr
+        return self.get_agent_metadata(agent_id)
 
 
 class ExecuteResponse:

@@ -34,8 +34,7 @@ class ExecuteContext(RequestContextBase):
             protocol_client (ProtocolClient): The client responsible for communicating with the protocol.
             request_biscuit (RequestBiscuit): The biscuit associated with the request, containing metadata and permissions.
         """
-        super().__init__(agent, request_biscuit)
-        self._protocol_client = protocol_client
+        super().__init__(agent, protocol_client, request_biscuit)
         self._configuration_hash: Optional[str] = None
 
     def send_event(self, message: str) -> None:
