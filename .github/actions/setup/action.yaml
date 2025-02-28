@@ -34,4 +34,4 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: poetry install --all-groups
+      run: poetry install --all-groups --all-extras
