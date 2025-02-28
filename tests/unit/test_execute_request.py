@@ -1,4 +1,4 @@
-from theoriq.api.v1alpha1.schemas import ExecuteRequestBody
+from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
 from theoriq.types import SourceType
 
 request_payload = {
@@ -38,20 +38,20 @@ request_payload = {
 }
 
 
-def test_exec_request_body_deserialization():
+def test_exec_request_body_deserialization() -> None:
 
     e: ExecuteRequestBody = ExecuteRequestBody.model_validate(request_payload)
     assert isinstance(e, ExecuteRequestBody)
 
 
-def test_last_item_with_different_formats():
+def test_last_item_with_different_formats() -> None:
     e: ExecuteRequestBody = ExecuteRequestBody.model_validate(request_payload)
     li = e.last_item
     assert li is not None
     assert li.source == "0x30fBa3e4195D17d06Ea9740338c8cdc9611468A9"
 
 
-def test_last_item_from():
+def test_last_item_from() -> None:
     e: ExecuteRequestBody = ExecuteRequestBody.model_validate(request_payload)
     li = e.last_item_from(SourceType.Agent)
     assert li is not None

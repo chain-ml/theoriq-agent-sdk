@@ -41,6 +41,7 @@ class Configuration(BaseModel):
     deployment: Optional[Dict[str, Any]] = None
     virtual: Optional[Virtual] = Field(default=None)
 
+    @classmethod
     @field_validator("virtual", mode="before")
     def validate_virtual(cls, value):
         # Handle cases where `b` is an empty dict or None

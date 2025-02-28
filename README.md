@@ -95,7 +95,7 @@ To confirm that Rust is correctly installed in your environment, run the followi
 To install the required dependencies for the SDK, run the following command:
 
 ```shell
-poetry install --with flask
+poetry install --all-groups --all-extras
 ```
 
 # Example
@@ -203,3 +203,8 @@ Once registered, the agent will be available for testing. It will only be visibl
 ## Result
 
 ![Result in Infinity Studio](./doc/HellowWorld%20Session.png)
+
+
+# Deprecation
+
+2025-02-27: Support for V1Alpha1 API is removed. Use V1Alpha2 instead
