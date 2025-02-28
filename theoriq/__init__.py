@@ -1,4 +1,4 @@
 from .agent import AgentDeploymentConfiguration, Agent
 
 from .api.v1alpha2.execute import ExecuteContext, ExecuteResponse
-from .api.common import ExecuteRuntimeError
+from .api.v1alpha2.request_context_base import ExecuteRuntimeError

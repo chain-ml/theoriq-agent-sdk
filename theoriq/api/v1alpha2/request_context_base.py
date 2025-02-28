@@ -5,13 +5,13 @@ from typing import Any, Dict, Optional, Sequence
 
 from theoriq import Agent
 
-from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
-from ..dialog import DialogItem, ErrorItemBlock, ItemBlock
-from ..types import AgentMetadata, Currency, SourceType
-from ..utils import TTLCache
+from ...biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
+from ...dialog import DialogItem, ErrorItemBlock, ItemBlock
+from ...types import AgentMetadata, Currency, SourceType
+from ...utils import TTLCache
 
 
-class ExecuteContextBase:
+class RequestContextBase:
     """
     Represents the context for executing a request, managing interactions with the agent and protocol client.
     """
@@ -24,7 +24,6 @@ class ExecuteContextBase:
 
         Args:
             agent (Agent): The agent responsible for handling the execution.
-            protocol_client (ProtocolClient): The client responsible for communicating with the protocol.
             request_biscuit (RequestBiscuit): The biscuit associated with the request, containing metadata and permissions.
         """
         self._agent = agent

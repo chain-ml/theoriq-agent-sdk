@@ -15,12 +15,12 @@ from theoriq.dialog import Dialog, DialogItem, ItemBlock
 from theoriq.types import AgentMetadata, Metric
 
 from ...types.agent_data import AgentDescriptions
-from ..common import ExecuteContextBase, ExecuteResponse
 from .protocol.protocol_client import ProtocolClient, RequestStatus
+from .request_context_base import ExecuteResponse, RequestContextBase
 from .schemas.request import Configuration, ExecuteRequestBody
 
 
-class ExecuteContext(ExecuteContextBase):
+class ExecuteContext(RequestContextBase):
     """
     Represents the context for executing a request, managing interactions with the agent and protocol client.
     """

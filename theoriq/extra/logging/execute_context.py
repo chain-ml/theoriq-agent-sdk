@@ -1,13 +1,13 @@
 from contextvars import ContextVar
 from typing import ContextManager, Optional
 
-from theoriq.api.common import ExecuteContextBase
+from theoriq.api.v1alpha2.request_context_base import RequestContextBase
 
 request_id_var: ContextVar[Optional[str]] = ContextVar("theoriq_request_id", default=None)
 
 
 class ExecuteLogContext(ContextManager):
-    def __init__(self, context: ExecuteContextBase):
+    def __init__(self, context: RequestContextBase):
         self._token = request_id_var.set(context.request_id)
 
     def __exit__(self, exc_type, exc_value, traceback, /):
