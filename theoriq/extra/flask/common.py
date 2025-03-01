@@ -118,7 +118,7 @@ def build_error_payload(*, agent_address: str, request_id: str, err: str, status
 
 def new_error_response(context: RequestContextBase, body: Exception, status_code: int) -> flask.Response:
     error_response = build_error_payload(
-        agent_address=context.agent_address, request_id=context.request_id, err=str(body), status_code=status_code
+        agent_address=str(context.agent_address), request_id=context.request_id, err=str(body), status_code=status_code
     )
     response_biscuit = context.new_error_response_biscuit(error_response.get_data())
     return add_biscuit_to_response(error_response, response_biscuit)

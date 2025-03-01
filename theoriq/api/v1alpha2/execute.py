@@ -25,7 +25,13 @@ class ExecuteContext(RequestContextBase):
     Represents the context for executing a request, managing interactions with the agent and protocol client.
     """
 
-    def __init__(self, agent: Agent, protocol_client: ProtocolClient, request_biscuit: RequestBiscuit) -> None:
+    def __init__(
+        self,
+        agent: Agent,
+        protocol_client: ProtocolClient,
+        request_biscuit: RequestBiscuit,
+        request_body: ExecuteRequestBody,
+    ) -> None:
         """
         Initializes an ExecuteContext instance.
 
@@ -34,8 +40,12 @@ class ExecuteContext(RequestContextBase):
             protocol_client (ProtocolClient): The client responsible for communicating with the protocol.
             request_biscuit (RequestBiscuit): The biscuit associated with the request, containing metadata and permissions.
         """
-        super().__init__(agent, protocol_client, request_biscuit)
-        self._configuration_hash: Optional[str] = None
+
+        configuration = request_body.configuration
+        virtual_address = AgentAddress(configuration.fromRef.id) if configuration else None
+        super().__init__(agent, protocol_client, request_biscuit, virtual_address)
+        self._configuration_hash = configuration.fromRef.hash if configuration else None
+        self._request_body = request_body
 
     def send_event(self, message: str) -> None:
         """
@@ -69,7 +79,9 @@ class ExecuteContext(RequestContextBase):
         Sends agent notification via the protocol client.
         """
         biscuit = TheoriqBiscuit(self._request_biscuit.biscuit)
-        self._protocol_client.post_notification(biscuit=biscuit, agent_id=self.agent_address, notification=notification)
+        self._protocol_client.post_notification(
+            biscuit=biscuit, agent_id=str(self.agent_address), notification=notification
+        )
 
     def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
         """
@@ -85,7 +97,7 @@ class ExecuteContext(RequestContextBase):
         """
         config = self._agent.config
         execute_request_body = ExecuteRequestBody(
-            dialog=Dialog(items=[DialogItem.new(source=self.agent_address, blocks=blocks)])
+            dialog=Dialog(items=[DialogItem.new(source=str(self.agent_address), blocks=blocks)])
         )
         body = execute_request_body.model_dump_json().encode("utf-8")
         theoriq_request = TheoriqRequest.from_body(body=body, from_addr=config.address, to_addr=to_addr)

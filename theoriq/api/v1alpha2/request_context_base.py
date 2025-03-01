@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Sequence
 
 from theoriq import Agent
 
-from ...biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
+from ...biscuit import AgentAddress, RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
 from ...dialog import DialogItem, ErrorItemBlock, ItemBlock
 from ...types import AgentMetadata, Currency, SourceType
 from . import ProtocolClient
@@ -17,7 +17,13 @@ class RequestContextBase(ContextBase):
     Represents the context for executing a request, managing interactions with the agent and protocol client.
     """
 
-    def __init__(self, agent: Agent, protocol_client: ProtocolClient, request_biscuit: RequestBiscuit) -> None:
+    def __init__(
+        self,
+        agent: Agent,
+        protocol_client: ProtocolClient,
+        request_biscuit: RequestBiscuit,
+        virtual_address: Optional[AgentAddress] = None,
+    ) -> None:
         """
         Initializes an ExecuteContext instance.
 
@@ -26,7 +32,7 @@ class RequestContextBase(ContextBase):
             request_biscuit (RequestBiscuit): The biscuit associated with the request, containing metadata and permissions.
         """
 
-        super().__init__(agent, protocol_client)
+        super().__init__(agent, protocol_client, virtual_address)
         self._request_biscuit = request_biscuit
 
     def new_response_biscuit(self, body: bytes, cost: TheoriqCost) -> ResponseBiscuit:
@@ -77,7 +83,7 @@ class RequestContextBase(ContextBase):
         Returns:
             ExecuteResponse: The response object with the provided blocks and cost.
         """
-        return ExecuteResponse(dialog_item=DialogItem.new(source=self.agent_address, blocks=blocks), cost=cost)
+        return ExecuteResponse(dialog_item=DialogItem.new(source=str(self.agent_address), blocks=blocks), cost=cost)
 
     def runtime_error_response(self, err: ExecuteRuntimeError) -> ExecuteResponse:
         """
@@ -105,19 +111,6 @@ class RequestContextBase(ContextBase):
             ExecuteResponse: The response received from the request.
         """
         pass
-
-    @property
-    def agent_address(self) -> str:
-        """
-        Returns the address of the agent.
-        If the agent is virtual return the virtual address
-
-        Returns:
-            str: The agent's address as a string.
-        """
-        if self._agent.virtual_address.is_null:
-            return str(self._agent.config.address)
-        return str(self._agent.virtual_address)
 
     @property
     def request_id(self) -> str:

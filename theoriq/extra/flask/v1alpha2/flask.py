@@ -114,11 +114,10 @@ def execute_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Resp
     agent = agent_var.get()
     protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
     request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
-    execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit)
-    with ExecuteLogContext(execute_context):
+    with ExecuteLogContext(str(request_biscuit.request_facts.req_id)):
         try:
             execute_request_body = ExecuteRequestBody.model_validate(request.json)
-            execute_context.set_configuration(execute_request_body.configuration)
+            execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit, execute_request_body)
             # Execute user's function
             try:
                 execute_response = execute_request_function(execute_context, execute_request_body)
@@ -142,11 +141,10 @@ def execute_async_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -
     agent = agent_var.get()
     protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
     request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
-    execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit)
-    with ExecuteLogContext(execute_context):
+    with ExecuteLogContext(str(request_biscuit.request_facts.req_id)):
         try:
             execute_request_body = ExecuteRequestBody.model_validate(request.json)
-            execute_context.set_configuration(execute_request_body.configuration)
+            execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit, execute_request_body)
 
             # Execute user's function
             thread = threading.Thread(
