@@ -69,7 +69,7 @@ class ExecuteContext(ExecuteContextBase):
         """
         Sends agent notification via the protocol client.
         """
-        biscuit = TheoriqBiscuit(self._request_biscuit.biscuit)
+        biscuit = self.agent_biscuit()
         self._protocol_client.post_notification(biscuit=biscuit, agent_id=self.agent_address, notification=notification)
 
     def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:

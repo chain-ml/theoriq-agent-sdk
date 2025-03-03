@@ -76,7 +76,8 @@ class Agent:
         return self._schema
 
     def authentication_biscuit(self) -> AuthenticationBiscuit:
-        facts = AuthenticationFacts(self.config.address, self.config.private_key)
+        address = self.config.address if self.virtual_address.is_null else self.virtual_address
+        facts = AuthenticationFacts(address, self.config.private_key)
         return facts.to_authentication_biscuit()
 
     def verify_biscuit(self, request_biscuit: RequestBiscuit, body: bytes) -> None:
