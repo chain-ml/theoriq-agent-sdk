@@ -18,11 +18,11 @@ from theoriq.types import AgentMetadata, Metric
 
 from ...types.agent_data import AgentDescriptions
 from .protocol.protocol_client import ProtocolClient, RequestStatus
-from .request_context_base import ExecuteResponse, RequestContextBase
+from .request_context import ExecuteResponse, RequestContext
 from .schemas.request import Configuration, ExecuteRequestBody
 
 
-class ExecuteContext(RequestContextBase):
+class ExecuteContext(RequestContext):
     """
     Represents the context for executing a request, managing interactions with the agent and protocol client.
     """
@@ -154,7 +154,7 @@ class ExecuteContext(RequestContextBase):
         )
 
     @classmethod
-    def from_request_context(cls, context: RequestContextBase, configuration: Optional[Configuration]) -> Self:
+    def from_request_context(cls, context: RequestContext, configuration: Optional[Configuration]) -> Self:
         return cls(context._agent, context._protocol_client, context._request_biscuit, configuration)
 
 

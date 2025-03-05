@@ -11,7 +11,7 @@ from . import ProtocolClient
 from .context_base import ContextBase
 
 
-class RequestContextBase(ContextBase):
+class RequestContext(ContextBase):
     """
     Represents the context for executing a request, managing interactions with the agent and protocol client.
     """
