@@ -79,7 +79,9 @@ class ExecuteContext(RequestContextBase):
         Sends agent notification via the protocol client.
         """
         biscuit = self.agent_biscuit()
-        self._protocol_client.post_notification(biscuit=biscuit, agent_id=self.agent_address, notification=notification)
+        self._protocol_client.post_notification(
+            biscuit=biscuit, agent_id=str(self.agent_address), notification=notification
+        )
 
     def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
         """
