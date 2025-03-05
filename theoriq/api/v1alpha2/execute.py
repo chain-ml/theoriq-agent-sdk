@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
+from typing_extensions import Self
+
 from theoriq.agent import Agent
 from theoriq.biscuit import AgentAddress, RequestBiscuit, ResponseBiscuit, TheoriqBiscuit, TheoriqBudget
 from theoriq.biscuit.facts import TheoriqRequest
@@ -30,7 +32,7 @@ class ExecuteContext(RequestContextBase):
         agent: Agent,
         protocol_client: ProtocolClient,
         request_biscuit: RequestBiscuit,
-        request_body: ExecuteRequestBody,
+        configuration: Optional[Configuration] = None,
     ) -> None:
         """
         Initializes an ExecuteContext instance.
@@ -41,11 +43,9 @@ class ExecuteContext(RequestContextBase):
             request_biscuit (RequestBiscuit): The biscuit associated with the request, containing metadata and permissions.
         """
 
-        configuration = request_body.configuration
         virtual_address = AgentAddress(configuration.fromRef.id) if configuration else None
         super().__init__(agent, protocol_client, request_biscuit, virtual_address)
         self._configuration_hash = configuration.fromRef.hash if configuration else None
-        self._request_body = request_body
 
     def send_event(self, message: str) -> None:
         """
@@ -152,6 +152,10 @@ class ExecuteContext(RequestContextBase):
             examples=metadata.example_prompts,
             cost_card=metadata.cost_card,
         )
+
+    @classmethod
+    def from_request_context(cls, context: RequestContextBase, configuration: Optional[Configuration]) -> Self:
+        return cls(context._agent, context._protocol_client, context._request_biscuit, configuration)
 
 
 ExecuteRequestFn = Callable[[ExecuteContext, ExecuteRequestBody], ExecuteResponse]
