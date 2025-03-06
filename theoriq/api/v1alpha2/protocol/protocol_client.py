@@ -118,7 +118,7 @@ class ProtocolClient:
     def _post_request_complete(
         self, biscuit: TheoriqBiscuit, response: Optional[str], agent: Agent, status: RequestStatus
     ) -> None:
-        request_fact = RequestFact.from_biscuit(biscuit)
+        request_fact = biscuit.read_fact(RequestFact)
         request_id = request_fact.request_id
         from_addr = request_fact.from_addr
         url = f"{self._uri}/requests/{request_id}/{status.value}"

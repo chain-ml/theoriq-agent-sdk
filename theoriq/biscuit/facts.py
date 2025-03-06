@@ -9,7 +9,7 @@ import itertools
 from typing import Generic, List, TypeVar
 from uuid import UUID
 
-from biscuit_auth import BlockBuilder, Fact, Rule  # pylint: disable=E0611
+from biscuit_auth import BlockBuilder, Fact, Rule
 from typing_extensions import Self
 
 from theoriq.types import Currency
@@ -42,6 +42,30 @@ class TheoriqFactBase(abc.ABC):
         for fact in self.to_facts():
             block_builder.add_fact(fact)
         return block_builder
+
+
+class SubjectFact(TheoriqFactBase):
+    """`theoriq:subject` fact"""
+
+    def __init__(self, *, agent_id: str):
+        super().__init__()
+        self.agent_id = agent_id
+
+    @classmethod
+    def biscuit_rule(cls) -> Rule:
+        return Rule("""address($address) <- theoriq:subject("agent", $address)""")
+
+    @classmethod
+    def from_fact(cls, fact: Fact) -> Self:
+        [address] = fact.terms
+        return cls(agent_id=address)
+
+    def to_facts(self) -> list[Fact]:
+        fact = Fact(
+            """theoriq:subject("agent", {agent_id})""",
+            {"agent_id": self.agent_id},
+        )
+        return [fact]
 
 
 class RequestFact(TheoriqFactBase):
@@ -241,7 +265,7 @@ class FactConvertibleBase(abc.ABC, Generic[T]):
 
     @classmethod
     @abc.abstractmethod
-    def from_theoriq_fact(cls, theoriq_fact: T) -> Self:
+    def from_theoriq_fact(cls, fact: T) -> Self:
         pass
 
 
