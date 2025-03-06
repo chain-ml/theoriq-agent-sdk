@@ -66,7 +66,7 @@ class AgentConfigurator:
             logger.error(f"Failed to configure agent: {e}")
             configure_context.post_request_failure(biscuit, str(e))
         else:
-            request_fact = RequestFact.from_biscuit(biscuit)
+            request_fact = biscuit.read_fact(RequestFact)
             configured_agent_id = request_fact.from_addr
             message = f"Successfully configured agent {configured_agent_id}"
             logger.info(message)
