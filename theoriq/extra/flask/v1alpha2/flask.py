@@ -12,7 +12,7 @@ import theoriq
 from theoriq import ExecuteRuntimeError
 from theoriq.agent import Agent, AgentDeploymentConfiguration
 from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
-from theoriq.api.v1alpha2 import ConfigureContext
+from theoriq.api.v1alpha2 import ConfigureContext, RequestContext
 from theoriq.api.v1alpha2.configure import AgentConfigurator
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
 from theoriq.biscuit import TheoriqBiscuit, TheoriqBiscuitError, TheoriqCost
@@ -114,11 +114,13 @@ def execute_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Resp
     agent = agent_var.get()
     protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
     request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
-    execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit)
-    with ExecuteLogContext(execute_context):
+    request_context = RequestContext(agent, protocol_client, request_biscuit)
+    with ExecuteLogContext(str(request_biscuit.request_facts.req_id)):
         try:
             execute_request_body = ExecuteRequestBody.model_validate(request.json)
-            execute_context.set_configuration(execute_request_body.configuration)
+            execute_context = ExecuteContextV1alpha2.from_request_context(
+                request_context, execute_request_body.configuration
+            )
             # Execute user's function
             try:
                 execute_response = execute_request_function(execute_context, execute_request_body)
@@ -130,10 +132,10 @@ def execute_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Resp
             response = add_biscuit_to_response(response, response_biscuit)
             return response
         except pydantic.ValidationError as err:
-            return new_error_response(execute_context, err, 400)
+            return new_error_response(request_context, err, 400)
         except Exception as err:
             logger.exception(err)
-            return new_error_response(execute_context, err, 500)
+            return new_error_response(request_context, err, 500)
 
 
 def execute_async_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Response:
@@ -142,11 +144,13 @@ def execute_async_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -
     agent = agent_var.get()
     protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
     request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
-    execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit)
-    with ExecuteLogContext(execute_context):
+    request_context = RequestContext(agent, protocol_client, request_biscuit)
+    with ExecuteLogContext(str(request_biscuit.request_facts.req_id)):
         try:
             execute_request_body = ExecuteRequestBody.model_validate(request.json)
-            execute_context.set_configuration(execute_request_body.configuration)
+            execute_context = ExecuteContextV1alpha2.from_request_context(
+                request_context, execute_request_body.configuration
+            )
 
             # Execute user's function
             thread = threading.Thread(
@@ -156,10 +160,10 @@ def execute_async_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -
             return Response(status=202)
 
         except pydantic.ValidationError as err:
-            return new_error_response(execute_context, err, 400)
+            return new_error_response(request_context, err, 400)
         except Exception as err:
             logger.exception(err)
-            return new_error_response(execute_context, err, 500)
+            return new_error_response(request_context, err, 500)
 
 
 def _execute_async(
