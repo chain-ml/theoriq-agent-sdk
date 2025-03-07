@@ -62,3 +62,6 @@ py_version=39
 src_paths = ["theoriq"]
 skip = ["__init__.py"]
 skip_glob = ["**/.venv/*", "**/venv/*", "**/docs/*", "**/stubs/*"]
+
+[tool.poetry.scripts]
+add-agent = "scripts.add_agent:main"
