@@ -5,10 +5,10 @@ import dotenv
 from flask import Flask
 
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
-from theoriq.api.v1alpha1.schemas import ExecuteRequestBody
+from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
 from theoriq.biscuit import TheoriqCost
 from theoriq.dialog import TextItemBlock
-from theoriq.extra.flask.v1alpha1.flask import theoriq_blueprint
+from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
 from theoriq.types import Currency
 
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     dotenv.load_dotenv()
     agent_config = AgentDeploymentConfiguration.from_env()
 
-    # Create and register theoriq blueprint with v1alpha1 api version
+    # Create and register theoriq blueprint with v1alpha2 api version
     blueprint = theoriq_blueprint(agent_config, execute)
     app.register_blueprint(blueprint)
     app.run(host="0.0.0.0", port=os.environ.get("FLASK_PORT", 8000))
