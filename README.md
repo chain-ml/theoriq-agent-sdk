@@ -97,18 +97,32 @@ To install the required dependencies for the SDK, run the following command:
 ```shell
 poetry install --all-groups --all-extras
 ```
+# Build Your Agent
 
-# Example
+To build a template of an agent that interacts with our protocol, you have two choices:
 
-## HelloWorld Agent
+## CLI
 
-Build a very simple HelloWorld Agent
+This approach will create a minimal agent that you can run and start interacting with the protocol. 
 
-## Creating the Private Key
+1. In the project root, after installing the SDK, run 
+```
+poetry run add-agent      
+```
+2. Fill out the requested information based on your preference. If not sure, you can accept the default choices and just press enter.
+3. After you finish the set up, you will have a folder with your project name, and see the commands to install dependencies and run your agent.
+4. When your agent is running, you can use the provided address of your agent in the terminal in step 3. 
+
+> **_NOTE:_**  If you are running your agent locally and behind a modem, you may need to forward the flask port in your modem. You can find more information here: https://www.noip.com/support/knowledgebase/general-port-forwarding-guide
+
+## Manually
+This approach will walk you through a step by step process to create a basic agent.
+
+### Creating the Private Key
 
 To ensure the security of the protocol interacting with the Agent, all responses must be signed using a private key. This private key is critical for validating and authenticating the responses.
 
-### Steps to Generate the Private Key
+#### Steps to Generate the Private Key
 
 1. **Run the Script**:
    - Navigate to the `script` folder in your project directory.
@@ -128,7 +142,7 @@ To ensure the security of the protocol interacting with the Agent, all responses
      
 Keep the public key for the Agent registration within the Infinity Hub.
 
-### Important Notes
+#### Important Notes
 
 - **Confidentiality**: This private key is extremely sensitive and should be stored securely. Under no circumstances should this key be shared with anyone, including any members of Theoriq.
 - **Security**: Ensure that the key is kept in a secure environment to prevent unauthorized access.
@@ -136,7 +150,7 @@ Keep the public key for the Agent registration within the Infinity Hub.
 
 By following these steps and precautions, you will maintain the integrity and security of the protocol interactions with the Agent.
 
-## Core of the Agent
+### Core of the Agent
 
 Writing the core function of an `HelloWorld` Agent
 
@@ -187,20 +201,20 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
 ```
 
-## Deploy and Start your Agent
+### Deploy and Start your Agent
 
 For the deployment process ensure to define those 2 environment variables:
 - `AGENT_PRIVATE_KEY` with the value created during the first step.
 - `THEORIQ_URI` with the following value `https://theoriq-backend.prod-02.chainml.net`
 
 
-## Register the Agent in the Infinity Hub
+### Register the Agent in the Infinity Hub
 
 To register your agent, follow this link: [Register your agent](https://infinity.theoriq.ai/hub/agent-register).
 
 Once registered, the agent will be available for testing. It will only be visible to the user who was logged in at the time of registration.
 
-## Result
+### Result
 
 ![Result in Infinity Studio](./doc/HellowWorld%20Session.png)
 
