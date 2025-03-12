@@ -31,11 +31,14 @@ fi
 # Activate the virtual environment
 source .venv/bin/activate
 
+
 # Install dependencies if they are not installed
 if [ ! -f "requirements.txt" ]; then
     echo "requirements.txt not found. Please create it first."
 else
-# Check if the --verbose flag is passed
+    # Declare PID in the scope of this block    PID=0
+
+    # Check if the --verbose flag is passed
     VERBOSE=false
     for arg in "$@"; do
         if [[ "$arg" == "--verbose" ]]; then
@@ -47,6 +50,7 @@ else
     echo "Installing dependencies..."
     if [ "$VERBOSE" = true ]; then
         $PIP_CMD install -r requirements.txt &
+        PID=$!
     else
         $PIP_CMD install -r requirements.txt > /dev/null 2>&1 &
         # Get the process ID
