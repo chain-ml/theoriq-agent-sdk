@@ -73,9 +73,6 @@ class Web3ItemBlock(ItemBlock[Web3Item]):
         """
         Initializes a Web3ItemBlock instance.
 
-        Args:
-            method (str): The method that this web3Item will execute.
-            args (Dict[str, Any]): The arguments that this web3Item will execute with.
         """
 
         block_type = f"{Web3ItemBlock.block_type()}:{sub_type}" if sub_type else Web3ItemBlock.block_type()
