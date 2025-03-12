@@ -131,12 +131,12 @@ class DialogItem:
         )
 
     @classmethod
-    def new_web3_item(cls, source: str, chainId: int, method: str, args: Dict[str, Any]) -> DialogItem:
+    def new_web3_item(cls, source: str, chain_id: int, method: str, args: Dict[str, Any]) -> DialogItem:
         return cls(
             timestamp=datetime.now(timezone.utc).isoformat(),
             source_type=SourceType.Agent.value,
             source=source,
-            blocks=[Web3ItemBlock(chainId=chainId, method=method, args=args)],
+            blocks=[Web3ItemBlock(chain_id=chain_id, method=method, args=args)],
         )
 
 
