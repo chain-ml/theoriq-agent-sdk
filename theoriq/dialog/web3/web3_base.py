@@ -11,16 +11,16 @@ class Web3Item(BaseData):
     A class representing a Base Web3 item. Inherits from BaseData.
     """
 
-    def __init__(self, *, chainId: int, method: str, args: Dict[str, Any]) -> None:
+    def __init__(self, *, chain_id: int, method: str, args: Dict[str, Any]) -> None:
         """
         Initializes a Web3Item instance.
 
         Args:
-            chainId (int): The chainId that this web3 item is related to.
+            chain_id (int): The chain_id that this web3 item is related to.
             method (str): The method that this web3Item will execute.
             args (List[str]): The arguments that this web3Item will execute with.
         """
-        self.chainId = chainId
+        self.chain_id = chain_id
         self.method = method
         self.args = args
 
@@ -29,9 +29,9 @@ class Web3Item(BaseData):
         Converts the web3Item instance into a dictionary.
 
         Returns:
-            Dict[str, Any]: A dictionary that contains the chainId, method, and args.
+            Dict[str, Any]: A dictionary that contains the chain_id, method, and args.
         """
-        return {"chainId": self.chainId, "method": self.method, "args": self.args}
+        return {"chain_id": self.chain_id, "method": self.method, "args": self.args}
 
     def to_str(self) -> str:
         """
@@ -43,7 +43,7 @@ class Web3Item(BaseData):
         args = json.dumps(self.args)
         # skip ` in the args str
         args = args.replace("`", "\\`")
-        result = [f"```{self.chainId}", self.method, args, "```"]
+        result = [f"```{self.chain_id}", self.method, args, "```"]
         return "\n".join(result)
 
     def __str__(self):
@@ -53,7 +53,7 @@ class Web3Item(BaseData):
         Returns:
             str: A string representing the web3Item.
         """
-        return f"Web3Item(chainId={self.chainId}, method={self.method}, args={json.dumps(self.args)})"
+        return f"Web3Item(chain_id={self.chain_id}, method={self.method}, args={json.dumps(self.args)})"
 
 
 class Web3ItemBlock(ItemBlock[Web3Item]):
@@ -64,7 +64,7 @@ class Web3ItemBlock(ItemBlock[Web3Item]):
     def __init__(
         self,
         *,
-        chainId: int,
+        chain_id: int,
         method: str,
         args: Dict[str, Any],
         sub_type: str | None = None,
@@ -75,7 +75,7 @@ class Web3ItemBlock(ItemBlock[Web3Item]):
         Initializes a Web3ItemBlock instance.
 
         Args:
-            chainId (int): The chainId that this web3 item is related to.
+            chain_id (int): The chain_id that this web3 item is related to.
             method (str): The method that this web3Item will execute.
             args (Dict[str, Any]): The arguments that this web3Item will execute with.
         """
@@ -83,7 +83,7 @@ class Web3ItemBlock(ItemBlock[Web3Item]):
         block_type = f"{Web3ItemBlock.block_type()}:{sub_type}" if sub_type else Web3ItemBlock.block_type()
         super().__init__(
             block_type=block_type,
-            data=Web3Item(chainId=chainId, method=method, args=args),
+            data=Web3Item(chain_id=chain_id, method=method, args=args),
             key=key,
             reference=reference,
         )
@@ -101,7 +101,7 @@ class Web3ItemBlock(ItemBlock[Web3Item]):
             Web3ItemBlock: A new instance of Web3ItemBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        return cls(chainId=data["chainId"], method=data["method"], args=data["args"])
+        return cls(chain_id=data["chain_id"], method=data["method"], args=data["args"])
 
     @staticmethod
     def block_type() -> str:
