@@ -39,7 +39,7 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
             "version": "1",
             "chainId": 1,
             "salt": "0x0000000000000000000000000000000000000000000000000000000000000030",
-            "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCcCcccccccC",
+            "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
         },
         types={
             "EIP712Domain": [{"name": "name", "type": "string"}],
@@ -53,7 +53,6 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
         message={"from": "Theoriq", "to": req.last_item.source or "User", "message": "Hello from Theoriq!"},
     )
 
-
     # Wrapping the result into an `ExecuteResponse` with some helper functions on the Context
     return context.new_response(
         blocks=[
@@ -65,7 +64,6 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
         ],
         cost=TheoriqCost(amount=1, currency=Currency.USDC),
     )
-
 
 
 if __name__ == "__main__":

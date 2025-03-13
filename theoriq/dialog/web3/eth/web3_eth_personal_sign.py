@@ -18,7 +18,7 @@ class Web3EthPersonalSignItem(Web3Item):
         Returns:
             str: A string representing the web3EthPersonalSignItem.
         """
-        return f"Web3EthPersonalSignItem(chain_id={self.chain_id}, message={self.message})"
+        return f"Web3EthPersonalSignItem(chain_id={self.chain_id}, message={self.args.message})"
 
 
 class Web3EthPersonalSignBlock(Web3EthBaseBlock):
@@ -28,7 +28,7 @@ class Web3EthPersonalSignBlock(Web3EthBaseBlock):
 
     def __init__(self, message: str, key: Optional[str] = None, reference: Optional[str] = None) -> None:
         """
-        Initializes a Web3ItemBlock instance.
+        Initializes a Web3EthPersonalSignBlock instance.
 
         Args:
             message (str): The message to be signed.
