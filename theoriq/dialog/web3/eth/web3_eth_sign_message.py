@@ -18,7 +18,7 @@ class Web3EthSignMessageItem(Web3Item):
         Returns:
             str: A string representing the web3EthSignMessageItem.
         """
-        return f"Web3EthSignMessageItem(chain_id={self.chain_id}, message={self.message})"
+        return f"Web3EthSignMessageItem(chain_id={self.chain_id}, message={self.args.message})"
 
 
 class Web3EthSignMessageBlock(Web3EthBaseBlock):
