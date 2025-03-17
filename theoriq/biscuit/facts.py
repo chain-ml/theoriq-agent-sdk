@@ -323,7 +323,7 @@ class TheoriqBudget(FactConvertibleBase[BudgetFact]):
 
     @classmethod
     def from_theoriq_fact(cls, fact: BudgetFact) -> Self:
-        return cls(amount=fact.amount, currency=Currency.from_value(fact.currency), voucher=fact.voucher)
+        return cls(amount=fact.amount, currency=Currency(fact.currency), voucher=fact.voucher)
 
     @classmethod
     def from_amount(cls, *, amount: str | int, currency: Currency) -> TheoriqBudget:

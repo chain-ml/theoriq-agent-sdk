@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from ..web3_base import Web3Item
+from .. import Web3Item
 from .web3_eth_base import Web3EthBaseBlock
 
 
@@ -34,9 +34,11 @@ class Web3EthSignMessageBlock(Web3EthBaseBlock):
             message (str): The message to be signed.
         """
         super().__init__(
-            method=self.__class__.getWeb3Method(),
-            args={"message": message},
-            BlockItem=Web3EthSignMessageItem,
+            item=Web3Item(
+                chain_id=self.__class__.getWeb3ChainId(),
+                method=self.__class__.getWeb3Method(),
+                args={"message": message},
+            ),
             key=key,
             reference=reference,
         )
