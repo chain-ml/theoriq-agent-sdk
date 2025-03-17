@@ -8,11 +8,11 @@ from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteRespons
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
 from theoriq.biscuit import TheoriqCost
 from theoriq.dialog import (
-    Web3EthTypedDataMessageType,
     TextItemBlock,
     Web3EthPersonalSignBlock,
     Web3EthSignMessageBlock,
     Web3EthSignTypedDataBlock,
+    Web3EthTypedDataMessageType,
     Web3ItemBlock,
 )
 from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint

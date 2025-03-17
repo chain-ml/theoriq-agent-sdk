@@ -68,15 +68,11 @@ class Web3ItemBlock(ItemBlock[Web3Item]):
         Initializes a Web3ItemBlock instance.
 
         Args:
-            chain_id (int): The chain_id that this web3 item is related to.
             method (str): The method that this web3Item will execute.
             args (Dict[str, Any]): The arguments that this web3Item will execute with.
-            BlockItem (Web3Item): The item to be used for the operation.
         """
 
         block_type = f"{Web3ItemBlock.block_type()}:{sub_type}" if sub_type else Web3ItemBlock.block_type()
-        if BlockItem is None:
-            BlockItem = Web3Item
 
         super().__init__(
             block_type=block_type,
