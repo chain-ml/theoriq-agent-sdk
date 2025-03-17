@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
-from ..web3_base import Web3Item
+from .. import Web3Item
 from .web3_eth_base import Web3EthBaseBlock
 
 
@@ -59,15 +59,18 @@ class Web3EthSignTypedDataBlock(Web3EthBaseBlock):
             data (Web3EthTypedDataMessageType): The data to be signed.
         """
         self.__class__.raiseIfInvalidDataType(dict(data))
+
         super().__init__(
-            method=self.__class__.getWeb3Method(),
-            args={
-                "domain": data["domain"],
-                "types": data["types"],
-                "primaryType": data["primaryType"],
-                "message": data["message"],
-            },
-            BlockItem=Web3EthSignTypedDataItem,
+            item=Web3Item(
+                chain_id=self.__class__.getWeb3ChainId(),
+                method=self.__class__.getWeb3Method(),
+                args={
+                    "domain": data["domain"],
+                    "types": data["types"],
+                    "primaryType": data["primaryType"],
+                    "message": data["message"],
+                },
+            ),
             key=key,
             reference=reference,
         )
