@@ -62,28 +62,12 @@ class Web3ItemBlock(ItemBlock[Web3Item]):
     """
 
     def __init__(
-        self,
-        *,
-        chain_id: int,
-        method: str,
-        args: Dict[str, Any],
-        sub_type: str | None = None,
-        key: Optional[str] = None,
-        reference: Optional[str] = None,
+        self, *, item: Web3Item, sub_type: str | None = None, key: Optional[str] = None, reference: Optional[str] = None
     ) -> None:
-        """
-        Initializes a Web3ItemBlock instance.
-
-        Args:
-            chain_id (int): The chain_id that this web3 item is related to.
-            method (str): The method that this web3Item will execute.
-            args (Dict[str, Any]): The arguments that this web3Item will execute with.
-        """
-
         block_type = f"{Web3ItemBlock.block_type()}:{sub_type}" if sub_type else Web3ItemBlock.block_type()
         super().__init__(
             block_type=block_type,
-            data=Web3Item(chain_id=chain_id, method=method, args=args),
+            data=item,
             key=key,
             reference=reference,
         )
@@ -101,7 +85,7 @@ class Web3ItemBlock(ItemBlock[Web3Item]):
             Web3ItemBlock: A new instance of Web3ItemBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        return cls(chain_id=data["chain_id"], method=data["method"], args=data["args"])
+        return cls(item=Web3Item(chain_id=data["chain_id"], method=data["method"], args=data["args"]))
 
     @staticmethod
     def block_type() -> str:
