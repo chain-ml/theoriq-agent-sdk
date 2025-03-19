@@ -2,14 +2,13 @@ from typing import Optional
 
 from .. import Web3Item
 from typing import Dict, Any
-import json
 
 class Web3ResultItem(Web3Item):
     """
     A class representing the result of a Web3 item. Inherits from BaseData.
     """
 
-    def __init__(self, *, chain_id: int, method: str, args: Dict[str, Any]) -> None:
+    def __init__(self, *, chain_id: int, args: Dict[str, Any]) -> None:
         """
         Initializes a Web3Item instance.
 
