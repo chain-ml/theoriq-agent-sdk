@@ -51,7 +51,7 @@ class Web3EthSignTypedDataBlock(Web3EthBaseBlock):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str) -> Web3EthSignTypedDataBlock:
+    def from_dict(cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> Web3EthSignTypedDataBlock:
         """
         Creates an instance of Web3EthPersonalSignBlock from a dictionary.
 
@@ -63,7 +63,8 @@ class Web3EthSignTypedDataBlock(Web3EthBaseBlock):
             Web3EthPersonalSignBlock: A new instance of Web3EthPersonalSignBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        return cls(message=data["message"])
+        cls.raiseIfInvalidDataType(data)
+        return cls(data=data["data"], key=block_key, reference=block_ref)
 
     @staticmethod
     def getWeb3Method() -> str:
