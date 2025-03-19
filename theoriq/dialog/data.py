@@ -69,7 +69,7 @@ class DataItemBlock(ItemBlock[DataItem]):
         super().__init__(block_type=block_type, data=DataItem(data=data), key=key, reference=reference)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str) -> DataItemBlock:
+    def from_dict(cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> DataItemBlock:
         """
         Creates an instance of DataItemBlock from a dictionary.
 
@@ -81,7 +81,7 @@ class DataItemBlock(ItemBlock[DataItem]):
             DataItemBlock: A new instance of DataItemBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        return cls(data=data["data"], data_type=cls.sub_type(block_type))
+        return cls(data=data["data"], data_type=cls.sub_type(block_type), key=block_key, reference=block_ref)
 
     @classmethod
     def block_type(cls) -> str:

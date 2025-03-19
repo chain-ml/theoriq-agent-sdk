@@ -85,7 +85,7 @@ class Web3ItemBlock(ItemBlock[Web3Item]):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str) -> Web3ItemBlock:
+    def from_dict(cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> Web3ItemBlock:
         """
         Creates an instance of Web3ItemBlock from a dictionary.
 
@@ -97,7 +97,7 @@ class Web3ItemBlock(ItemBlock[Web3Item]):
             Web3ItemBlock: A new instance of Web3ItemBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        return cls(item=Web3Item(chain_id=data["chain_id"], method=data["method"], args=data["args"]))
+        return cls(item=Web3Item(chain_id=data["chain_id"], method=data["method"], args=data["args"]), key=block_key, reference=block_ref)
 
     @staticmethod
     def block_type() -> str:

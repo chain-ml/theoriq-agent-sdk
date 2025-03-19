@@ -78,7 +78,9 @@ class DialogItem:
             bloc_class = block_classes.get(ItemBlock.root_type(block_type))
             if bloc_class is not None:
                 block_data = item["data"]
-                item_blocks.append(bloc_class.from_dict(block_data, block_type))
+                block_key = item.get("key", None)
+                block_ref = item.get("ref", None)
+                item_blocks.append(bloc_class.from_dict(block_data, block_type, block_key, block_ref))
             else:
                 raise ValueError(f"invalid item type {block_type}")
 

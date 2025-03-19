@@ -76,7 +76,7 @@ class MetricsItemBlock(ItemBlock[Sequence[MetricItem]]):
         super().__init__(block_type=MetricsItemBlock.block_type(), data=metrics, key=key, reference=reference)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str) -> MetricsItemBlock:
+    def from_dict(cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> MetricsItemBlock:
         """
         Creates an instance of MetricsItemBlock from a dictionary.
 
@@ -89,7 +89,7 @@ class MetricsItemBlock(ItemBlock[Sequence[MetricItem]]):
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
         items = data.get("items", [])
-        return cls(metrics=[MetricItem.from_dict(metric) for metric in items])
+        return cls(metrics=[MetricItem.from_dict(metric) for metric in items], key=block_key, reference=block_ref)
 
     @staticmethod
     def block_type() -> str:
