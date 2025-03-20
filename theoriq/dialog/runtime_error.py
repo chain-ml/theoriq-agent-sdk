@@ -82,7 +82,9 @@ class ErrorItemBlock(ItemBlock[ErrorItem]):
         super().__init__(block_type=ErrorItemBlock.block_type(), data=err, key=key, reference=reference)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> ErrorItemBlock:
+    def from_dict(
+        cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> ErrorItemBlock:
         """
         Creates an instance of ErrorItemBlock from a dictionary.
 

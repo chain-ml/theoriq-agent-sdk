@@ -65,7 +65,9 @@ class CustomItemBlock(ItemBlock[CustomData]):
         super().__init__(block_type=block_type, data=data, key=key, reference=reference)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> CustomItemBlock:
+    def from_dict(
+        cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> CustomItemBlock:
         """
         Creates an instance of CustomItemBlock from a dictionary.
 

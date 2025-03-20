@@ -68,7 +68,9 @@ class TextItemBlock(ItemBlock[TextItem]):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> TextItemBlock:
+    def from_dict(
+        cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> TextItemBlock:
         """
         Creates an instance of TextItemBlock from a dictionary.
 

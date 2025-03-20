@@ -66,7 +66,9 @@ class CodeItemBlock(ItemBlock[CodeItem]):
         )
 
     @classmethod
-    def from_dict(cls, data: Any, block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> CodeItemBlock:
+    def from_dict(
+        cls, data: Any, block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> CodeItemBlock:
         """
         Creates an instance of CodeItemBlock from a dictionary.
 

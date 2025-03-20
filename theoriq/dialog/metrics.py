@@ -76,7 +76,9 @@ class MetricsItemBlock(ItemBlock[Sequence[MetricItem]]):
         super().__init__(block_type=MetricsItemBlock.block_type(), data=metrics, key=key, reference=reference)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> MetricsItemBlock:
+    def from_dict(
+        cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> MetricsItemBlock:
         """
         Creates an instance of MetricsItemBlock from a dictionary.
 
