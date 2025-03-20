@@ -20,6 +20,7 @@ class Web3Item(BaseData):
             method (str): The method that this web3Item will execute.
             args (List[str]): The arguments that this web3Item will execute with.
         """
+        self.__class__.validate_args(args)
         self.chain_id = chain_id
         self.method = method
         self.args = args
@@ -54,6 +55,11 @@ class Web3Item(BaseData):
             str: A string representing the web3Item.
         """
         return f"Web3Item(chain_id={self.chain_id}, method={self.method}, args={json.dumps(self.args)})"
+
+    @classmethod
+    def validate_args(cls, args: Dict[str, Any]) -> None:
+        if not isinstance(args, dict):
+            raise ValueError(f"{cls.__name__}: args must be a dictionary")
 
 
 class Web3ItemBlock(ItemBlock[Web3Item]):

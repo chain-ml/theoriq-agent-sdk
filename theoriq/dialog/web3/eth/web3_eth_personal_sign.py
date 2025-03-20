@@ -2,14 +2,44 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+from pydantic import BaseModel
+
 from .. import Web3Item
 from .web3_eth_base import Web3EthBaseBlock
+
+
+class Web3EthPersonalSignArgs(BaseModel):
+    message: str
 
 
 class Web3EthPersonalSignItem(Web3Item):
     """
     A class representing a web3 eth personal sign item.
     """
+
+    def __init__(
+        self,
+        chain_id: int,
+        method: str,
+        args: Dict[str, Any],
+        key: Optional[str] = None,
+        reference: Optional[str] = None,
+    ) -> None:
+        """
+        Initializes a Web3EthPersonalSignItem instance.
+
+        Args:
+            message (str): The message to be signed.
+            key (Optional[str]): The key to be used for the signature.
+            reference (Optional[str]): The reference to the item.
+        """
+        super().__init__(
+            chain_id=chain_id,
+            method=method,
+            args=Web3EthPersonalSignArgs(message=args["message"]).dict(),
+        )
+        self.key = key
+        self.reference = reference
 
     def __str__(self):
         """
@@ -19,6 +49,14 @@ class Web3EthPersonalSignItem(Web3Item):
             str: A string representing the web3EthPersonalSignItem.
         """
         return f"Web3EthPersonalSignItem(chain_id={self.chain_id}, message={self.args.message})"
+
+    @classmethod
+    def validate_args(cls, args: Dict[str, Any]) -> None:
+        super().validate_args(args)
+        if "message" not in args:
+            raise ValueError(f"{cls.__name__}: message must be a key in the args dictionary")
+        if not isinstance(args["message"], str):
+            raise ValueError(f"{cls.__name__}: message must be a string")
 
 
 class Web3EthPersonalSignBlock(Web3EthBaseBlock):
