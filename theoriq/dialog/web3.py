@@ -20,7 +20,7 @@ class Web3Item(BaseData):
             method (str): The method that this web3Item will execute.
             args (List[str]): The arguments that this web3Item will execute with.
         """
-        self.__class__.validate_args(args)
+        self.validate_args(args)
         self.chain_id = chain_id
         self.method = method
         self.args = args

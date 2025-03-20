@@ -47,8 +47,8 @@ class Web3EthSignMessageBlock(Web3EthBaseBlock):
         """
         super().__init__(
             item=Web3Item(
-                chain_id=self.__class__.get_web3_chain_id(),
-                method=self.__class__.get_web3_method(),
+                chain_id=self.get_web3_chain_id(),
+                method=self.get_web3_method(),
                 args={"message": message},
             ),
             key=key,
