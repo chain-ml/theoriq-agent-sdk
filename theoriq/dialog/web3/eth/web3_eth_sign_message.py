@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, TypedDict
 
 from .. import Web3Item
 from .web3_eth_base import Web3EthBaseBlock
+
+
+class Web3EthSignMessageArgs(TypedDict):
+    message: str
 
 
 class Web3EthSignMessageItem(Web3Item):
@@ -19,6 +23,14 @@ class Web3EthSignMessageItem(Web3Item):
             str: A string representing the web3EthSignMessageItem.
         """
         return f"Web3EthSignMessageItem(chain_id={self.chain_id}, message={self.args.message})"
+
+    @classmethod
+    def validate_args(cls, args: Dict[str, Any]) -> None:
+        super().validate_args(args)
+        if "message" not in args:
+            raise ValueError(f"{cls.__name__}: message must be a key in the args dictionary")
+        if not isinstance(args["message"], str):
+            raise ValueError(f"{cls.__name__}: message must be a string")
 
 
 class Web3EthSignMessageBlock(Web3EthBaseBlock):
