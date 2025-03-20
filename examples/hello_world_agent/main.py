@@ -9,8 +9,7 @@ from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
 from theoriq.biscuit import TheoriqCost
 from theoriq.dialog import (
     TextItemBlock,
-    Web3EthPersonalSignBlock,
-    Web3EthSignMessageBlock,
+    Web3EthSignBlock,
     Web3EthSignTypedDataBlock,
     Web3EthTypedDataMessageType,
     Web3ItemBlock,
@@ -58,8 +57,8 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
         blocks=[
             TextItemBlock(text=agent_result),
             Web3ItemBlock(chain_id=1, method="personal_sign", args={"message": "Hello Web3 World"}),
-            Web3EthPersonalSignBlock(message="Hello Web3 World"),
-            Web3EthSignMessageBlock(message="Hello Web3 World"),
+            Web3EthSignBlock(message="Hello Web3 World", method="personal_sign"),
+            Web3EthSignBlock(message="Hello Web3 World", method="eth_sign"),
             Web3EthSignTypedDataBlock(data=eth_typed_data_message_type),
         ],
         cost=TheoriqCost(amount=1, currency=Currency.USDC),

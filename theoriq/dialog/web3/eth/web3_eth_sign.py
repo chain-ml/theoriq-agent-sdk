@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Literal, Optional
 
 from pydantic import BaseModel
 
@@ -8,11 +8,11 @@ from .. import Web3Item
 from .web3_eth_base import Web3EthBaseBlock
 
 
-class Web3EthPersonalSignArgs(BaseModel):
+class Web3EthSignArgs(BaseModel):
     message: str
 
 
-class Web3EthPersonalSignItem(Web3Item):
+class Web3EthSignItem(Web3Item):
     """
     A class representing a web3 eth personal sign item.
     """
@@ -36,19 +36,19 @@ class Web3EthPersonalSignItem(Web3Item):
         super().__init__(
             chain_id=chain_id,
             method=method,
-            args=Web3EthPersonalSignArgs(message=args["message"]).dict(),
+            args=Web3EthSignArgs(message=args["message"]).dict(),
         )
         self.key = key
         self.reference = reference
 
     def __str__(self):
         """
-        Converts the web3EthPersonalSignItem instance into a string.
+        Converts the web3EthSignItem instance into a string.
 
         Returns:
-            str: A string representing the web3EthPersonalSignItem.
+            str: A string representing the web3EthSignItem.
         """
-        return f"Web3EthPersonalSignItem(chain_id={self.chain_id}, message={self.args.message})"
+        return f"Web3EthSignItem(chain_id={self.chain_id}, message={self.args.message}, method={self.method})"
 
     @classmethod
     def validate_args(cls, args: Dict[str, Any]) -> None:
@@ -59,14 +59,20 @@ class Web3EthPersonalSignItem(Web3Item):
             raise ValueError(f"{cls.__name__}: message must be a string")
 
 
-class Web3EthPersonalSignBlock(Web3EthBaseBlock):
+class Web3EthSignBlock(Web3EthBaseBlock):
     """
-    A class representing a block of web3 eth personal sign items. Inherits from Web3ItemBlock.
+    A class representing a block of web3 eth sign items. Inherits from Web3ItemBlock.
     """
 
-    def __init__(self, message: str, key: Optional[str] = None, reference: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        key: Optional[str] = None,
+        reference: Optional[str] = None,
+        method: Optional[Literal["personal_sign", "eth_sign"]] = "personal_sign",
+    ) -> None:
         """
-        Initializes a Web3EthPersonalSignBlock instance.
+        Initializes a Web3EthSignBlock instance.
 
         Args:
             message (str): The message to be signed.
@@ -74,7 +80,7 @@ class Web3EthPersonalSignBlock(Web3EthBaseBlock):
         super().__init__(
             item=Web3Item(
                 chain_id=self.get_web3_chain_id(),
-                method=self.get_web3_method(),
+                method=method or "personal_sign",
                 args={"message": message},
             ),
             key=key,
@@ -82,20 +88,16 @@ class Web3EthPersonalSignBlock(Web3EthBaseBlock):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str) -> Web3EthPersonalSignBlock:
+    def from_dict(cls, data: Dict[str, Any], block_type: str) -> Web3EthSignBlock:
         """
-        Creates an instance of Web3EthPersonalSignBlock from a dictionary.
+        Creates an instance of Web3EthSignBlock from a dictionary.
 
         Args:
             data (Dict[str, Any]): The dictionary containing the web3 item.
             block_type (str): The type of the block.
 
         Returns:
-            Web3EthPersonalSignBlock: A new instance of Web3EthPersonalSignBlock initialized with the provided data.
+            Web3EthSignBlock: A new instance of Web3EthSignBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        return cls(message=data["message"])
-
-    @staticmethod
-    def get_web3_method() -> str:
-        return "personal_sign"
+        return cls(message=data["message"], method=data["method"] or "personal_sign")
