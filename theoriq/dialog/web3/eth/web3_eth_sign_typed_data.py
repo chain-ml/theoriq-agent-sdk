@@ -113,7 +113,7 @@ class Web3EthSignTypedDataBlock(Web3EthBaseBlock):
         return cls(data=data["data"])
 
     @staticmethod
-    def getWeb3Method() -> str:
+    def get_web3_method() -> str:
         """
         Returns the web3 method for the Web3EthSignTypedDataBlock.
 
