@@ -35,8 +35,8 @@ class Web3EthSignMessageBlock(Web3EthBaseBlock):
         """
         super().__init__(
             item=Web3Item(
-                chain_id=self.__class__.getWeb3ChainId(),
-                method=self.__class__.getWeb3Method(),
+                chain_id=self.__class__.get_web3_chain_id(),
+                method=self.__class__.get_web3_method(),
                 args={"message": message},
             ),
             key=key,
@@ -59,5 +59,5 @@ class Web3EthSignMessageBlock(Web3EthBaseBlock):
         return cls(message=data["message"])
 
     @staticmethod
-    def getWeb3Method() -> str:
+    def get_web3_method() -> str:
         return "eth_sign"
