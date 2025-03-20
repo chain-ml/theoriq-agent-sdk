@@ -79,7 +79,9 @@ class RouterItemBlock(ItemBlock[Sequence[RouteItem]]):
         super().__init__(block_type=RouterItemBlock.block_type(), data=routes, key=key, reference=reference)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> RouterItemBlock:
+    def from_dict(
+        cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> RouterItemBlock:
         """
         Creates an instance of RouterItemBlock from a dictionary.
 

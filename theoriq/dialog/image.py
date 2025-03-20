@@ -69,7 +69,9 @@ class ImageItemBlock(ItemBlock[ImageItem]):
         super().__init__(block_type=block_type, data=ImageItem(image=image_base64), key=key, reference=reference)
 
     @classmethod
-    def from_dict(cls, data: Any, block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> ImageItemBlock:
+    def from_dict(
+        cls, data: Any, block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> ImageItemBlock:
         """
         Creates an instance of ImageItemBlock from a dictionary.
 

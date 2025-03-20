@@ -44,7 +44,9 @@ class Web3EthSignMessageBlock(Web3EthBaseBlock):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> Web3EthSignMessageBlock:
+    def from_dict(
+        cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> Web3EthSignMessageBlock:
         """
         Creates an instance of Web3EthSignMessageBlock from a dictionary.
 

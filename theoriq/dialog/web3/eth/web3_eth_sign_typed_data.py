@@ -51,7 +51,9 @@ class Web3EthSignTypedDataBlock(Web3EthBaseBlock):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> Web3EthSignTypedDataBlock:
+    def from_dict(
+        cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> Web3EthSignTypedDataBlock:
         """
         Creates an instance of Web3EthPersonalSignBlock from a dictionary.
 
@@ -69,3 +71,23 @@ class Web3EthSignTypedDataBlock(Web3EthBaseBlock):
     @staticmethod
     def getWeb3Method() -> str:
         return "eth_signTypedData_v4"
+
+    @staticmethod
+    def raiseIfInvalidDataType(data: dict) -> None:
+        """
+        Validates the data for the Web3EthSignTypedDataBlock.
+
+        Args:
+            data (dict): The data to validate.
+        """
+        if data["domain"]["salt"].startswith("0x") and len(data["domain"]["salt"]) != 66:
+            raise ValueError("Invalid salt")
+
+        if data["domain"]["verifyingContract"].startswith("0x") and len(data["domain"]["verifyingContract"]) != 42:
+            raise ValueError("Invalid verifyingContract")
+
+        if "EIP712Domain" not in data["types"]:
+            raise ValueError("Invalid types")
+
+        if data["primaryType"] not in data["types"]:
+            raise ValueError("Invalid primaryType")

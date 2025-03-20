@@ -1,7 +1,8 @@
-from typing import Optional
+
+from typing import Any, Dict
 
 from .. import Web3Item
-from typing import Dict, Any
+
 
 class Web3ResultItem(Web3Item):
     """
@@ -20,8 +21,7 @@ class Web3ResultItem(Web3Item):
         self.chain_id = chain_id
         self.method = self.__class__.getWeb3Method()
         self.args = args
-    
+
     @staticmethod
     def getWeb3Method() -> str:
         return "result"
-

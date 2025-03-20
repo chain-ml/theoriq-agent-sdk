@@ -54,7 +54,7 @@ class Web3Item(BaseData):
         Returns:
             str: A string representing the web3Item.
         """
-        return f"Web3Item(chain_id={self.chain_id}, method={self.method}, args={json.dumps(self.args)})"
+        return f"Web3Item(chain_id={self.chain_id}, method={self.method}, args={json.dumps(self.args)}, key={self.key}, reference={self.reference})"
 
     @classmethod
     def validate_args(cls, args: Dict[str, Any]) -> None:
@@ -85,7 +85,9 @@ class Web3ItemBlock(ItemBlock[Web3Item]):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None) -> Web3ItemBlock:
+    def from_dict(
+        cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> Web3ItemBlock:
         """
         Creates an instance of Web3ItemBlock from a dictionary.
 
@@ -97,7 +99,11 @@ class Web3ItemBlock(ItemBlock[Web3Item]):
             Web3ItemBlock: A new instance of Web3ItemBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        return cls(item=Web3Item(chain_id=data["chain_id"], method=data["method"], args=data["args"]), key=block_key, reference=block_ref)
+        return cls(
+            item=Web3Item(chain_id=data["chain_id"], method=data["method"], args=data["args"]),
+            key=block_key,
+            reference=block_ref,
+        )
 
     @staticmethod
     def block_type() -> str:
