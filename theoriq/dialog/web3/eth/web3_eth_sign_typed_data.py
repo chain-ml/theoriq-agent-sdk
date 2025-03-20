@@ -58,12 +58,12 @@ class Web3EthSignTypedDataBlock(Web3EthBaseBlock):
         Args:
             data (Web3EthTypedDataMessageType): The data to be signed.
         """
-        self.__class__.raiseIfInvalidDataType(dict(data))
+        self.__class__.raise_if_invalid_data_type(dict(data))
 
         super().__init__(
             item=Web3Item(
-                chain_id=self.__class__.getWeb3ChainId(),
-                method=self.__class__.getWeb3Method(),
+                chain_id=self.__class__.get_web3_chain_id(),
+                method=self.__class__.get_web3_method(),
                 args={
                     "domain": data["domain"],
                     "types": data["types"],
@@ -87,11 +87,11 @@ class Web3EthSignTypedDataBlock(Web3EthBaseBlock):
             Web3EthSignTypedDataBlock: A new instance of Web3EthSignTypedDataBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        cls.raiseIfInvalidDataType(data)
+        cls.raise_if_invalid_data_type(data)
         return cls(data=data["data"])
 
     @staticmethod
-    def getWeb3Method() -> str:
+    def get_web3_method() -> str:
         """
         Returns the web3 method for the Web3EthSignTypedDataBlock.
 
@@ -101,7 +101,7 @@ class Web3EthSignTypedDataBlock(Web3EthBaseBlock):
         return "eth_signTypedData_v4"
 
     @staticmethod
-    def raiseIfInvalidDataType(data: dict) -> None:
+    def raise_if_invalid_data_type(data: dict) -> None:
         """
         Validates the data for the Web3EthSignTypedDataBlock.
 

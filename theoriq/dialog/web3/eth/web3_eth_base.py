@@ -27,9 +27,9 @@ class Web3EthBaseBlock(Web3ItemBlock):
         )
 
     @staticmethod
-    def getWeb3ChainId() -> int:
+    def get_web3_chain_id() -> int:
         return 1
 
     @staticmethod
-    def getWeb3Method() -> str:
+    def get_web3_method() -> str:
         raise NotImplementedError("Subclasses must implement this method")
