@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, Optional
 
-from ..item_block import BaseData, ItemBlock
+from .item_block import BaseData, ItemBlock
 
 
 class Web3Item(BaseData):
