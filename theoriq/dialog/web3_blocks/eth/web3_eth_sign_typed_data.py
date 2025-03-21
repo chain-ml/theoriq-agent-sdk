@@ -42,7 +42,7 @@ class Web3EthSignTypedDataItem(Web3Item):
             str: A string representing the web3EthSignTypedDataItem.
         """
         data = json.dumps(self.args)
-        return f"Web3EthSignTypedDataItem(chain_id={self.chain_id}, data={data})"
+        return f"Web3EthSignTypedDataItem(chain_id={self.chain_id}, data={data}, key={self.key}, reference={self.reference})"
 
     @classmethod
     def validate_args(cls, args: dict) -> None:
@@ -99,7 +99,9 @@ class Web3EthSignTypedDataBlock(Web3EthBaseBlock):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str) -> Web3EthSignTypedDataBlock:
+    def from_dict(
+        cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> Web3EthSignTypedDataBlock:
         """
         Creates an instance of Web3EthSignTypedDataBlock from a dictionary.
 
@@ -110,7 +112,7 @@ class Web3EthSignTypedDataBlock(Web3EthBaseBlock):
             Web3EthSignTypedDataBlock: A new instance of Web3EthSignTypedDataBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        return cls(data=data["data"])
+        return cls(data=data["data"], key=block_key, reference=block_ref)
 
     @staticmethod
     def get_web3_method() -> str:

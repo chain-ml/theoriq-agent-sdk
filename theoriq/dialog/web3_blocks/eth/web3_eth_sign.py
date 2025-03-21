@@ -48,7 +48,7 @@ class Web3EthSignItem(Web3Item):
         Returns:
             str: A string representing the web3EthSignItem.
         """
-        return f"Web3EthSignItem(chain_id={self.chain_id}, message={self.args.message}, method={self.method})"
+        return f"Web3EthSignItem(chain_id={self.chain_id}, message={self.args.message}, method={self.method}, key={self.key}, reference={self.reference})"
 
     @classmethod
     def validate_args(cls, args: Dict[str, Any]) -> None:
@@ -88,7 +88,9 @@ class Web3EthSignBlock(Web3EthBaseBlock):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str) -> Web3EthSignBlock:
+    def from_dict(
+        cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> Web3EthSignBlock:
         """
         Creates an instance of Web3EthSignBlock from a dictionary.
 
@@ -100,4 +102,6 @@ class Web3EthSignBlock(Web3EthBaseBlock):
             Web3EthSignBlock: A new instance of Web3EthSignBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        return cls(message=data["message"], method=data["method"] or "personal_sign")
+        return cls(
+            message=data["message"], method=data["method"] or "personal_sign", key=block_key, reference=block_ref
+        )

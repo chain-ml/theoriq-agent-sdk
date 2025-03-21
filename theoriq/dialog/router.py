@@ -79,7 +79,9 @@ class RouterItemBlock(ItemBlock[Sequence[RouteItem]]):
         super().__init__(block_type=RouterItemBlock.block_type(), data=routes, key=key, reference=reference)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str) -> RouterItemBlock:
+    def from_dict(
+        cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> RouterItemBlock:
         """
         Creates an instance of RouterItemBlock from a dictionary.
 
@@ -92,7 +94,7 @@ class RouterItemBlock(ItemBlock[Sequence[RouteItem]]):
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
         items = data.get("items", [])
-        return cls(routes=[RouteItem.from_dict(route) for route in items])
+        return cls(routes=[RouteItem.from_dict(route) for route in items], key=block_key, reference=block_ref)
 
     def best(self) -> RouteItem:
         """

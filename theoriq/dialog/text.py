@@ -68,7 +68,9 @@ class TextItemBlock(ItemBlock[TextItem]):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str) -> TextItemBlock:
+    def from_dict(
+        cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> TextItemBlock:
         """
         Creates an instance of TextItemBlock from a dictionary.
 
@@ -80,7 +82,7 @@ class TextItemBlock(ItemBlock[TextItem]):
             TextItemBlock: A new instance of TextItemBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        return cls(text=data["text"], sub_type=cls.sub_type(block_type))
+        return cls(text=data["text"], sub_type=cls.sub_type(block_type), key=block_key, reference=block_ref)
 
     @staticmethod
     def block_type() -> str:
