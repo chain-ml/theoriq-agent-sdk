@@ -16,5 +16,4 @@ from .web3_blocks.eth.web3_eth_sign_typed_data import (
     Web3EthTypedDataMessageType,
 )
 
-
 from .dialog import Dialog, DialogItem, DialogItemPredicate
