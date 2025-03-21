@@ -7,5 +7,6 @@ from .metrics import MetricItem, MetricsItemBlock
 from .router import RouteItem, RouterItemBlock
 from .runtime_error import ErrorItem, ErrorItemBlock
 from .text import TextItem, TextItemBlock
+from .web3 import Web3Item, Web3ItemBlock
 
 from .dialog import Dialog, DialogItem, DialogItemPredicate

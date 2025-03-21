@@ -16,6 +16,7 @@ from .metrics import MetricsItemBlock
 from .router import RouteItem, RouterItemBlock
 from .runtime_error import ErrorItemBlock
 from .text import TextItemBlock
+from .web3 import Web3Item, Web3ItemBlock
 
 block_classes: Dict[str, Type[ItemBlock]] = {
     "code": CodeItemBlock,
@@ -26,6 +27,7 @@ block_classes: Dict[str, Type[ItemBlock]] = {
     "metrics": MetricsItemBlock,
     "router": RouterItemBlock,
     "text": TextItemBlock,
+    "web3": Web3ItemBlock,
 }
 
 
@@ -126,6 +128,15 @@ class DialogItem:
             source_type=SourceType.Agent.value,
             source=source,
             blocks=[RouterItemBlock([RouteItem(route, score)])],
+        )
+
+    @classmethod
+    def new_web3(cls, source: str, chain_id: int, method: str, args: Dict[str, Any]) -> DialogItem:
+        return cls(
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            source_type=SourceType.Agent.value,
+            source=source,
+            blocks=[Web3ItemBlock(item=Web3Item(chain_id=chain_id, method=method, args=args))],
         )
 
 
