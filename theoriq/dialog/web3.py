@@ -54,7 +54,7 @@ class Web3Item(BaseData):
         Returns:
             str: A string representing the web3Item.
         """
-        return f"Web3Item(chain_id={self.chain_id}, method={self.method}, args={json.dumps(self.args)}, key={self.key}, reference={self.reference})"
+        return f"Web3Item(chain_id={self.chain_id}, method={self.method}, args={json.dumps(self.args)})"
 
     @classmethod
     def validate_args(cls, args: Dict[str, Any]) -> None:
