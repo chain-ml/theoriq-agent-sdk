@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel
 
-from .. import Web3Item
+from ...web3 import Web3Item
 from .web3_eth_base import Web3EthBaseBlock
 
 

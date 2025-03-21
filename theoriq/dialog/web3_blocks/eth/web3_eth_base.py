@@ -1,6 +1,6 @@
 from typing import Optional
 
-from .. import Web3Item, Web3ItemBlock
+from ...web3 import Web3Item, Web3ItemBlock
 
 
 class Web3EthBaseBlock(Web3ItemBlock):
