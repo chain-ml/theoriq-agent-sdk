@@ -7,7 +7,15 @@ from flask import Flask
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
 from theoriq.biscuit import TheoriqCost
-from theoriq.dialog import TextItemBlock, Web3EthSignBlock, Web3EthSignTypedDataBlock, Web3Item, Web3ItemBlock
+from theoriq.dialog import (
+    ErrorMessageItem,
+    ErrorMessageItemBlock,
+    TextItemBlock,
+    Web3EthSignBlock,
+    Web3EthSignTypedDataBlock,
+    Web3Item,
+    Web3ItemBlock,
+)
 from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
 from theoriq.types import Currency
 
@@ -54,6 +62,7 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
             Web3EthSignBlock(message="Hello Web3 World", method="personal_sign"),
             Web3EthSignBlock(message="Hello Web3 World", method="eth_sign"),
             Web3EthSignTypedDataBlock(data=eth_typed_data_message_type),
+            ErrorMessageItemBlock(err=ErrorMessageItem(err="error", message="error message")),
         ],
         cost=TheoriqCost(amount=1, currency=Currency.USDC),
     )
