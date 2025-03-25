@@ -69,7 +69,9 @@ class ImageItemBlock(ItemBlock[ImageItem]):
         super().__init__(block_type=block_type, data=ImageItem(image=image_base64), key=key, reference=reference)
 
     @classmethod
-    def from_dict(cls, data: Any, block_type: str) -> ImageItemBlock:
+    def from_dict(
+        cls, data: Any, block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> ImageItemBlock:
         """
         Creates an instance of ImageItemBlock from a dictionary.
 
@@ -83,7 +85,7 @@ class ImageItemBlock(ItemBlock[ImageItem]):
         # Ensures the block type is valid before proceeding.
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
         # Returns a new instance of ImageItemBlock using the base64 image string from the data dictionary.
-        return cls(image_base64=data["base64"], sub_type=cls.sub_type(block_type))
+        return cls(image_base64=data["base64"], sub_type=cls.sub_type(block_type), key=block_key, reference=block_ref)
 
     @classmethod
     def from_file(cls, path: str) -> ImageItemBlock:

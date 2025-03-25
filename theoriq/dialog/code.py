@@ -66,7 +66,9 @@ class CodeItemBlock(ItemBlock[CodeItem]):
         )
 
     @classmethod
-    def from_dict(cls, data: Any, block_type: str) -> CodeItemBlock:
+    def from_dict(
+        cls, data: Any, block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> CodeItemBlock:
         """
         Creates an instance of CodeItemBlock from a dictionary.
 
@@ -80,7 +82,7 @@ class CodeItemBlock(ItemBlock[CodeItem]):
         # Ensures the block type is valid before proceeding.
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
         # Returns a new instance of CodeItemBlock using the code from the data dictionary.
-        return cls(code=data["code"], language=cls.sub_type(block_type))
+        return cls(code=data["code"], language=cls.sub_type(block_type), key=block_key, reference=block_ref)
 
     @staticmethod
     def block_type() -> str:

@@ -82,7 +82,7 @@ class ItemBlock(Generic[T_Data]):
         return "\n".join(result)
 
     @classmethod
-    def from_dict(cls, data: dict, block_type: str):
+    def from_dict(cls, data: dict, block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None):
         """
         Abstract method to create an instance of ItemBlock from a dictionary.
 
