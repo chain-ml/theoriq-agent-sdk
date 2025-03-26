@@ -1,9 +1,11 @@
 """Utility module"""
 
 import os
+import sys
+import threading
 import time
 from collections import OrderedDict
-from typing import Generic, Optional, TypeVar
+from typing import Callable, Generic, Optional, TypeVar
 
 
 def is_protocol_secured() -> bool:
@@ -71,3 +73,37 @@ class TTLCache(Generic[T]):
         Clear all items from the cache.
         """
         self.cache.clear()
+
+
+class ControlledThread(threading.Thread):
+    def __init__(self, cleanup_func: Optional[Callable[[], None]] = None, *args, **keywords):
+        threading.Thread.__init__(self, *args, **keywords)
+        self.killed = False
+        self.cleanup_func = cleanup_func
+
+    def start(self):
+        self.__run_backup = self.run
+        self.run = self.__run
+        threading.Thread.start(self)
+
+    def __run(self):
+        sys.settrace(self.globalTrace)
+        self.__run_backup()
+        self.run = self.__run_backup
+
+    def globalTrace(self, frame, event, arg):
+        if event == "call":
+            return self.localTrace
+        else:
+            return None
+
+    def localTrace(self, frame, event, arg):
+        if self.killed:
+            if event == "line":
+                if self.cleanup_func:
+                    self.cleanup_func()
+                raise SystemExit()
+        return self.localTrace
+
+    def kill(self):
+        self.killed = True
