@@ -11,6 +11,55 @@ from ..types import AgentMetadata, Currency, SourceType
 from ..utils import TTLCache
 
 
+class SubscribeContextBase:
+    """
+    Represents the context for subscribing to a Theoriq agent, providing the biscuit, and making the request to the protocol
+    """
+
+    def __init__(self, agent: Agent, _request_biscuit: RequestBiscuit) -> None:
+        """
+        Initializes a SubscribeContext instance.
+        """
+        self._agent = agent
+        self._request_biscuit = _request_biscuit
+
+    @property
+    def agent_address(self) -> str:
+        """
+        Returns the address of the agent.
+        If the agent is virtual return the virtual address
+
+        Returns:
+            str: The agent's address as a string.
+        """
+        if self._agent.virtual_address.is_null:
+            return str(self._agent.config.address)
+        return str(self._agent.virtual_address)
+
+
+class SubscribeRuntimeError(RuntimeError):
+    """
+    Custom exception class for runtime errors during the execution of a subscribe request.
+
+    Attributes:
+        err (str): The error code or message.
+        message (Optional[str]): An optional message providing additional context for the error.
+    """
+
+    def __init__(self, err: str, message: Optional[str] = None) -> None:
+        """
+        Initializes an SubscribeRuntimeError instance.
+
+        Args:
+            err (str): The error code or message.
+            message (Optional[str]): An optional additional message providing more details about the error.
+        """
+        # Calls the base class constructor with a combined error and message if both are provided.
+        super().__init__(err if message is None else f"{err}, {message}")
+        self.err = err
+        self.message = message
+
+
 class ExecuteContextBase:
     """
     Represents the context for executing a request, managing interactions with the agent and protocol client.
@@ -27,8 +76,8 @@ class ExecuteContextBase:
             protocol_client (ProtocolClient): The client responsible for communicating with the protocol.
             request_biscuit (RequestBiscuit): The biscuit associated with the request, containing metadata and permissions.
         """
-        self._agent = agent
-        self._request_biscuit = request_biscuit
+        self._agent: Agent = agent
+        self._request_biscuit: RequestBiscuit = request_biscuit
 
     def new_response_biscuit(self, body: bytes, cost: TheoriqCost) -> ResponseBiscuit:
         """

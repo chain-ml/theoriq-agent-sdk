@@ -1,4 +1,4 @@
 from .agent import AgentResponse
 from .challenge import ChallengeRequestBody, ChallengeResponseBody
-from .request import ExecuteRequestBody
+from .request import ExecuteRequestBody, SubscribeRequestBody
 from .metrics import MetricsRequestBody

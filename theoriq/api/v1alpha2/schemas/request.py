@@ -75,3 +75,12 @@ class ExecuteRequestBody(BaseModel):
         # Filters items matching the given predicate and finds the one with the latest timestamp.
         items = (item for item in self.dialog.items if predicate(item))
         return max(items, key=lambda obj: obj.timestamp) if items else None
+
+
+class SubscribeRequestBody(BaseModel):
+    """
+    A class representing the body of an subscription request. Inherits from BaseModel.
+    """
+
+    configuration: Optional[Configuration] = None
+    message: str
