@@ -3,12 +3,13 @@ import os
 
 import dotenv
 from flask import Flask
+import asyncio
 
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
 from theoriq.biscuit import TheoriqCost
 from theoriq.dialog import TextItemBlock, Web3EthSignBlock, Web3EthSignTypedDataBlock, Web3Item, Web3ItemBlock
-from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
+from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint_with_subscriber
 from theoriq.types import Currency
 
 logger = logging.getLogger(__name__)
@@ -59,7 +60,14 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
     )
 
 
-if __name__ == "__main__":
+def subscribe(context: ExecuteContext, req: ExecuteRequestBody) -> None:
+    logger.info(
+        f"Received a new notification: {context.request_id} from {context.request_sender_type} {context.request_sender_address}"
+    )
+    logger.info(f"Received notification: {req}")
+
+
+async def main():
     app = Flask(__name__)
 
     # Logging
@@ -70,6 +78,18 @@ if __name__ == "__main__":
     agent_config = AgentDeploymentConfiguration.from_env()
 
     # Create and register theoriq blueprint with v1alpha2 api version
-    blueprint = theoriq_blueprint(agent_config, execute)
+    blueprint, subscription_manager = theoriq_blueprint_with_subscriber(agent_config, execute)
+    # Add a listener to the subscription manager
+    publisher_agent_id = "0x0000000000000000000000000000000000000000"
+    subscriber = subscription_manager.new_listener(subscribe, publisher_agent_id)
+    subscriber.start_listener()
+    
+    await asyncio.sleep(10)  # Using asyncio.sleep instead of time.sleep
+    subscriber.stop_listener()
+
     app.register_blueprint(blueprint)
     app.run(host="0.0.0.0", port=os.environ.get("FLASK_PORT", 8000))
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
