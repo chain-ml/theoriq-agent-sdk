@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence
 from uuid import UUID
 
 import httpx
@@ -11,6 +11,7 @@ from biscuit_auth import PublicKey
 from pydantic import BaseModel
 
 from theoriq import Agent
+from theoriq.api.common import SubscribeRuntimeError
 from theoriq.biscuit import AgentAddress, PayloadHash, RequestBiscuit, RequestFact, ResponseFact, TheoriqBiscuit
 from theoriq.biscuit.authentication_biscuit import AuthenticationBiscuit
 from theoriq.types import Metric
@@ -178,6 +179,22 @@ class ProtocolClient:
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
             client.post(url=url, content=notification, headers=headers)
+
+    def subscribe_to_agent_notifications(
+        self, biscuit: TheoriqBiscuit, agent_id: str, callback: Callable[[str], None]
+    ) -> None:
+        url = f"{self._uri}/agents/{agent_id}/notifications"
+        headers = biscuit.to_headers()
+
+        with httpx.Client(timeout=self._timeout) as client:
+            with client.stream("GET", url, headers=headers) as response:
+                # Make sure the response is successful (HTTP status 200)
+                if response.status_code == 200:
+                    # Process the SSE events
+                    for chunk in response.iter_text():
+                        callback(chunk)
+                else:
+                    raise SubscribeRuntimeError(f"Failed to subscribe, status code: {response.status_code}")
 
     @classmethod
     def from_env(cls) -> ProtocolClient:
