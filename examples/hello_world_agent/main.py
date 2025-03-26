@@ -1,9 +1,9 @@
+import asyncio
 import logging
 import os
 
 import dotenv
 from flask import Flask
-import asyncio
 
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
@@ -83,7 +83,7 @@ async def main():
     publisher_agent_id = "0x0000000000000000000000000000000000000000"
     subscriber = subscription_manager.new_listener(subscribe, publisher_agent_id)
     subscriber.start_listener()
-    
+
     await asyncio.sleep(10)  # Using asyncio.sleep instead of time.sleep
     subscriber.stop_listener()
 
