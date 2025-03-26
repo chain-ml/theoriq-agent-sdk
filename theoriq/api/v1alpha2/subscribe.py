@@ -18,7 +18,7 @@ from .base_context import BaseContext
 from .protocol.protocol_client import ProtocolClient
 from .schemas.request import SubscribeRequestBody
 
-# from theoriq.api.v1alpha2.protocol import ProtocolClient
+from theoriq.api.common import SubscribeRuntimeError
 
 
 class SubscribeContext(SubscribeContextBase, BaseContext):
@@ -38,9 +38,11 @@ class SubscribeContext(SubscribeContextBase, BaseContext):
         authentication_biscuit = agent.authentication_biscuit(
             expires_at=datetime.now(tz=timezone.utc) + timedelta(seconds=timeout)
         )
-        self._request_biscuit = RequestBiscuit.from_token(
-            token=authentication_biscuit.to_base64(), public_key=protocol_client.public_key
-        )
+        agent_public_key = agent.config.public_key
+        try:
+            self._request_biscuit = protocol_client.get_biscuit(authentication_biscuit, agent_public_key)
+        except Exception as e:
+            raise SubscribeRuntimeError(f"Failed to get biscuit: {e}")
         SubscribeContextBase.__init__(self, agent, self._request_biscuit)
         BaseContext.__init__(self, agent, protocol_client, self._request_biscuit)
 
@@ -84,7 +86,7 @@ class Subscriber:
 class TheoriqSubscriptionManager:
     def __init__(self, agent: Agent):
         self.protocol_client = ProtocolClient.from_env()
-        self.subscription_context = SubscribeContext(agent, self.protocol_client)
+        self.agent = agent
         self.listeners: List[Subscriber] = []
 
     def _subscribe(self, subscriber_request_fn: SubscribeListenerFn, publisher_agent_id: str) -> None:
@@ -102,8 +104,10 @@ class TheoriqSubscriptionManager:
         self,
         subscriber_request_fn: SubscribeListenerFn,
         publisher_agent_id: str,
-        cleanup_func: Optional[SubscribeListenerFn],
+        cleanup_func: Optional[SubscribeListenerFn]=None,
     ):
+        self.subscription_context = SubscribeContext(self.agent, self.protocol_client)
+
         def _subscribe():
             self._subscribe(subscriber_request_fn, publisher_agent_id)
 

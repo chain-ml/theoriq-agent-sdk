@@ -63,6 +63,7 @@ class ProtocolClient:
         body = {"publicKey": public_key.to_hex()}
         with httpx.Client(timeout=self._timeout) as client:
             response = client.post(url=url, json=body, headers=headers)
+            response.raise_for_status()
             return BiscuitResponse.model_validate(response.json())
 
     def get_agent(self, agent_id: str) -> AgentResponse:

@@ -1,3 +1,4 @@
 python-dotenv==1.0.1
 flask==3.1.*
-git+ssh://git@github.com/chain-ml/theoriq-agent-sdk.git#egg=theoriq[flask]
+../[flask]
+# git+ssh://git@github.com/chain-ml/theoriq-agent-sdk.git#egg=theoriq[flask]

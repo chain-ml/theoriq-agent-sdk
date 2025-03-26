@@ -130,7 +130,7 @@ def run_setup():
 
     theoriq_uri = ask_user_input("Enter Theoriq URI", "https://theoriq-backend.prod-02.chainml.net")
     # check if the uri is a valid url
-    if not theoriq_uri.startswith("https://"):
+    if not theoriq_uri.startswith("https://") and not theoriq_uri.startswith("http://"):
         print(bold(red("Theoriq URI must be a valid URL.")))
         return
 
