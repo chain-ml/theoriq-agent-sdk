@@ -26,8 +26,8 @@ class ExecuteContext(ExecuteContextBase, BaseContext):
     """
 
     def __init__(self, agent: Agent, protocol_client: ProtocolClient, request_biscuit: RequestBiscuit) -> None:
-        ExecuteContextBase.__init__(self, agent, request_biscuit)
         BaseContext.__init__(self, agent, protocol_client, request_biscuit)
+        ExecuteContextBase.__init__(self, agent, request_biscuit)
 
     def complete_request(self, response_biscuit: ResponseBiscuit, body: bytes):
         biscuit = TheoriqBiscuit(response_biscuit.biscuit)

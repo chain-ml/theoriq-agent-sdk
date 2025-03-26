@@ -16,12 +16,11 @@ class SubscribeContextBase:
     Represents the context for subscribing to a Theoriq agent, providing the biscuit, and making the request to the protocol
     """
 
-    def __init__(self, agent: Agent, _request_biscuit: RequestBiscuit) -> None:
+    def __init__(self, agent: Agent) -> None:
         """
         Initializes a SubscribeContext instance.
         """
         self._agent = agent
-        self._request_biscuit = _request_biscuit
 
     @property
     def agent_address(self) -> str:

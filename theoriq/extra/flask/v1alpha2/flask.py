@@ -3,7 +3,7 @@
 import json
 import logging
 import threading
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 
 import pydantic
 from flask import Blueprint, Response, jsonify, request
@@ -38,16 +38,18 @@ def theoriq_blueprint_with_subscriber(
     execute_fn: ExecuteRequestFnV1alpha2,
     schema: Optional[Dict] = None,
     agent_configurator: AgentConfigurator = AgentConfigurator.default(),
-) -> Tuple[Blueprint, TheoriqSubscriptionManager]:
+):
     """
     Theoriq blueprint with a subscriber
     :return: a blueprint with all the routes required by the `theoriq` protocol and a subscriber
     """
     main_blueprint = theoriq_blueprint(agent_config, execute_fn, schema, agent_configurator)
 
-    subscription_handler = TheoriqSubscriptionManager(agent=Agent(agent_config, schema))
+    agent = Agent(agent_config, schema)
 
-    return main_blueprint, subscription_handler
+    subscription_handler = TheoriqSubscriptionManager(agent=agent)
+
+    return main_blueprint, subscription_handler, agent
 
 
 def theoriq_blueprint(

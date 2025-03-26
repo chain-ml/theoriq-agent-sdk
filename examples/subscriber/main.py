@@ -1,16 +1,15 @@
 import asyncio
-import json
 import logging
 import os
-from datetime import datetime, timedelta, timezone
-from typing import Callable, Tuple
+import time
 
 import dotenv
-from flask import Flask, Response, jsonify, request
+from flask import Flask
 
-from theoriq import Agent, AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
-from theoriq.api.v1alpha2.protocol.protocol_client import ProtocolClient
+from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
+from theoriq.api.v1alpha2 import SubscribeContext, Subscriber
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
+from theoriq.api.v1alpha2.schemas.request import SubscribeRequestBody
 from theoriq.biscuit import TheoriqCost
 from theoriq.dialog import TextItemBlock, Web3EthSignBlock, Web3EthSignTypedDataBlock, Web3Item, Web3ItemBlock
 from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint_with_subscriber
@@ -23,7 +22,6 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
     logger.info(
         f"Received request: {context.request_id} from {context.request_sender_type} {context.request_sender_address}"
     )
-
     if req.last_item is None:
         raise ValueError("Last item is required")
 
@@ -67,46 +65,21 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
     )
 
 
-def subscribe(context: ExecuteContext, req: ExecuteRequestBody) -> None:
-    logger.info(
-        f"Received a new notification: {context.request_id} from {context.request_sender_type} {context.request_sender_address}"
-    )
+def subscribe(context: SubscribeContext, req: SubscribeRequestBody) -> None:
+    logger.info(f"Received a new notification: {context.agent_address}")
     logger.info(f"Received notification: {req}")
 
 
-def publish_message(agent: Agent) -> Callable[[], Tuple[Response, int]]:
-    def get_context() -> ExecuteContext:
-        protocol_client = ProtocolClient.from_env()
-        authentication_biscuit = agent.authentication_biscuit(
-            expires_at=datetime.now(tz=timezone.utc) + timedelta(seconds=10)
-        )
-        agent_public_key = agent.config.public_key
-        request_biscuit = protocol_client.get_biscuit(authentication_biscuit, agent_public_key)
-        context = ExecuteContext(
-            agent=agent,
-            protocol_client=protocol_client,
-            request_biscuit=request_biscuit,
-        )
-        return context
+def cleanup(context: SubscribeContext) -> None:
+    print(f"Cleaning up: {context.agent_address}")
 
-    def publish_message_inner() -> Tuple[Response, int]:
-        context = get_context()
-        logger.info(f"Received request: {request}")
-        params = {}
-        if request.is_json:
-            params = request.get_json()  # Raw JSON data
-        elif request.method == "GET":
-            params = request.args.to_dict()  # Query parameters
-        else:
-            params = request.form.to_dict()  # Form data
 
-        if not request.is_json:
-            return jsonify({"error": "Content-Type must be application/json"}), 415
-
-        context.send_notification(json.dumps(params))
-        return jsonify({"message": "Message published", "request": params}), 200
-
-    return publish_message_inner
+def stop_listener(subscriber: Subscriber, duration: int = 10) -> None:
+    logger.info(f"will stop listener in {duration} seconds")
+    time.sleep(duration)
+    logger.info(f"Stopping listener: {subscriber.subscriber_id}")
+    subscriber.stop_listener()
+    logger.info(f"Listener stopped: {subscriber.subscriber_id}")
 
 
 async def main():
@@ -120,19 +93,20 @@ async def main():
     agent_config = AgentDeploymentConfiguration.from_env()
 
     # Create and register theoriq blueprint with v1alpha2 api version
-    blueprint, subscription_manager, agent = theoriq_blueprint_with_subscriber(agent_config, execute)
+    blueprint, subscription_manager, _ = theoriq_blueprint_with_subscriber(agent_config, execute)
 
-    blueprint.add_url_rule("/publish", view_func=publish_message(agent), methods=["POST"])
     # Add a listener to the subscription manager
-    # publisher_agent_id = "0x0000000000000000000000000000000000000000"
-    # subscriber = subscription_manager.new_listener(subscribe, publisher_agent_id)
-    # subscriber.start_listener()
-
-    # await asyncio.sleep(10)  # Using asyncio.sleep instead of time.sleep
-    # subscriber.stop_listener()
+    publisher_agent_id = os.environ.get("PUBLISHER_AGENT_ID")
+    if publisher_agent_id:
+        subscriber = subscription_manager.new_listener(subscribe, publisher_agent_id, cleanup)
+        print("new listener", subscriber)
+        subscriber.start_listener()
 
     app.register_blueprint(blueprint)
-    app.run(host="0.0.0.0", port=os.environ.get("FLASK_PORT", 8000))
+    asyncio.create_task(asyncio.to_thread(stop_listener, subscriber, 5))
+    await asyncio.gather(
+        asyncio.to_thread(app.run, host="0.0.0.0", port=os.environ.get("FLASK_PORT", 8000)),
+    )
 
 
 if __name__ == "__main__":

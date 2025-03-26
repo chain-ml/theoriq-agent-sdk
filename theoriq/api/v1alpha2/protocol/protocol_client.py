@@ -175,11 +175,12 @@ class ProtocolClient:
         with httpx.Client(timeout=self._timeout) as client:
             client.post(url=url, json=request.to_dict(), headers=headers)
 
-    def post_notification(self, biscuit: TheoriqBiscuit, agent_id: str, notification: bytes) -> None:
+    def post_notification(self, biscuit: TheoriqBiscuit, agent_id: str, notification: str) -> None:
         url = f"{self._uri}/agents/{agent_id}/notifications"
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
-            client.post(url=url, content=notification, headers=headers)
+            response = client.post(url=url, content=notification, headers=headers)
+            print(response.json())
 
     def subscribe_to_agent_notifications(
         self, biscuit: TheoriqBiscuit, agent_id: str, callback: Callable[[str], None]

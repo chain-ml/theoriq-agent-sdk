@@ -40,22 +40,19 @@ else
 
     # Check if the --verbose flag is passed
     VERBOSE=false
-    FRESH_INSTALL=""
     for arg in "$@"; do
         if [[ "$arg" == "--verbose" ]]; then
             VERBOSE=true
-        fi
-        if [[ "$arg" == "--fresh" ]]; then
-            FRESH_INSTALL="--force-reinstall --no-cache-dir "
+            break
         fi
     done
 
     echo "Installing dependencies..."
     if [ "$VERBOSE" = true ]; then
-        $PIP_CMD install $FRESH_INSTALL -r requirements.txt &
+        $PIP_CMD install -r requirements.txt &
         PID=$!
     else
-        $PIP_CMD install $FRESH_INSTALL -r requirements.txt > /dev/null 2>&1 &
+        $PIP_CMD install -r requirements.txt > /dev/null 2>&1 &
         # Get the process ID
         PID=$!
 
