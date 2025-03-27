@@ -6,6 +6,7 @@ Types and functions used by an Agent when subscribing to a Theoriq agent
 
 from __future__ import annotations
 
+import json
 from typing import Callable, List, Optional
 
 from theoriq.agent import Agent
@@ -16,7 +17,7 @@ from ..common import SubscribeContextBase
 from .base_context import BaseContext
 from .protocol.protocol_client import ProtocolClient
 from .schemas.request import SubscribeRequestBody
-import json
+
 
 class SubscribeContext(SubscribeContextBase, BaseContext):
     """
@@ -99,7 +100,7 @@ class TheoriqSubscriptionManager:
                 raise RuntimeError("Subscription context not set")
 
             if notification.strip() == ":":
-                return #Keep-alive notification
+                return  # Keep-alive notification
 
             received_message = notification[6:] if notification.startswith("data: ") else notification
             processed_message = json.loads(received_message) if is_json else received_message
@@ -119,7 +120,7 @@ class TheoriqSubscriptionManager:
         cleanup_func: Optional[SubscribeListenerFn] = None,
         is_json: bool = False,
     ):
-        self.subscription_context = SubscribeContext(self.agent, self.protocol_client)            
+        self.subscription_context = SubscribeContext(self.agent, self.protocol_client)
         subscriber = Subscriber(
             subscriber_id=publisher_agent_id,
             target=lambda: self._subscribe(subscriber_request_fn, publisher_agent_id, is_json),
