@@ -9,7 +9,7 @@ from theoriq.biscuit import TheoriqBiscuit
 logger = logging.getLogger(__name__)
 
 
-def theoriq_subscribe_to_agent(agent_id: str, subscribe_fn: Callable[[str], None], access_token: str):
+def theoriq_subscribe_to_agent(agent_id: str, subscribe_fn: Callable[[str], None], access_token: str)->threading.Thread:
     """
     Subscribe to an agent
     """
@@ -21,5 +21,6 @@ def theoriq_subscribe_to_agent(agent_id: str, subscribe_fn: Callable[[str], None
             for message in protocol_client.subscribe_to_agent_notifications(biscuit, agent_id):
                 subscribe_fn(message)
             time.sleep(1)  # wait for 1 second before reconnecting
+            logger.warning("Connection to server lost. Reconnecting...")
 
     return threading.Thread(target=_subscribe)
