@@ -3,12 +3,12 @@ import os
 
 import dotenv
 
-from theoriq.extra.flask.v1alpha2 import theoriq_subscribe_to_agent
+from theoriq.extra.flask.v1alpha2 import subscribe_to_agent
 
 logger = logging.getLogger(__name__)
 
 
-def handle_notification(notification: str):
+def handle_notification(notification: str) -> None:
     logger.info(notification)
 
 
@@ -24,6 +24,6 @@ if __name__ == "__main__":
 
     logger.info(f"Subscribing to agent {publisher_agent_id}")
 
-    thread = theoriq_subscribe_to_agent(publisher_agent_id, handle_notification, access_token)
+    thread = subscribe_to_agent(publisher_agent_id, handle_notification, access_token)
     thread.start()
     logger.info(f"We have subscribed to the agent {publisher_agent_id}.")
