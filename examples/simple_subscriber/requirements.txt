@@ -1,4 +1,4 @@
 python-dotenv==1.0.1
 flask==3.1.*
-../../[flask]
-# git+ssh://git@github.com/chain-ml/theoriq-agent-sdk.git#egg=theoriq[flask]
+# TODO: remove the branch once the PR is approved and merged
+git+ssh://git@github.com/chain-ml/theoriq-agent-sdk.git@inspiring71/feat/add-subscribe-to-agent-stream-868d7grvv#egg=theoriq[flask]
