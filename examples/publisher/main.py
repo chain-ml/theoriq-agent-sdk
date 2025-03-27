@@ -19,6 +19,13 @@ from theoriq.types import Currency
 logger = logging.getLogger(__name__)
 
 
+def green(text):
+    # ANSI escape code for green text
+    GREEN = "\033[1;32m"  # Green text (you can modify it to non-bold green if needed)
+    RESET = "\033[0m"
+    return f"{GREEN}{text}{RESET}"
+
+
 def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse:
     logger.info(
         f"Received request: {context.request_id} from {context.request_sender_type} {context.request_sender_address}"
@@ -120,16 +127,11 @@ async def main():
     agent_config = AgentDeploymentConfiguration.from_env()
 
     # Create and register theoriq blueprint with v1alpha2 api version
-    blueprint, subscription_manager, agent = theoriq_blueprint_with_subscriber(agent_config, execute)
+    blueprint, _, agent = theoriq_blueprint_with_subscriber(agent_config, execute)
 
     blueprint.add_url_rule("/publish", view_func=publish_message(agent), methods=["POST"])
-    # Add a listener to the subscription manager
-    # publisher_agent_id = "0x0000000000000000000000000000000000000000"
-    # subscriber = subscription_manager.new_listener(subscribe, publisher_agent_id)
-    # subscriber.start_listener()
 
-    # await asyncio.sleep(10)  # Using asyncio.sleep instead of time.sleep
-    # subscriber.stop_listener()
+    logger.info(green(f"Agent ID to subscribe to: {agent.config.address}"))
 
     app.register_blueprint(blueprint)
     app.run(host="0.0.0.0", port=os.environ.get("FLASK_PORT", 8000))

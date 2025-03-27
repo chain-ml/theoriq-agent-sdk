@@ -180,7 +180,7 @@ class ProtocolClient:
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
             response = client.post(url=url, content=notification, headers=headers)
-            print(response.json())
+            response.raise_for_status()
 
     def subscribe_to_agent_notifications(
         self, biscuit: TheoriqBiscuit, agent_id: str, callback: Callable[[str], None]

@@ -83,4 +83,12 @@ class SubscribeRequestBody(BaseModel):
     """
 
     configuration: Optional[Configuration] = None
-    message: str
+    message: str | dict
+
+    @property
+    def is_json(self) -> bool:
+        return isinstance(self.message, dict)
+
+    @property
+    def is_string(self) -> bool:
+        return isinstance(self.message, str)

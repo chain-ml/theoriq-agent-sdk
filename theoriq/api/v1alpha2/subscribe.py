@@ -16,7 +16,7 @@ from ..common import SubscribeContextBase
 from .base_context import BaseContext
 from .protocol.protocol_client import ProtocolClient
 from .schemas.request import SubscribeRequestBody
-
+import json
 
 class SubscribeContext(SubscribeContextBase, BaseContext):
     """
@@ -67,7 +67,6 @@ class Subscriber:
         self.thread.start()
 
     def stop_listener(self):
-        print("stopping listener", self.subscriber_id, self.thread)
         self.thread.kill()
 
     def join_listener(self):
@@ -91,7 +90,7 @@ class TheoriqSubscriptionManager:
         self.listeners: List[Subscriber] = []
         self.subscription_context: Optional[SubscribeContext] = None
 
-    def _subscribe(self, subscriber_request_fn: SubscribeListenerFn, publisher_agent_id: str) -> None:
+    def _subscribe(self, subscriber_request_fn: SubscribeListenerFn, publisher_agent_id: str, is_json: bool) -> None:
         if not self.subscription_context:
             raise RuntimeError("Subscription context not set")
 
@@ -99,10 +98,15 @@ class TheoriqSubscriptionManager:
             if not self.subscription_context:
                 raise RuntimeError("Subscription context not set")
 
+            if notification.strip() == ":":
+                return #Keep-alive notification
+
+            received_message = notification[6:] if notification.startswith("data: ") else notification
+            processed_message = json.loads(received_message) if is_json else received_message
             # TODO: Handle configuration for the subscriber
             request_body = SubscribeRequestBody(
                 configuration=None,
-                message=notification,
+                message=processed_message,
             )
             subscriber_request_fn(self.subscription_context, request_body)
 
@@ -113,15 +117,12 @@ class TheoriqSubscriptionManager:
         subscriber_request_fn: SubscribeListenerFn,
         publisher_agent_id: str,
         cleanup_func: Optional[SubscribeListenerFn] = None,
+        is_json: bool = False,
     ):
-        self.subscription_context = SubscribeContext(self.agent, self.protocol_client)
-
-        def _subscribe():
-            self._subscribe(subscriber_request_fn, publisher_agent_id)
-
+        self.subscription_context = SubscribeContext(self.agent, self.protocol_client)            
         subscriber = Subscriber(
             subscriber_id=publisher_agent_id,
-            target=_subscribe,
+            target=lambda: self._subscribe(subscriber_request_fn, publisher_agent_id, is_json),
             cleanup_func=self.cleanup_func(cleanup_func, publisher_agent_id),
         )
         self.listeners.append(subscriber)

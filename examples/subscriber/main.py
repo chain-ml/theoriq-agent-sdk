@@ -67,7 +67,10 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
 
 def subscribe(context: SubscribeContext, req: SubscribeRequestBody) -> None:
     logger.info(f"Received a new notification: {context.agent_address}")
-    logger.info(f"Received notification: {req}")
+    if req.is_json:
+        logger.info(f"Received notification: {req.message}")
+    else:
+        logger.info(f"Received notification: {req.message}")
 
 
 def cleanup(context: SubscribeContext) -> None:
@@ -98,12 +101,15 @@ async def main():
     # Add a listener to the subscription manager
     publisher_agent_id = os.environ.get("PUBLISHER_AGENT_ID")
     if publisher_agent_id:
-        subscriber = subscription_manager.new_listener(subscribe, publisher_agent_id, cleanup)
+        subscriber = subscription_manager.new_listener(subscribe, publisher_agent_id, cleanup, is_json=True)
         print("new listener", subscriber)
         subscriber.start_listener()
 
+    # Get the duration from the .env file
+    subscribe_duration = os.environ.get("SUBSCRIBE_DURATION", 10)
+
     app.register_blueprint(blueprint)
-    asyncio.create_task(asyncio.to_thread(stop_listener, subscriber, 5))
+    asyncio.create_task(asyncio.to_thread(stop_listener, subscriber, subscribe_duration))
     await asyncio.gather(
         asyncio.to_thread(app.run, host="0.0.0.0", port=os.environ.get("FLASK_PORT", 8000)),
     )
