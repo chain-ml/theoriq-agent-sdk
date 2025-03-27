@@ -11,7 +11,6 @@ from biscuit_auth import PublicKey
 from pydantic import BaseModel
 
 from theoriq import Agent
-from theoriq.api.common import SubscribeRuntimeError
 from theoriq.biscuit import AgentAddress, PayloadHash, RequestBiscuit, RequestFact, ResponseFact, TheoriqBiscuit
 from theoriq.biscuit.authentication_biscuit import AuthenticationBiscuit
 from theoriq.types import Metric
@@ -191,12 +190,11 @@ class ProtocolClient:
         with httpx.Client(timeout=self._timeout) as client:
             with client.stream("GET", url, headers=headers) as response:
                 # Make sure the response is successful (HTTP status 200)
+                response.raise_for_status()
                 if response.status_code == 200:
                     # Process the SSE events
                     for chunk in response.iter_text():
                         callback(chunk)
-                else:
-                    raise SubscribeRuntimeError(f"Failed to subscribe, status code: {response.status_code}")
 
     @classmethod
     def from_env(cls) -> ProtocolClient:

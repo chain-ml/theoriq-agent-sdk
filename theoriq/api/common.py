@@ -36,29 +36,6 @@ class SubscribeContextBase:
         return str(self._agent.virtual_address)
 
 
-class SubscribeRuntimeError(RuntimeError):
-    """
-    Custom exception class for runtime errors during the execution of a subscribe request.
-
-    Attributes:
-        err (str): The error code or message.
-        message (Optional[str]): An optional message providing additional context for the error.
-    """
-
-    def __init__(self, err: str, message: Optional[str] = None) -> None:
-        """
-        Initializes an SubscribeRuntimeError instance.
-
-        Args:
-            err (str): The error code or message.
-            message (Optional[str]): An optional additional message providing more details about the error.
-        """
-        # Calls the base class constructor with a combined error and message if both are provided.
-        super().__init__(err if message is None else f"{err}, {message}")
-        self.err = err
-        self.message = message
-
-
 class ExecuteContextBase:
     """
     Represents the context for executing a request, managing interactions with the agent and protocol client.

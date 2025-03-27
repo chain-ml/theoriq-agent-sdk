@@ -8,7 +8,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Sequence
 
 from theoriq.agent import Agent
-from theoriq.api.common import SubscribeRuntimeError
 from theoriq.biscuit import AgentAddress, RequestBiscuit, TheoriqBiscuit, TheoriqBudget
 from theoriq.biscuit.facts import TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
@@ -78,7 +77,7 @@ class BaseContext:
         try:
             return self._protocol_client.get_biscuit(authentication_biscuit, agent_public_key)
         except Exception as e:
-            raise SubscribeRuntimeError(f"Failed to get biscuit: {e}")
+            raise RuntimeError(f"Failed to get biscuit: {e}")
 
     def get_temporary_biscuit(self, timeout: int = 10) -> RequestBiscuit:
         responseBiscuit = self.get_response_biscuit(timeout)

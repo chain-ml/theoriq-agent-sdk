@@ -76,10 +76,10 @@ class Agent:
     def schema(self) -> Optional[Dict]:
         return self._schema
 
-    def authentication_biscuit(self, expires_at: Optional[datetime] = None) -> AuthenticationBiscuit:
+    def authentication_biscuit(self) -> AuthenticationBiscuit:
         address = self.config.address if self.virtual_address.is_null else self.virtual_address
         facts = AuthenticationFacts(address, self.config.private_key)
-        return facts.to_authentication_biscuit(expires_at)
+        return facts.to_authentication_biscuit()
 
     def verify_biscuit(self, request_biscuit: RequestBiscuit, body: bytes) -> None:
         """

@@ -15,8 +15,8 @@ class AuthenticationFacts:
         self.agent_address = address
         self.private_key = private_key
 
-    def to_authentication_biscuit(self, expires_at: Optional[datetime] = None):
-        expires_at = expires_at or datetime.now(tz=timezone.utc) + timedelta(seconds=5)
+    def to_authentication_biscuit(self):
+        expires_at = datetime.now(tz=timezone.utc) + timedelta(seconds=5)
         builder = self.agent_address.new_authority_builder(expires_at)
         biscuit = builder.build(self.private_key)
         return AuthenticationBiscuit(biscuit)
