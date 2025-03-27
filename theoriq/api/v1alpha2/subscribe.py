@@ -6,7 +6,6 @@ Types and functions used by an Agent when subscribing to a Theoriq agent
 
 from __future__ import annotations
 
-import json
 from typing import Callable, List, Optional
 
 from theoriq.agent import Agent
@@ -16,8 +15,8 @@ from theoriq.utils import ControlledThread
 from .protocol.protocol_client import ProtocolClient
 from .schemas.request import SubscribeRequestBody
 
-class SubscribeContext:
 
+class SubscribeContext:
     """
     Represents the context for subscribing to a Theoriq agent
     """
@@ -56,6 +55,7 @@ class SubscribeContext:
         if self._agent.virtual_address.is_null:
             return str(self._agent.config.address)
         return str(self._agent.virtual_address)
+
 
 SubscribeListenerFn = Callable[[SubscribeContext, SubscribeRequestBody], None]
 SubscribeListenerCleanupFn = Callable[[SubscribeContext], None]
@@ -105,7 +105,7 @@ class TheoriqSubscriptionManager:
         self.listeners: List[Subscriber] = []
         self.subscription_context: Optional[SubscribeContext] = None
 
-    def _subscribe(self, subscriber_request_fn: SubscribeListenerFn, publisher_agent_id: str, is_json: bool) -> None:
+    def _subscribe(self, subscriber_request_fn: SubscribeListenerFn, publisher_agent_id: str) -> None:
         if not self.subscription_context:
             raise RuntimeError("Subscription context not set")
 
@@ -117,11 +117,10 @@ class TheoriqSubscriptionManager:
                 return  # Keep-alive notification
 
             received_message = notification[6:] if notification.startswith("data: ") else notification
-            processed_message = json.loads(received_message) if is_json else received_message
-            # TODO: Handle configuration for the subscriber
+            # TODO: Handle configuration for the subscriber in virtual agents
             request_body = SubscribeRequestBody(
                 configuration=None,
-                message=processed_message,
+                message=received_message,
             )
             subscriber_request_fn(self.subscription_context, request_body)
 
@@ -132,12 +131,11 @@ class TheoriqSubscriptionManager:
         subscriber_request_fn: SubscribeListenerFn,
         publisher_agent_id: str,
         cleanup_func: Optional[SubscribeListenerFn] = None,
-        is_json: bool = False,
     ):
         self.subscription_context = SubscribeContext(self.agent, self.protocol_client)
         subscriber = Subscriber(
             subscriber_id=publisher_agent_id,
-            target=lambda: self._subscribe(subscriber_request_fn, publisher_agent_id, is_json),
+            target=lambda: self._subscribe(subscriber_request_fn, publisher_agent_id),
             cleanup_func=self.cleanup_func(cleanup_func, publisher_agent_id),
         )
         self.listeners.append(subscriber)
