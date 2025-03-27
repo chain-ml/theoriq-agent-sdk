@@ -9,9 +9,7 @@ from theoriq.biscuit import TheoriqBiscuit
 logger = logging.getLogger(__name__)
 
 
-def subscribe_to_agent(
-    agent_id: str, subscribe_fn: Callable[[str], None], access_token: str
-) -> threading.Thread:
+def subscribe_to_agent(agent_id: str, subscribe_fn: Callable[[str], None], access_token: str) -> threading.Thread:
     """
     Subscribe to an agent
     """

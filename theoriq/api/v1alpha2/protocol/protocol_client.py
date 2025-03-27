@@ -188,7 +188,7 @@ class ProtocolClient:
                 for chunk in response.iter_text():
                     if not chunk or chunk.strip() == ":":
                         continue
-                    chunk = chunk[6:].strip("\n\n") # remove the "data: " prefix and the trailing newlines
+                    chunk = chunk[6:].strip("\n\n")  # remove the "data: " prefix and the trailing newlines
                     yield chunk
 
     @classmethod
