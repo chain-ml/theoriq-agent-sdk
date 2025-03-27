@@ -189,8 +189,8 @@ class ProtocolClient:
 
         with httpx.Client(timeout=self._timeout) as client:
             with client.stream("GET", url, headers=headers) as response:
-                # Make sure the response is successful (HTTP status 200)
                 response.raise_for_status()
+                # Make sure the response is successful (HTTP status 200)
                 if response.status_code == 200:
                     # Process the SSE events
                     for chunk in response.iter_text():

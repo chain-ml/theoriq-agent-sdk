@@ -27,8 +27,8 @@ class ExecuteContextBase:
             protocol_client (ProtocolClient): The client responsible for communicating with the protocol.
             request_biscuit (RequestBiscuit): The biscuit associated with the request, containing metadata and permissions.
         """
-        self._agent: Agent = agent
-        self._request_biscuit: RequestBiscuit = request_biscuit
+        self._agent = agent
+        self._request_biscuit = request_biscuit
 
     def new_response_biscuit(self, body: bytes, cost: TheoriqCost) -> ResponseBiscuit:
         """
