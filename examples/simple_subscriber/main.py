@@ -23,7 +23,6 @@ if __name__ == "__main__":
     access_token = os.getenv("ACCESS_TOKEN")
 
     logger.info(f"Subscribing to agent {publisher_agent_id}")
-    logger.info(f"Biscuit token {access_token}")
 
     t = theoriq_subscribe_to_agent(publisher_agent_id, handle_notification, access_token)
     t.start()
