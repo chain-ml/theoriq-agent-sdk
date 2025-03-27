@@ -2,12 +2,15 @@ import logging
 import os
 
 import dotenv
+
 from theoriq.extra.flask.v1alpha2 import theoriq_subscribe_to_agent
+
 logger = logging.getLogger(__name__)
 
 
 def handle_notification(notification: str):
     logger.info(notification)
+
 
 if __name__ == "__main__":
 
@@ -21,7 +24,6 @@ if __name__ == "__main__":
 
     logger.info(f"Subscribing to agent {publisher_agent_id}")
     logger.info(f"Biscuit token {access_token}")
-
 
     t = theoriq_subscribe_to_agent(publisher_agent_id, handle_notification, access_token)
     t.start()
