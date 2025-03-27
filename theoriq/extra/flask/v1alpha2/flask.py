@@ -49,7 +49,7 @@ def theoriq_blueprint_with_subscriber(
 
     subscription_handler = TheoriqSubscriptionManager(agent=agent)
 
-    return main_blueprint, subscription_handler, agent
+    return main_blueprint, subscription_handler
 
 
 def theoriq_blueprint(
