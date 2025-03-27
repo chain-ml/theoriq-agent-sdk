@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, Iterator, List, Optional, Sequence
 from uuid import UUID
 
 import httpx
@@ -178,6 +178,19 @@ class ProtocolClient:
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
             client.post(url=url, content=notification, headers=headers)
+
+    def subscribe_to_agent_notifications(
+        self, biscuit: TheoriqBiscuit, agent_id: str
+    ) -> Iterator[str]:
+        url = f"{self._uri}/agents/{agent_id}/notifications"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            with client.stream("GET", url, headers=headers) as response:
+                response.raise_for_status()
+                for chunk in response.iter_text():
+                    if not chunk or chunk.strip() == ":":
+                        continue
+                    yield chunk
 
     @classmethod
     def from_env(cls) -> ProtocolClient:
