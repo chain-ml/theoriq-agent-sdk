@@ -13,13 +13,11 @@ from theoriq.agent import Agent
 from theoriq.biscuit import TheoriqBiscuit
 from theoriq.utils import ControlledThread
 
-from ..common import SubscribeContextBase
-from .base_context import BaseContext
 from .protocol.protocol_client import ProtocolClient
 from .schemas.request import SubscribeRequestBody
 
+class SubscribeContext:
 
-class SubscribeContext(SubscribeContextBase, BaseContext):
     """
     Represents the context for subscribing to a Theoriq agent
     """
@@ -33,15 +31,31 @@ class SubscribeContext(SubscribeContextBase, BaseContext):
             protocol_client (ProtocolClient): The client responsible for communicating with the protocol.
             request_biscuit (RequestBiscuit): The biscuit associated with the request, containing metadata and permissions.
         """
-        SubscribeContextBase.__init__(self, agent)
-        BaseContext.__init__(self, agent, protocol_client)
+        self._agent = agent
+        self._protocol_client = protocol_client
 
     def subscribe_to_agent_notifications(self, publisher_agent_id: str, handle_notification: Callable[[str], None]):
-        response_biscuit = self.get_response_biscuit()
-        protocol_public_key = self._protocol_client.public_key
-        theoriq_biscuit = TheoriqBiscuit.from_token(token=response_biscuit.biscuit, public_key=protocol_public_key)
+        theoriq_biscuit = self.get_temporary_biscuit()
         self._protocol_client.subscribe_to_agent_notifications(theoriq_biscuit, publisher_agent_id, handle_notification)
 
+    def get_temporary_biscuit(self) -> TheoriqBiscuit:
+        authentication_biscuit = self._agent.authentication_biscuit()
+        agent_public_key = self._agent.config.public_key
+        responseBiscuit = self._protocol_client.get_biscuit(authentication_biscuit, agent_public_key)
+        return TheoriqBiscuit.from_token(token=responseBiscuit.biscuit, public_key=self._protocol_client.public_key)
+
+    @property
+    def agent_address(self) -> str:
+        """
+        Returns the address of the agent.
+        If the agent is virtual return the virtual address
+
+        Returns:
+            str: The agent's address as a string.
+        """
+        if self._agent.virtual_address.is_null:
+            return str(self._agent.config.address)
+        return str(self._agent.virtual_address)
 
 SubscribeListenerFn = Callable[[SubscribeContext, SubscribeRequestBody], None]
 SubscribeListenerCleanupFn = Callable[[SubscribeContext], None]

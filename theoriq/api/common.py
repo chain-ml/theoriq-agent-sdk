@@ -11,31 +11,6 @@ from ..types import AgentMetadata, Currency, SourceType
 from ..utils import TTLCache
 
 
-class SubscribeContextBase:
-    """
-    Represents the context for subscribing to a Theoriq agent, providing the biscuit, and making the request to the protocol
-    """
-
-    def __init__(self, agent: Agent) -> None:
-        """
-        Initializes a SubscribeContext instance.
-        """
-        self._agent = agent
-
-    @property
-    def agent_address(self) -> str:
-        """
-        Returns the address of the agent.
-        If the agent is virtual return the virtual address
-
-        Returns:
-            str: The agent's address as a string.
-        """
-        if self._agent.virtual_address.is_null:
-            return str(self._agent.config.address)
-        return str(self._agent.virtual_address)
-
-
 class ExecuteContextBase:
     """
     Represents the context for executing a request, managing interactions with the agent and protocol client.
