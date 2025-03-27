@@ -24,6 +24,6 @@ if __name__ == "__main__":
 
     logger.info(f"Subscribing to agent {publisher_agent_id}")
 
-    t = theoriq_subscribe_to_agent(publisher_agent_id, handle_notification, access_token)
-    t.start()
+    thread = theoriq_subscribe_to_agent(publisher_agent_id, handle_notification, access_token)
+    thread.start()
     logger.info("We have subscribed to the agent")
