@@ -56,7 +56,7 @@ class ProtocolClient:
             data = response.json()
             return PublicKeyResponse(**data)
 
-    def get_biscuit(self, authentication_biscuit: AuthenticationBiscuit, public_key: PublicKey):
+    def get_biscuit(self, authentication_biscuit: AuthenticationBiscuit, public_key: PublicKey) -> BiscuitResponse:
         url = f"{self._uri}/auth/biscuits/biscuit"
         headers = authentication_biscuit.to_headers()
         body = {"publicKey": public_key.to_hex()}
@@ -173,7 +173,7 @@ class ProtocolClient:
         with httpx.Client(timeout=self._timeout) as client:
             client.post(url=url, json=request.to_dict(), headers=headers)
 
-    def post_notification(self, biscuit: TheoriqBiscuit, agent_id: str, notification: bytes) -> None:
+    def post_notification(self, biscuit: TheoriqBiscuit, agent_id: str, notification: str) -> None:
         url = f"{self._uri}/agents/{agent_id}/notifications"
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
