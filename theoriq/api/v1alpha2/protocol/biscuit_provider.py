@@ -1,23 +1,22 @@
 import abc
 import time
-from typing import Optional
+from typing import Optional, Tuple
 
 from biscuit_auth import PrivateKey
-from biscuit_auth.biscuit_auth import KeyPair, PublicKey
+from biscuit_auth.biscuit_auth import KeyPair
 
 from theoriq.api.v1alpha2 import ProtocolClient
 from theoriq.biscuit import AgentAddress, TheoriqBiscuit
 from theoriq.biscuit.authentication_biscuit import AuthenticationFacts
-from theoriq.extra.flask.common import public_key
 
 
 class BiscuitProvider(abc.ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         self._biscuit: Optional[TheoriqBiscuit] = None
         self._renew_after: int = int(time.time())
 
     @abc.abstractmethod
-    def _get_new_biscuit(self) -> TheoriqBiscuit:
+    def _get_new_biscuit(self) -> Tuple[TheoriqBiscuit, int]:
         pass
 
     def get_biscuit(self) -> TheoriqBiscuit:
@@ -34,7 +33,7 @@ class BiscuitProviderFromPrivateKey(BiscuitProvider):
         self._address: AgentAddress = address
         self._client = client
 
-    def _get_new_biscuit(self) -> (TheoriqBiscuit, int):
+    def _get_new_biscuit(self) -> Tuple[TheoriqBiscuit, int]:
         facts = AuthenticationFacts(self._address, self._key_pair.private_key)
         authentication_biscuit = facts.to_authentication_biscuit()
         result = self._client.get_biscuit(authentication_biscuit, self._key_pair.public_key)

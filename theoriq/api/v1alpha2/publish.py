@@ -15,7 +15,7 @@ class PublisherContext:
 
     def publish(self, message: str) -> None:
         biscuit = self._biscuit_provider.get_biscuit()
-        self._client.post_notification(biscuit, self._address, message)
+        self._client.post_notification(biscuit, self._address.address, message)
 
 
 PublishJob = Callable[[PublisherContext], None]

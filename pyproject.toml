@@ -52,6 +52,10 @@ exclude = "(?x)(venv|docs|tmp|examples)"
 mypy_path = "./stubs"
 explicit_package_bases = "true"
 
+[[tool.mypy.overrides]]
+module = ["biscuit_auth.*"]
+ignore_missing_imports = true
+
 [tool.ruff]
 exclude = ["__init__.py", "docs", "tmp"]
 line-length = 120
