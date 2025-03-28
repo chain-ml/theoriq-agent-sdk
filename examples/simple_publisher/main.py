@@ -8,6 +8,7 @@ from theoriq.api.v1alpha2.publish import Publisher, PublisherContext
 
 logger = logging.getLogger(__name__)
 
+
 def hello_job(context: PublisherContext) -> None:
     i = 0
     while True:

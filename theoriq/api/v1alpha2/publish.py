@@ -17,11 +17,13 @@ class PublisherContext:
         biscuit = self._biscuit_provider.get_biscuit()
         self._client.post_notification(biscuit, self._address, message)
 
+
 PublishJob = Callable[[PublisherContext], None]
+
 
 class Publisher:
     def __init__(self, agent: Agent, client: Optional[ProtocolClient] = None) -> None:
         self._context = PublisherContext(agent, client or ProtocolClient.from_env())
 
     def new_job(self, job: PublishJob) -> threading.Thread:
-        return threading.Thread(target=lambda : job(self._context))
+        return threading.Thread(target=lambda: job(self._context))

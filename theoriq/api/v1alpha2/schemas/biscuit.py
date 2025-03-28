@@ -7,6 +7,7 @@ class BiscuitResponseData(BaseModel):
     expires_at: Annotated[int, Field(alias="expiresAt")]
     subject: str
 
+
 class BiscuitResponse(BaseModel):
     """
     Represents the response payload for a biscuit request.

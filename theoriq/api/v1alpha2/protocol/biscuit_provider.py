@@ -40,4 +40,3 @@ class BiscuitProviderFromPrivateKey(BiscuitProvider):
         result = self._client.get_biscuit(authentication_biscuit, self._key_pair.public_key)
         biscuit = TheoriqBiscuit.from_token(token=result.biscuit, public_key=self._client.public_key)
         return biscuit, result.data.expires_at
-
