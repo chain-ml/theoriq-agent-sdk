@@ -65,7 +65,7 @@ class ExecuteContext(ExecuteContextBase):
         """
         self._protocol_client.post_metrics(request_biscuit=self._request_biscuit, metrics=[metric])
 
-    def send_notification(self, notification: bytes):
+    def send_notification(self, notification: str) -> None:
         """
         Sends agent notification via the protocol client.
         """

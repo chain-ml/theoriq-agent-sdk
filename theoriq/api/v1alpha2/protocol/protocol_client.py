@@ -56,12 +56,13 @@ class ProtocolClient:
             data = response.json()
             return PublicKeyResponse(**data)
 
-    def get_biscuit(self, authentication_biscuit: AuthenticationBiscuit, public_key: PublicKey):
+    def get_biscuit(self, authentication_biscuit: AuthenticationBiscuit, public_key: PublicKey) -> BiscuitResponse:
         url = f"{self._uri}/auth/biscuits/biscuit"
         headers = authentication_biscuit.to_headers()
         body = {"publicKey": public_key.to_hex()}
         with httpx.Client(timeout=self._timeout) as client:
             response = client.post(url=url, json=body, headers=headers)
+            response.raise_for_status()
             return BiscuitResponse.model_validate(response.json())
 
     def get_agent(self, agent_id: str) -> AgentResponse:
@@ -99,6 +100,7 @@ class ProtocolClient:
         headers = request_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
             response = client.post(url=url, content=content, headers=headers)
+            response.raise_for_status()
             return response.json()
 
     def post_configure(self, biscuit: TheoriqBiscuit, to_addr: str):
@@ -173,11 +175,12 @@ class ProtocolClient:
         with httpx.Client(timeout=self._timeout) as client:
             client.post(url=url, json=request.to_dict(), headers=headers)
 
-    def post_notification(self, biscuit: TheoriqBiscuit, agent_id: str, notification: bytes) -> None:
+    def post_notification(self, biscuit: TheoriqBiscuit, agent_id: str, notification: str) -> None:
         url = f"{self._uri}/agents/{agent_id}/notifications"
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
-            client.post(url=url, content=notification, headers=headers)
+            response = client.post(url=url, content=notification, headers=headers)
+            response.raise_for_status()
 
     def subscribe_to_agent_notifications(self, biscuit: TheoriqBiscuit, agent_id: str) -> Iterator[str]:
         url = f"{self._uri}/agents/{agent_id}/notifications"
