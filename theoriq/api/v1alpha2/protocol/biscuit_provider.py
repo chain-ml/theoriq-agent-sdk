@@ -7,7 +7,8 @@ from biscuit_auth.biscuit_auth import KeyPair
 
 from theoriq.api.v1alpha2 import ProtocolClient
 from theoriq.biscuit import AgentAddress, TheoriqBiscuit
-from theoriq.biscuit.authentication_biscuit import AuthenticationFacts
+from theoriq.biscuit.authentication_biscuit import AuthenticationBiscuit, AuthenticationFacts
+from theoriq.biscuit.facts import ExpiresAtFact
 
 
 class BiscuitProvider(abc.ABC):
@@ -37,5 +38,18 @@ class BiscuitProviderFromPrivateKey(BiscuitProvider):
         facts = AuthenticationFacts(self._address, self._key_pair.private_key)
         authentication_biscuit = facts.to_authentication_biscuit()
         result = self._client.get_biscuit(authentication_biscuit, self._key_pair.public_key)
+        biscuit = TheoriqBiscuit.from_token(token=result.biscuit, public_key=self._client.public_key)
+        return biscuit, result.data.expires_at
+
+
+class BiscuitProviderFromAPIKey(BiscuitProvider):
+    def __init__(self, api_key: str, client: ProtocolClient) -> None:
+        super().__init__()
+        self._api_key_biscuit = TheoriqBiscuit.from_token(token=api_key, public_key=client.public_key)
+        self._client = client
+
+    def _get_new_biscuit(self) -> Tuple[TheoriqBiscuit, int]:
+        new_biscuit = self._api_key_biscuit.attenuate(ExpiresAtFact.from_lifetime_duration(300))
+        result = self._client.api_key_exchange(AuthenticationBiscuit(new_biscuit.biscuit))
         biscuit = TheoriqBiscuit.from_token(token=result.biscuit, public_key=self._client.public_key)
         return biscuit, result.data.expires_at

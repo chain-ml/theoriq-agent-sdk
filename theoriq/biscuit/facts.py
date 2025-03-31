@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import abc
 import itertools
+import time
 from typing import Generic, TypeVar
 from uuid import UUID
 
@@ -42,6 +43,32 @@ class TheoriqFactBase(abc.ABC):
         for fact in self.to_facts():
             block_builder.add_fact(fact)
         return block_builder
+
+
+class ExpiresAtFact(TheoriqFactBase):
+    """`theoriq:expire_at` fact"""
+
+    def __init__(self, *, expires_at: int) -> None:
+        super().__init__()
+        self.expires_at = expires_at
+
+    @classmethod
+    def biscuit_rule(cls) -> Rule:
+        return Rule("expires_at($timestamp) <- theoriq:expires_at($timestamp)")
+
+    @classmethod
+    def from_fact(cls, fact: Fact) -> Self:
+        [expires_at] = fact.terms
+        return cls(expires_at=expires_at)
+
+    def to_facts(self) -> list[Fact]:
+        fact = Fact("theoriq:expires_at({expires_at})", {"expires_at": self.expires_at})
+        return [fact]
+
+    @classmethod
+    def from_lifetime_duration(cls, duration_in_second: int) -> Self:
+        timestamp = int(time.time()) + duration_in_second
+        return cls(expires_at=timestamp)
 
 
 class SubjectFact(TheoriqFactBase):

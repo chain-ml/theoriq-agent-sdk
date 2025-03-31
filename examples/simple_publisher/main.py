@@ -25,4 +25,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     agent = Agent.from_env()
-    Publisher(agent).new_job(hello_job).start()
+    Publisher(agent).new_job(job=hello_job).start()
