@@ -14,6 +14,8 @@ from .protocol.protocol_client import ProtocolClient
 logger = logging.getLogger(__name__)
 
 
+# Type alias for a function that handles subscription messages
+# The function takes a message string as input and returns nothing
 SubscribeHandlerFn = Callable[[str], None]
 
 
@@ -24,7 +26,13 @@ class Subscriber:
 
     def new_job(self, agent_address: AgentAddress, handler: SubscribeHandlerFn) -> threading.Thread:
         """
-        Subscribe to an agent
+        Subscribe to an agent's notifications.
+
+        Args:
+            agent_address: The address of the agent to subscribe to
+            handler: The handler function to call when a message is received
+
+        Returns:
         """
 
         def _subscribe_job() -> None:
@@ -40,7 +48,14 @@ class Subscriber:
     @classmethod
     def from_api_key(cls, api_key: str, client: Optional[ProtocolClient] = None) -> Self:
         """
-        Create a Subscriber from an API key
+        Create a Subscriber from an API key.
+
+        Args:
+            api_key: The API key used for authentication
+            client: Optional protocol client, will create one from environment if not provided
+
+        Returns:
+            A new Subscriber instance configured with the API key credentials
         """
         protocol_client = client or ProtocolClient.from_env()
         biscuit_provider = BiscuitProviderFromAPIKey(api_key=api_key, client=protocol_client)
@@ -50,6 +65,17 @@ class Subscriber:
     def from_agent(
         cls, private_key: PrivateKey, address: AgentAddress, client: Optional[ProtocolClient] = None
     ) -> Self:
+        """
+        Create a Subscriber from an agent's private key and address.
+
+        Args:
+            private_key: The agent's private key used for authentication
+            address: The agent's address
+            client: Optional protocol client, will create one from environment if not provided
+
+        Returns:
+            A new Subscriber instance configured with the agent's credentials
+        """
         protocol_client = client or ProtocolClient.from_env()
         biscuit_provider = BiscuitProviderFromPrivateKey(
             private_key=private_key, address=address, client=protocol_client
