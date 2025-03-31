@@ -1,4 +1,11 @@
-from pydantic import BaseModel
+from typing import Annotated
+
+from pydantic import BaseModel, Field
+
+
+class BiscuitResponseData(BaseModel):
+    expires_at: Annotated[int, Field(alias="expiresAt")]
+    subject: str
 
 
 class BiscuitResponse(BaseModel):
@@ -10,3 +17,4 @@ class BiscuitResponse(BaseModel):
     """
 
     biscuit: str
+    data: BiscuitResponseData

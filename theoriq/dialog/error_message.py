@@ -5,14 +5,14 @@ from typing import Any, Dict, Optional
 from .item_block import BaseData, ItemBlock
 
 
-class ErrorItem(BaseData):
+class ErrorMessageItem(BaseData):
     """
     A class representing an error item. Inherits from BaseData.
     """
 
     def __init__(self, err: str, message: Optional[str]) -> None:
         """
-        Initializes an ErrorItem instance.
+        Initializes an ErrorMessageItem instance.
 
         Args:
             err (str): The error code or identifier.
@@ -34,21 +34,21 @@ class ErrorItem(BaseData):
         return result
 
     def to_str(self) -> str:
-        result = [f"- Error: {self.err}"]
+        result = [f"- AgentError: {self.err}"]
         if self.message is not None:
             result.append(f"- Message: {self.message}")
         return "\n".join(result)
 
     @classmethod
-    def from_dict(cls, values: Dict[str, Any]) -> ErrorItem:
+    def from_dict(cls, values: Dict[str, Any]) -> ErrorMessageItem:
         """
-        Creates an instance of ErrorItem from a dictionary.
+        Creates an instance of ErrorMessageItem from a dictionary.
 
         Args:
             values (Dict[str, Any]): The dictionary containing the error code and optionally the message.
 
         Returns:
-            ErrorItem: A new instance of ErrorItem initialized with the provided values.
+            ErrorMessageItem: A new instance of ErrorMessageItem initialized with the provided values.
         """
         return cls(err=values["error"], message=values.get("message"))
 
@@ -57,19 +57,19 @@ class ErrorItem(BaseData):
         Returns a string representation of the ErrorItem instance.
 
         Returns:
-            str: A string representing the ErrorItem.
+            str: A string representing the ErrorMessageItem.
         """
-        return f"ErrorItem(err={self.err}, message={self.message})"
+        return f"ErrorMessageItem(err={self.err}, message={self.message})"
 
 
-class ErrorItemBlock(ItemBlock[ErrorItem]):
+class ErrorMessageItemBlock(ItemBlock[ErrorMessageItem]):
     """
     A class representing a block of error items. Inherits from ItemBlock with ErrorItem as the generic type.
     """
 
     def __init__(
         self,
-        err: ErrorItem,
+        err: ErrorMessageItem,
         key: Optional[str] = None,
         reference: Optional[str] = None,
     ) -> None:
@@ -79,32 +79,32 @@ class ErrorItemBlock(ItemBlock[ErrorItem]):
         Args:
             err (ErrorItem): An instance of ErrorItem to be stored in the block.
         """
-        super().__init__(block_type=ErrorItemBlock.block_type(), data=err, key=key, reference=reference)
+        super().__init__(block_type=ErrorMessageItemBlock.block_type(), data=err, key=key, reference=reference)
 
     @classmethod
     def from_dict(
         cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
-    ) -> ErrorItemBlock:
+    ) -> ErrorMessageItemBlock:
         """
-        Creates an instance of ErrorItemBlock from a dictionary.
+        Creates an instance of ErrorMessageItemBlock from a dictionary.
 
         Args:
             data (Dict[str, Any]): The dictionary containing the error item data.
             block_type (str): The type of the block.
 
         Returns:
-            ErrorItemBlock: A new instance of ErrorItemBlock initialized with the provided data.
+            ErrorMessageItemBlock: A new instance of ErrorMessageItemBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
         values = data.get("error")
         if values is None:
             raise ValueError("Missing 'error' key")
-        return cls(err=ErrorItem.from_dict(values), key=block_key, reference=block_ref)
+        return cls(err=ErrorMessageItem.from_dict(values), key=block_key, reference=block_ref)
 
     @staticmethod
     def block_type() -> str:
         """
-        Returns the block type for ErrorItemBlock.
+        Returns the block type for ErrorMessageItemBlock.
 
         Returns:
             str: The string 'error', representing the block type.
@@ -114,7 +114,7 @@ class ErrorItemBlock(ItemBlock[ErrorItem]):
     @staticmethod
     def is_valid(block_type: str) -> bool:
         """
-        Checks if the provided block type is valid for an ErrorItemBlock.
+        Checks if the provided block type is valid for an ErrorMessageItemBlock.
 
         Args:
             block_type (str): The block type to validate.
@@ -122,18 +122,18 @@ class ErrorItemBlock(ItemBlock[ErrorItem]):
         Returns:
             bool: True if the block type is valid, False otherwise.
         """
-        return block_type.startswith(ErrorItemBlock.block_type())
+        return block_type.startswith(ErrorMessageItemBlock.block_type())
 
     @classmethod
-    def new(cls, err: str, message: Optional[str]) -> ErrorItemBlock:
+    def new(cls, err: str, message: Optional[str]) -> ErrorMessageItemBlock:
         """
-        Creates a new instance of ErrorItemBlock with a given error code and optional message.
+        Creates a new instance of ErrorMessageItemBlock with a given error code and optional message.
 
         Args:
             err (str): The error code or identifier.
             message (Optional[str]): An optional message providing additional details about the error.
 
         Returns:
-            ErrorItemBlock: A new instance of ErrorItemBlock initialized with the provided error data.
+            ErrorMessageItemBlock: A new instance of ErrorMessageItemBlock initialized with the provided error data.
         """
-        return cls(err=ErrorItem(err=err, message=message))
+        return cls(err=ErrorMessageItem(err=err, message=message))

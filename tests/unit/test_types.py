@@ -1,7 +1,7 @@
 import pytest
 
 from theoriq.biscuit import AgentAddress
-from theoriq.types import SourceType
+from theoriq.types import Currency, SourceType
 
 valid_agent_address = [
     "0x48656c6c6f20776f726c642c2074686948656c6c6f20776f726c642c20746869",
@@ -54,3 +54,25 @@ def test__from_address__with_invalid_agent_address__raise_value_error():
     with pytest.raises(ValueError) as exception_info:
         SourceType.from_address(address)
     assert str(exception_info.value) == f"'{address}' is not a valid address"
+
+
+@pytest.mark.parametrize(
+    "value,currency",
+    [
+        ("USDC", Currency.USDC),
+        ("usdc", Currency.USDC),
+        ("USDT", Currency.USDT),
+        ("usdt", Currency.USDT),
+        ("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", Currency.USDC),
+        ("0xdAC17F958D2ee523a2206206994597C13D831ec7", Currency.USDT),
+    ],
+)
+def test__currency_ctor__with_valid_value__returns_currency(value, currency):
+    assert Currency(value) == currency
+
+
+@pytest.mark.parametrize("value", ["Toto", "0x12", ""])
+def test__currency_ctor__with_invalid_value__raise_value_error(value):
+    with pytest.raises(ValueError) as exception_info:
+        Currency(value)
+    assert str(exception_info.value) == f"'{value}' is not a valid Currency"

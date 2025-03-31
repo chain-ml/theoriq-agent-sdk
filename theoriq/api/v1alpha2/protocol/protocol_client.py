@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, Iterator, List, Optional, Sequence
 from uuid import UUID
 
 import httpx
@@ -56,12 +56,21 @@ class ProtocolClient:
             data = response.json()
             return PublicKeyResponse(**data)
 
-    def get_biscuit(self, authentication_biscuit: AuthenticationBiscuit, public_key: PublicKey):
+    def get_biscuit(self, authentication_biscuit: AuthenticationBiscuit, public_key: PublicKey) -> BiscuitResponse:
         url = f"{self._uri}/auth/biscuits/biscuit"
         headers = authentication_biscuit.to_headers()
         body = {"publicKey": public_key.to_hex()}
         with httpx.Client(timeout=self._timeout) as client:
             response = client.post(url=url, json=body, headers=headers)
+            response.raise_for_status()
+            return BiscuitResponse.model_validate(response.json())
+
+    def api_key_exchange(self, api_key_biscuit: AuthenticationBiscuit) -> BiscuitResponse:
+        url = f"{self._uri}/auth/api-keys/exchange"
+        headers = api_key_biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, headers=headers)
+            response.raise_for_status()
             return BiscuitResponse.model_validate(response.json())
 
     def get_agent(self, agent_id: str) -> AgentResponse:
@@ -99,6 +108,7 @@ class ProtocolClient:
         headers = request_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
             response = client.post(url=url, content=content, headers=headers)
+            response.raise_for_status()
             return response.json()
 
     def post_configure(self, biscuit: TheoriqBiscuit, to_addr: str):
@@ -118,7 +128,7 @@ class ProtocolClient:
     def _post_request_complete(
         self, biscuit: TheoriqBiscuit, response: Optional[str], agent: Agent, status: RequestStatus
     ) -> None:
-        request_fact = RequestFact.from_biscuit(biscuit)
+        request_fact = biscuit.read_fact(RequestFact)
         request_id = request_fact.request_id
         from_addr = request_fact.from_addr
         url = f"{self._uri}/requests/{request_id}/{status.value}"
@@ -173,11 +183,24 @@ class ProtocolClient:
         with httpx.Client(timeout=self._timeout) as client:
             client.post(url=url, json=request.to_dict(), headers=headers)
 
-    def post_notification(self, biscuit: TheoriqBiscuit, agent_id: str, notification: bytes) -> None:
+    def post_notification(self, biscuit: TheoriqBiscuit, agent_id: str, notification: str) -> None:
         url = f"{self._uri}/agents/{agent_id}/notifications"
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
-            client.post(url=url, content=notification, headers=headers)
+            response = client.post(url=url, content=notification, headers=headers)
+            response.raise_for_status()
+
+    def subscribe_to_agent_notifications(self, biscuit: TheoriqBiscuit, agent_id: str) -> Iterator[str]:
+        url = f"{self._uri}/agents/{agent_id}/notifications"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            with client.stream("GET", url, headers=headers) as response:
+                response.raise_for_status()
+                for chunk in response.iter_text():
+                    if not chunk or chunk.strip() == ":":
+                        continue
+                    chunk = chunk[6:].strip("\n\n")  # remove the "data: " prefix and the trailing newlines
+                    yield chunk
 
     @classmethod
     def from_env(cls) -> ProtocolClient:
@@ -204,6 +227,6 @@ class ProtocolClient:
     ) -> TheoriqBiscuit:
         config_response = ConfigureResponse(response=response)
         response_bytes = config_response.model_dump_json().encode()
-        response_fact = ResponseFact(request_id, PayloadHash(response_bytes), from_addr)
+        response_fact = ResponseFact(request_id=request_id, body_hash=PayloadHash(response_bytes), to_addr=from_addr)
         biscuit = agent.attenuate_biscuit(biscuit, response_fact)
         return biscuit

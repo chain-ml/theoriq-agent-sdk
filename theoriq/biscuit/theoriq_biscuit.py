@@ -1,118 +1,14 @@
 from __future__ import annotations
 
-import abc
-from typing import Any, Dict, Generic, TypeVar
+from typing import Any, Dict, Sequence, Type, TypeVar
 from uuid import UUID
 
-from biscuit_auth import Authorizer, Biscuit, BlockBuilder, Fact, KeyPair, PrivateKey, PublicKey, Rule
+from biscuit_auth import Authorizer, Biscuit, BlockBuilder, KeyPair, PrivateKey, PublicKey
 
-from theoriq.biscuit import PayloadHash
-from theoriq.biscuit.agent_address import AgentAddress
-from theoriq.biscuit.facts import FactConvertibleBase
-from theoriq.biscuit.utils import from_base64_token, verify_address
+from theoriq.biscuit.facts import FactConvertibleBase, TheoriqFactBase
+from theoriq.biscuit.utils import from_base64_token
 
-# Define a type variable
-T = TypeVar("T")
-
-
-class TheoriqFactBase(abc.ABC, Generic[T]):
-    """Base class for facts contained in a biscuit"""
-
-    @classmethod
-    def from_biscuit(cls, theoriq_biscuit: TheoriqBiscuit) -> T:
-        """Extract facts from a biscuit"""
-        rule = cls.biscuit_rule()
-
-        authorizer = Authorizer()
-        authorizer.add_token(theoriq_biscuit.biscuit)
-        facts = authorizer.query(rule)
-
-        if len(facts) == 0:
-            raise ValueError("No facts found in current biscuit")
-
-        try:
-            return cls.from_fact(facts[0])
-        except Exception as e:
-            raise ValueError("Missing information") from e
-
-    @classmethod
-    @abc.abstractmethod
-    def biscuit_rule(cls) -> Rule:
-        pass
-
-    @classmethod
-    @abc.abstractmethod
-    def from_fact(cls, fact: Fact) -> T:
-        pass
-
-    @abc.abstractmethod
-    def to_fact(self) -> Fact:
-        pass
-
-    def to_block_builder(self) -> BlockBuilder:
-        """Convert facts to a biscuit block"""
-        fact = self.to_fact()
-        block_builder = BlockBuilder("")
-        block_builder.add_fact(fact)
-        return block_builder
-
-
-class RequestFact(TheoriqFactBase):
-    """`theoriq:request` fact"""
-
-    def __init__(self, request_id: UUID, body_hash: PayloadHash, from_addr: str | AgentAddress, to_addr: str) -> None:
-        super().__init__()
-        self.request_id = request_id
-        self.body_hash = body_hash
-        self.from_addr = from_addr if isinstance(from_addr, str) else from_addr.address
-        self.to_addr = verify_address(to_addr)
-
-    @classmethod
-    def biscuit_rule(cls) -> Rule:
-        return Rule(
-            "data($req_id, $body_hash, $from_addr, $target_addr) <- theoriq:request($req_id, $body_hash, $from_addr, $target_addr)"
-        )
-
-    @classmethod
-    def from_fact(cls, fact: Fact) -> RequestFact:
-        [req_id, body_hash, from_addr, to_addr] = fact.terms
-        return cls(req_id, body_hash, from_addr, to_addr)
-
-    def to_fact(self) -> Fact:
-        return Fact(
-            "theoriq:request({req_id}, {body_hash}, {from_addr}, {to_addr})",
-            {
-                "req_id": str(self.request_id),
-                "body_hash": str(self.body_hash),
-                "from_addr": self.from_addr,
-                "to_addr": self.to_addr,
-            },
-        )
-
-
-class ResponseFact(TheoriqFactBase):
-    """`theoriq:response` fact"""
-
-    def __init__(self, request_id: UUID, body_hash: PayloadHash, to_addr: str) -> None:
-        super().__init__()
-        self.request_id = request_id
-        self._body_hash = body_hash
-        self.to_addr = to_addr
-
-    @classmethod
-    def biscuit_rule(cls) -> Rule:
-        return Rule("data($req_id, $body_hash, $target_addr) <- theoriq:response($req_id, $body_hash, $target_addr)")
-
-    @classmethod
-    def from_fact(cls, fact: Fact) -> ResponseFact:
-        [req_id, body_hash, to_addr] = fact.terms
-        return cls(req_id, body_hash, to_addr)
-
-    def to_fact(self) -> Fact:
-        return Fact(
-            "theoriq:response({req_id}, {body_hash}, {to_addr})",
-            {"req_id": str(self.request_id), "body_hash": str(self._body_hash), "to_addr": self.to_addr},
-        )
+T = TypeVar("T", bound=TheoriqFactBase)
 
 
 class TheoriqBiscuit:
@@ -136,19 +32,38 @@ class TheoriqBiscuit:
             "Authorization": "bearer " + self.biscuit.to_base64(),
         }
 
-    def attenuate(self, agent_pk: PrivateKey, fact: TheoriqFactBase) -> TheoriqBiscuit:
-        agent_kp = KeyPair.from_private_key(agent_pk)
+    def attenuate(self, fact: TheoriqFactBase) -> TheoriqBiscuit:
+        attenuated_biscuit = self.biscuit.append(fact.to_block_builder())  # type: ignore
+        return TheoriqBiscuit(attenuated_biscuit)
+
+    def attenuate_third_party_block(self, agent_pk: PrivateKey, fact: TheoriqFactBase) -> TheoriqBiscuit:
         block_builder = fact.to_block_builder()
+        return self._attenuate_third_party_block(agent_pk, block_builder)
+
+    def attenuate_for_request(
+        self, agent_pk: PrivateKey, request_id: UUID, facts: Sequence[FactConvertibleBase]
+    ) -> TheoriqBiscuit:
+        block_builder = BlockBuilder("")
+        for fact in facts:
+            theoriq_fact = fact.to_theoriq_fact(request_id)
+            block_builder.merge(theoriq_fact.to_block_builder())
+        return self._attenuate_third_party_block(agent_pk, block_builder)
+
+    def _attenuate_third_party_block(self, agent_pk, block_builder) -> TheoriqBiscuit:
+        agent_kp = KeyPair.from_private_key(agent_pk)
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, block_builder)  # type: ignore
         return TheoriqBiscuit(attenuated_biscuit)
 
-    def attenuate_for_request(
-        self, agent_pk: PrivateKey, request_id: UUID, facts: list[FactConvertibleBase]
-    ) -> TheoriqBiscuit:
-        agent_kp = KeyPair.from_private_key(agent_pk)
-        block_builder = BlockBuilder("")
-        for fact in facts:
-            converted_fact = fact.to_fact(str(request_id))
-            block_builder.add_fact(converted_fact)
-        attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, block_builder)  # type: ignore
-        return TheoriqBiscuit(attenuated_biscuit)
+    def authorizer(self) -> Authorizer:
+        authorizer = Authorizer()
+        authorizer.add_token(self.biscuit)
+        return authorizer
+
+    def read_fact(self, fact_type: Type[T]) -> T:
+        facts = self.authorizer().query(fact_type.biscuit_rule())
+        if len(facts) == 0:
+            raise ValueError("No facts found in current biscuit")
+        try:
+            return fact_type.from_fact(facts[0])
+        except Exception as e:
+            raise ValueError("Missing information") from e

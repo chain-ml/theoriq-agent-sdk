@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from biscuit_auth import Authorizer, Biscuit, BlockBuilder, Rule  # pylint: disable=E0611
+from biscuit_auth import Biscuit, BlockBuilder  # pylint: disable=E0611
 
-from theoriq.biscuit import PayloadHash, TheoriqCost, TheoriqResponse
-from theoriq.types.currency import Currency
+from theoriq.biscuit import TheoriqBiscuit, TheoriqCost, TheoriqResponse
+from theoriq.biscuit.facts import ExecuteResponseFacts
 
 
 class ResponseBiscuit:
@@ -38,26 +38,19 @@ class ResponseFacts:
     @staticmethod
     def from_biscuit(biscuit: Biscuit) -> ResponseFacts:
         """Read response facts from biscuit"""
-        rule = Rule(
-            """
-            data($req_id, $body_hash, $target_addr, $amount, $currency) <- theoriq:response($req_id, $body_hash, $target_addr), theoriq:cost($req_id, $amount, $currency)
-            """
-        )
-
-        authorizer = Authorizer()
-        authorizer.add_token(biscuit)
-        facts = authorizer.query(rule)
-
-        [req_id, body_hash, to_addr, amount, currency] = facts[0].terms
-        theoriq_response = TheoriqResponse(body_hash=PayloadHash.from_hash(body_hash), to_addr=to_addr)
-        theoriq_cost = TheoriqCost(amount=amount, currency=Currency.from_value(currency))
-
-        return ResponseFacts(req_id, theoriq_response, theoriq_cost)
+        theoriq_biscuit = TheoriqBiscuit(biscuit)
+        biscuit_facts = theoriq_biscuit.read_fact(ExecuteResponseFacts)
+        request_id = biscuit_facts.response.request_id
+        theoriq_response = TheoriqResponse.from_theoriq_fact(biscuit_facts.response)
+        theoriq_cost = TheoriqCost.from_theoriq_fact(biscuit_facts.cost)
+        return ResponseFacts(request_id, theoriq_response, theoriq_cost)
 
     def to_block_builder(self) -> BlockBuilder:
         """Construct a biscuit block using the response facts"""
-        block_builder = BlockBuilder("")
-        block_builder.add_fact(self.response.to_fact(self.req_id))
-        block_builder.add_fact(self.cost.to_fact(self.req_id))
+        response_fact = self.response.to_theoriq_fact(self.req_id)
+        cost_fact = self.cost.to_theoriq_fact(self.req_id)
 
+        block_builder = BlockBuilder("")
+        block_builder.merge(response_fact.to_block_builder())
+        block_builder.merge(cost_fact.to_block_builder())
         return block_builder

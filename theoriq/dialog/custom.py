@@ -65,7 +65,9 @@ class CustomItemBlock(ItemBlock[CustomData]):
         super().__init__(block_type=block_type, data=data, key=key, reference=reference)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], block_type: str) -> CustomItemBlock:
+    def from_dict(
+        cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> CustomItemBlock:
         """
         Creates an instance of CustomItemBlock from a dictionary.
 
@@ -81,7 +83,7 @@ class CustomItemBlock(ItemBlock[CustomData]):
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
         custom_type = block_type.split(":", 1)[1]
-        return cls(data=CustomData(data, custom_type=custom_type))
+        return cls(data=CustomData(data, custom_type=custom_type), key=block_key, reference=block_ref)
 
     @staticmethod
     def block_type() -> str:
