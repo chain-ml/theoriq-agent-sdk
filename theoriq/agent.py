@@ -98,7 +98,7 @@ class Agent:
         return req_biscuit.attenuate_for_response(body, cost, self.config.private_key)
 
     def attenuate_biscuit(self, biscuit: TheoriqBiscuit, fact: TheoriqFactBase) -> TheoriqBiscuit:
-        return biscuit.attenuate(self.config.private_key, fact)
+        return biscuit.attenuate_third_party_block(self.config.private_key, fact)
 
     def authorize_biscuit(self, biscuit: Biscuit):
         """Runs the authorization checks and policies on the given biscuit."""

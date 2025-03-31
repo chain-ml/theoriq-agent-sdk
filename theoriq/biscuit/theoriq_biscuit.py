@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Type, TypeVar
+from typing import Any, Dict, Sequence, Type, TypeVar
 from uuid import UUID
 
 from biscuit_auth import Authorizer, Biscuit, BlockBuilder, KeyPair, PrivateKey, PublicKey
@@ -32,20 +32,25 @@ class TheoriqBiscuit:
             "Authorization": "bearer " + self.biscuit.to_base64(),
         }
 
-    def attenuate(self, agent_pk: PrivateKey, fact: TheoriqFactBase) -> TheoriqBiscuit:
-        agent_kp = KeyPair.from_private_key(agent_pk)
-        block_builder = fact.to_block_builder()
-        attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, block_builder)  # type: ignore
+    def attenuate(self, fact: TheoriqFactBase) -> TheoriqBiscuit:
+        attenuated_biscuit = self.biscuit.append(fact.to_block_builder())  # type: ignore
         return TheoriqBiscuit(attenuated_biscuit)
 
+    def attenuate_third_party_block(self, agent_pk: PrivateKey, fact: TheoriqFactBase) -> TheoriqBiscuit:
+        block_builder = fact.to_block_builder()
+        return self._attenuate_third_party_block(agent_pk, block_builder)
+
     def attenuate_for_request(
-        self, agent_pk: PrivateKey, request_id: UUID, facts: list[FactConvertibleBase]
+        self, agent_pk: PrivateKey, request_id: UUID, facts: Sequence[FactConvertibleBase]
     ) -> TheoriqBiscuit:
-        agent_kp = KeyPair.from_private_key(agent_pk)
         block_builder = BlockBuilder("")
         for fact in facts:
             theoriq_fact = fact.to_theoriq_fact(request_id)
             block_builder.merge(theoriq_fact.to_block_builder())
+        return self._attenuate_third_party_block(agent_pk, block_builder)
+
+    def _attenuate_third_party_block(self, agent_pk, block_builder) -> TheoriqBiscuit:
+        agent_kp = KeyPair.from_private_key(agent_pk)
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, block_builder)  # type: ignore
         return TheoriqBiscuit(attenuated_biscuit)
 

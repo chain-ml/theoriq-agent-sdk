@@ -65,6 +65,14 @@ class ProtocolClient:
             response.raise_for_status()
             return BiscuitResponse.model_validate(response.json())
 
+    def api_key_exchange(self, api_key_biscuit: AuthenticationBiscuit) -> BiscuitResponse:
+        url = f"{self._uri}/auth/api-keys/exchange"
+        headers = api_key_biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, headers=headers)
+            response.raise_for_status()
+            return BiscuitResponse.model_validate(response.json())
+
     def get_agent(self, agent_id: str) -> AgentResponse:
         with httpx.Client(timeout=self._timeout) as client:
             response = client.get(url=f'{self._uri}/agents/0x{agent_id.removeprefix("0x")}')
