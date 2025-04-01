@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import threading
 from typing import Callable, Optional
 
@@ -13,6 +15,10 @@ class PublisherContext:
         self._address = agent.config.address if agent.virtual_address.is_null else agent.virtual_address
         self._biscuit_provider = BiscuitProviderFromPrivateKey(agent.config.private_key, self._address, self._client)
 
+    @classmethod
+    def from_env(cls) -> PublisherContext:
+        return cls(agent=Agent.from_env(), client=ProtocolClient.from_env())
+
     def publish(self, message: str) -> None:
         biscuit = self._biscuit_provider.get_biscuit()
         self._client.post_notification(biscuit, self._address.address, message)
@@ -24,6 +30,10 @@ PublishJob = Callable[[PublisherContext], None]
 class Publisher:
     def __init__(self, agent: Agent, client: Optional[ProtocolClient] = None) -> None:
         self._context = PublisherContext(agent, client or ProtocolClient.from_env())
+
+    @classmethod
+    def from_env(cls) -> Publisher:
+        return cls(agent=Agent.from_env(), client=ProtocolClient.from_env())
 
     def new_job(self, job: PublishJob) -> threading.Thread:
         return threading.Thread(target=lambda: job(self._context))
