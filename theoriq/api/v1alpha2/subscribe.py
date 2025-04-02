@@ -37,11 +37,14 @@ class Subscriber:
 
         def _subscribe_job() -> None:
             while True:
-                biscuit = self._biscuit_provider.get_biscuit()
-                for message in self._client.subscribe_to_agent_notifications(biscuit, agent_address.address):
-                    handler(message)
+                try:
+                    biscuit = self._biscuit_provider.get_biscuit()
+                    for message in self._client.subscribe_to_agent_notifications(biscuit, agent_address.address):
+                        handler(message)
+                    logger.warning("Connection to server lost. Reconnecting...")
+                except Exception as e:
+                    logger.warning(f"Something went wrong: {e}. Retrying...")
                 time.sleep(1)  # wait for 1 second before reconnecting
-                logger.warning("Connection to server lost. Reconnecting...")
 
         return threading.Thread(target=_subscribe_job)
 
