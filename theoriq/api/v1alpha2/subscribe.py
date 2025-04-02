@@ -3,7 +3,7 @@ import threading
 import time
 from typing import Callable, Optional
 
-from biscuit_auth import KeyPair, PrivateKey
+from biscuit_auth import PrivateKey
 from typing_extensions import Self
 
 from theoriq.biscuit import AgentAddress
@@ -77,10 +77,6 @@ class Subscriber:
             A new Subscriber instance configured with the agent's credentials
         """
         protocol_client = client or ProtocolClient.from_env()
-        if address is None:
-            key_pair = KeyPair.from_private_key(private_key)
-            address = AgentAddress.from_public_key(key_pair.public_key)
-
         biscuit_provider = BiscuitProviderFromPrivateKey(
             private_key=private_key, address=address, client=protocol_client
         )

@@ -28,10 +28,10 @@ class BiscuitProvider(abc.ABC):
 
 
 class BiscuitProviderFromPrivateKey(BiscuitProvider):
-    def __init__(self, private_key: PrivateKey, address: AgentAddress, client: ProtocolClient) -> None:
+    def __init__(self, private_key: PrivateKey, address: Optional[AgentAddress], client: ProtocolClient) -> None:
         super().__init__()
         self._key_pair = KeyPair.from_private_key(private_key)
-        self._address: AgentAddress = address
+        self._address: AgentAddress = address or AgentAddress.from_public_key(self._key_pair.public_key)
         self._client = client
 
     def _get_new_biscuit(self) -> Tuple[TheoriqBiscuit, int]:
