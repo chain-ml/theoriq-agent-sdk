@@ -66,14 +66,14 @@ class Subscriber:
 
     @classmethod
     def from_agent(
-        cls, private_key: PrivateKey, address: AgentAddress, client: Optional[ProtocolClient] = None
+        cls, private_key: PrivateKey, address: Optional[AgentAddress] = None, client: Optional[ProtocolClient] = None
     ) -> Self:
         """
         Create a Subscriber from an agent's private key and address.
 
         Args:
             private_key: The agent's private key used for authentication
-            address: The agent's address
+            address: Optional agent's address, will derive from a private key if not provided
             client: Optional protocol client, will create one from environment if not provided
 
         Returns:
