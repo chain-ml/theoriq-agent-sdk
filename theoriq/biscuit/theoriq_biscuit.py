@@ -1,36 +1,28 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Sequence, Type, TypeVar
+from typing import Sequence, Type, TypeVar
 from uuid import UUID
 
 from biscuit_auth import Authorizer, Biscuit, BlockBuilder, KeyPair, PrivateKey, PublicKey
 
+from theoriq.biscuit.authentication_biscuit import AuthenticationBiscuit
 from theoriq.biscuit.facts import FactConvertibleBase, TheoriqFactBase
 from theoriq.biscuit.utils import from_base64_token
 
 T = TypeVar("T", bound=TheoriqFactBase)
 
 
-class TheoriqBiscuit:
+class TheoriqBiscuit(AuthenticationBiscuit):
     """Base class for biscuits used in Theoriq protocol"""
 
     def __init__(self, biscuit: Biscuit) -> None:
-        self.biscuit = biscuit
+        super().__init__(biscuit)
 
     @classmethod
     def from_token(cls, *, token: str, public_key: str) -> TheoriqBiscuit:
         public_key = public_key.removeprefix("0x")
         biscuit = from_base64_token(token, PublicKey.from_hex(public_key))
         return cls(biscuit)
-
-    def to_base64(self) -> str:
-        return self.biscuit.to_base64()
-
-    def to_headers(self) -> Dict[str, Any]:
-        return {
-            "Content-Type": "application/json",
-            "Authorization": "bearer " + self.biscuit.to_base64(),
-        }
 
     def attenuate(self, fact: TheoriqFactBase) -> TheoriqBiscuit:
         attenuated_biscuit = self.biscuit.append(fact.to_block_builder())  # type: ignore

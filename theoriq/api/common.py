@@ -209,7 +209,7 @@ class ExecuteResponse:
         self.theoriq_cost = cost
         self.status_code = status_code
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Returns a string representation of the ExecuteResponse instance.
 

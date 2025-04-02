@@ -47,7 +47,7 @@ class AgentDeploymentConfiguration:
     def agent_yaml_path(self) -> Optional[str]:
         return os.getenv(f"{self.prefix}AGENT_YAML_PATH")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Address: {self.address}, Public key:0x{self.public_key.to_hex()}"
 
 
@@ -76,8 +76,8 @@ class Agent:
         return self._schema
 
     def authentication_biscuit(self) -> AuthenticationBiscuit:
-        address = self.config.address if self.virtual_address.is_null else self.virtual_address
-        facts = AuthenticationFacts(address, self.config.private_key)
+        address = self._config.address if self.virtual_address.is_null else self.virtual_address
+        facts = AuthenticationFacts(address, self._config.private_key)
         return facts.to_authentication_biscuit()
 
     def verify_biscuit(self, request_biscuit: RequestBiscuit, body: bytes) -> None:
@@ -95,14 +95,14 @@ class Agent:
     def attenuate_biscuit_for_response(
         self, req_biscuit: RequestBiscuit, body: bytes, cost: TheoriqCost
     ) -> ResponseBiscuit:
-        return req_biscuit.attenuate_for_response(body, cost, self.config.private_key)
+        return req_biscuit.attenuate_for_response(body, cost, self._config.private_key)
 
     def attenuate_biscuit(self, biscuit: TheoriqBiscuit, fact: TheoriqFactBase) -> TheoriqBiscuit:
-        return biscuit.attenuate_third_party_block(self.config.private_key, fact)
+        return biscuit.attenuate_third_party_block(self._config.private_key, fact)
 
     def authorize_biscuit(self, biscuit: Biscuit):
         """Runs the authorization checks and policies on the given biscuit."""
-        authorizer = self.config.address.default_authorizer()
+        authorizer = self._config.address.default_authorizer()
         authorizer.add_token(biscuit)
         try:
             authorizer.authorize()
@@ -112,7 +112,7 @@ class Agent:
     def _verify_biscuit_facts(self, facts: RequestFacts, body: bytes) -> None:
         """Verify Facts on the given biscuit."""
         target_address = AgentAddress(facts.request.to_addr)
-        if target_address != self.config.address:
+        if target_address != self._config.address:
             msg = f"biscuit's target address '{target_address}' does not match agent's address `{target_address}`"
             raise VerificationError(msg)
 
@@ -123,11 +123,20 @@ class Agent:
 
     def sign_challenge(self, challenge: bytes) -> bytes:
         """Sign the given challenge with the Agent's private key"""
-        private_key_bytes = bytes(self.config.private_key.to_bytes())
+        private_key_bytes = bytes(self._config.private_key.to_bytes())
         private_key = Ed25519PrivateKey.from_private_bytes(private_key_bytes)
         return private_key.sign(challenge)
 
     def validate_configuration(self, values: Any) -> None:
+        """
+        Validate the configuration values against the agent's JSON schema.
+
+        Args:
+            values (Any): The configuration values to validate
+
+        Raises:
+            AgentConfigurationSchemaError: If the configuration values do not match the schema
+        """
         if self.schema is None:
             return
 
@@ -137,20 +146,38 @@ class Agent:
         except ValidationError as e:
             raise AgentConfigurationSchemaError(e.message) from e
 
-    def __str__(self):
-        return f"Address: {self.config.address}, Public key: 0x{self.config.public_key.to_hex()}"
+    def __str__(self) -> str:
+        return f"Address: {self._config.address}, Public key: 0x{self._config.public_key.to_hex()}"
 
     @property
     def public_key(self) -> str:
-        pk = self.config.public_key.to_hex()
+        """
+        Get the public key of the agent.
+
+        Returns:
+            str: The public key of the agent
+        """
+        pk = self._config.public_key.to_hex()
         return f"0x{pk}"
 
     @classmethod
     def from_env(cls) -> Agent:
+        """
+        Create an Agent instance from environment variables.
+
+        Returns:
+            Agent: An Agent instance configured from environment variables
+        """
         config = AgentDeploymentConfiguration.from_env()
         return cls(config)
 
     @classmethod
-    def validate_schema(cls, schema: Optional[Dict]):
+    def validate_schema(cls, schema: Optional[Dict]) -> None:
+        """
+        Validate the schema against the JSON schema draft 7.
+
+        Args:
+            schema (Optional[Dict]): The schema to validate
+        """
         if schema is not None:
             Draft7Validator.check_schema(schema)

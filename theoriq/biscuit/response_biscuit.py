@@ -8,21 +8,10 @@ from theoriq.biscuit import TheoriqBiscuit, TheoriqCost, TheoriqResponse
 from theoriq.biscuit.facts import ExecuteResponseFacts
 
 
-class ResponseBiscuit:
-    """Response biscuit used by the `theoriq` protocol"""
-
-    def __init__(self, biscuit: Biscuit, response_facts: ResponseFacts):
-        self.biscuit = biscuit
-        self.resp_facts = response_facts
-
-    def to_base64(self) -> str:
-        return self.biscuit.to_base64()
-
-
 class ResponseFacts:
     """Required facts inside the response biscuit"""
 
-    def __init__(self, request_id: UUID | str, response: TheoriqResponse, cost: TheoriqCost):
+    def __init__(self, request_id: UUID | str, response: TheoriqResponse, cost: TheoriqCost) -> None:
         self.req_id = request_id if isinstance(request_id, UUID) else UUID(request_id)
         self.response = response
         self.cost = cost
@@ -32,7 +21,7 @@ class ResponseFacts:
             return self.__dict__ == other.__dict__
         return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"req_id={self.req_id}, response={self.response}, cost={self.cost}"
 
     @staticmethod
@@ -54,3 +43,14 @@ class ResponseFacts:
         block_builder.merge(response_fact.to_block_builder())
         block_builder.merge(cost_fact.to_block_builder())
         return block_builder
+
+
+class ResponseBiscuit:
+    """Response biscuit used by the `theoriq` protocol"""
+
+    def __init__(self, biscuit: Biscuit, response_facts: ResponseFacts):
+        self.biscuit = biscuit
+        self.resp_facts = response_facts
+
+    def to_base64(self) -> str:
+        return self.biscuit.to_base64()

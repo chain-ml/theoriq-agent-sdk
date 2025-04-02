@@ -6,7 +6,7 @@ Types and functions used by an Agent when executing a Theoriq request
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, Optional, Sequence
 
 from theoriq.agent import Agent
 from theoriq.biscuit import AgentAddress, RequestBiscuit, ResponseBiscuit, TheoriqBiscuit, TheoriqBudget
@@ -38,6 +38,20 @@ class ExecuteContext(ExecuteContextBase):
         self._protocol_client = protocol_client
         self._configuration_hash: Optional[str] = None
 
+    @property
+    def agent_configuration(self) -> Optional[Dict[str, Any]]:
+        virtual_address = self._agent.virtual_address
+        if virtual_address.is_null or not self._configuration_hash:
+            return None
+        try:
+            return self._protocol_client.get_configuration(
+                request_biscuit=self._request_biscuit,
+                agent_address=virtual_address,
+                configuration_hash=self._configuration_hash,
+            )
+        except RuntimeError:
+            return {}
+
     def send_event(self, message: str) -> None:
         """
         Sends an event message via the protocol client.
@@ -47,7 +61,7 @@ class ExecuteContext(ExecuteContextBase):
         """
         self._protocol_client.post_event(request_biscuit=self._request_biscuit, message=message)
 
-    def send_metrics(self, metrics: List[Metric]):
+    def send_metrics(self, metrics: Sequence[Metric]) -> None:
         """
         Sends agent metrics via the protocol client.
 
@@ -56,7 +70,7 @@ class ExecuteContext(ExecuteContextBase):
         """
         self._protocol_client.post_metrics(request_biscuit=self._request_biscuit, metrics=metrics)
 
-    def send_metric(self, metric: Metric):
+    def send_metric(self, metric: Metric) -> None:
         """
         Sends agent metrics via the protocol client.
 
@@ -69,7 +83,7 @@ class ExecuteContext(ExecuteContextBase):
         """
         Sends agent notification via the protocol client.
         """
-        biscuit = self.agent_biscuit()
+        biscuit = self._get_agent_biscuit()
         self._protocol_client.post_notification(biscuit=biscuit, agent_id=self.agent_address, notification=notification)
 
     def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
@@ -94,7 +108,7 @@ class ExecuteContext(ExecuteContextBase):
         response = self._protocol_client.post_request(request_biscuit=request_biscuit, content=body, to_addr=to_addr)
         return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
 
-    def complete_request(self, response_biscuit: ResponseBiscuit, body: bytes):
+    def complete_request(self, response_biscuit: ResponseBiscuit, body: bytes) -> None:
         biscuit = TheoriqBiscuit(response_biscuit.biscuit)
         request_id = response_biscuit.resp_facts.req_id
         self._protocol_client.post_request_complete(
@@ -108,25 +122,10 @@ class ExecuteContext(ExecuteContextBase):
         self._agent.virtual_address = AgentAddress(configuration.fromRef.id)
         self._configuration_hash = configuration.fromRef.hash
 
-    @property
-    def agent_configuration(self) -> Optional[Dict[str, Any]]:
-        virtual_address = self._agent.virtual_address
-        if virtual_address.is_null or not self._configuration_hash:
-            return None
-        try:
-            return self._protocol_client.get_configuration(
-                request_biscuit=self._request_biscuit,
-                agent_address=virtual_address,
-                configuration_hash=self._configuration_hash,
-            )
-        except RuntimeError:
-            return {}
-
-    def agent_biscuit(self) -> TheoriqBiscuit:
+    def _get_agent_biscuit(self) -> TheoriqBiscuit:
         authentication_biscuit = self._agent.authentication_biscuit()
         agent_public_key = self._agent.config.public_key
         biscuit_response = self._protocol_client.get_biscuit(authentication_biscuit, agent_public_key)
-
         protocol_public_key = self._protocol_client.public_key
         return TheoriqBiscuit.from_token(token=biscuit_response.biscuit, public_key=protocol_public_key)
 

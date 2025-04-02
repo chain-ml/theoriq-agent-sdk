@@ -21,11 +21,13 @@ class BiscuitProvider(abc.ABC):
         pass
 
     def get_biscuit(self) -> TheoriqBiscuit:
-        if self._biscuit is None or time.time() > self._renew_after:
+        if self.should_be_renewed():
             (self._biscuit, expires_at) = self._get_new_biscuit()
             self._renew_after = expires_at - 300
         return self._biscuit
 
+    def should_be_renewed(self) -> bool:
+        return self._biscuit is None or time.time() > self._renew_after
 
 class BiscuitProviderFromPrivateKey(BiscuitProvider):
     def __init__(self, private_key: PrivateKey, address: AgentAddress, client: ProtocolClient) -> None:

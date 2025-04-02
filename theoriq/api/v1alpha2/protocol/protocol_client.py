@@ -172,7 +172,7 @@ class ProtocolClient:
                 retry_delay *= 2
                 retry_count += 1
 
-    def post_metrics(self, request_biscuit: RequestBiscuit, metrics: List[Metric]) -> None:
+    def post_metrics(self, request_biscuit: RequestBiscuit, metrics: Sequence[Metric]) -> None:
         url = f"{self._uri}/requests/{request_biscuit.request_facts.req_id}/metrics"
         headers = request_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:

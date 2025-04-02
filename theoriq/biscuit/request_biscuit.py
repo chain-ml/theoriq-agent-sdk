@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import os
 import uuid
-from typing import Any, Dict
 from uuid import UUID
 
 from biscuit_auth import Biscuit, BlockBuilder, KeyPair  # pylint: disable=E0611
 from biscuit_auth.biscuit_auth import PrivateKey, PublicKey  # type: ignore
 
 from . import AgentAddress, TheoriqBiscuit
+from .authentication_biscuit import AuthenticationBiscuit
 from .facts import ExecuteRequestFacts, TheoriqBudget, TheoriqCost, TheoriqRequest, TheoriqResponse
 from .response_biscuit import ResponseBiscuit, ResponseFacts
 from .utils import from_base64_token
@@ -59,7 +59,7 @@ class RequestFacts:
         block_builder.merge(budget_fact.to_block_builder())
         return block_builder
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"RequestFacts(req_id={self.req_id}, request={self.request}, budget={self.budget})"
 
     @classmethod
@@ -68,11 +68,11 @@ class RequestFacts:
         return cls(uuid.uuid4(), theoriq_request, TheoriqBudget.empty())
 
 
-class RequestBiscuit:
+class RequestBiscuit(AuthenticationBiscuit):
     """Request biscuit used by the `Theoriq` protocol"""
 
     def __init__(self, biscuit: Biscuit) -> None:
-        self.biscuit: Biscuit = biscuit
+        super().__init__(biscuit)
         self.request_facts = RequestFacts.from_biscuit(biscuit)
 
     def attenuate_for_response(self, body: bytes, cost: TheoriqCost, agent_private_key: PrivateKey) -> ResponseBiscuit:
@@ -90,15 +90,6 @@ class RequestBiscuit:
         request_facts = RequestFacts(uuid.uuid4(), request, budget)
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, request_facts.to_block_builder())  # type: ignore
         return RequestBiscuit(attenuated_biscuit)
-
-    def to_base64(self) -> str:
-        return self.biscuit.to_base64()
-
-    def to_headers(self) -> Dict[str, Any]:
-        return {
-            "Content-Type": "application/json",
-            "Authorization": "bearer " + self.biscuit.to_base64(),
-        }
 
     def __str__(self):
         return f"RequestBiscuit(biscuit={self.biscuit}, request_facts={self.request_facts})"
