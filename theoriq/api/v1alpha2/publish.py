@@ -35,5 +35,15 @@ class Publisher:
     def from_env(cls) -> Publisher:
         return cls(agent=Agent.from_env(), client=ProtocolClient.from_env())
 
-    def new_job(self, job: PublishJob) -> threading.Thread:
-        return threading.Thread(target=lambda: job(self._context))
+    def new_job(self, job: PublishJob, background: bool = False) -> threading.Thread:
+        """
+        Create a new job to publish messages.
+
+        Args:
+            job: The function to execute when publishing a message
+            background: Whether to run the job in the background
+
+        Returns:
+            A thread object that can be started to run the publish job
+        """
+        return threading.Thread(target=lambda: job(self._context), daemon=background)
