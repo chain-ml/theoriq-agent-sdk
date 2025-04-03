@@ -1,12 +1,12 @@
 import logging
-from typing import Optional
+from typing import Optional, Union
 
 from flask import Flask
 
 from ..logging import http_request_context, init
 
 
-def init_logging(app: Flask, level: Optional[str] = None):
+def init_logging(app: Flask, level: Optional[Union[str, int]] = None):
     init(level)
     app.before_request(http_request_context.before_request)
     app.after_request(http_request_context.after_request)
