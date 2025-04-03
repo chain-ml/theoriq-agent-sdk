@@ -24,15 +24,19 @@ class Subscriber:
         self._client = client or ProtocolClient.from_env()
         self._biscuit_provider = biscuit_provider
 
-    def new_job(self, agent_address: AgentAddress, handler: SubscribeHandlerFn) -> threading.Thread:
+    def new_job(
+        self, agent_address: AgentAddress, handler: SubscribeHandlerFn, background: bool = False
+    ) -> threading.Thread:
         """
         Subscribe to an agent's notifications.
 
         Args:
             agent_address: The address of the agent to subscribe to
             handler: The handler function to call when a message is received
+            background: Whether to run the job in the background
 
         Returns:
+            A thread object that can be started to run the subscription job
         """
 
         def _subscribe_job() -> None:
@@ -46,7 +50,7 @@ class Subscriber:
                     logger.warning(f"Something went wrong: {e}. Retrying...")
                 time.sleep(1)  # wait for 1 second before reconnecting
 
-        return threading.Thread(target=_subscribe_job)
+        return threading.Thread(target=_subscribe_job, daemon=background)
 
     @classmethod
     def from_api_key(cls, api_key: str, client: Optional[ProtocolClient] = None) -> Self:
