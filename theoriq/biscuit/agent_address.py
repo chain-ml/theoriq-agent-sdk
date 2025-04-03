@@ -62,6 +62,16 @@ class AgentAddress:
         return authorizer
 
     @classmethod
+    def from_env(cls, env_name: str) -> AgentAddress:
+        """
+        Create an agent address from an environment variable
+        :param env_name: environment variable name
+        :return: agent address
+        """
+        address = os.environ[env_name]
+        return cls(address=address)
+
+    @classmethod
     def from_public_key(cls, key: PublicKey) -> AgentAddress:
         """
         Create an agent address from a public key
