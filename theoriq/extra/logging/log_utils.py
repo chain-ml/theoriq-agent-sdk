@@ -1,11 +1,11 @@
 import logging
 import os
-from typing import Optional
+from typing import Optional, Union
 
 from . import execute_context, http_request_context
 
 
-def init(level: Optional[str]):
+def init(level: Optional[Union[str, int]]):
     effective_level = level or os.environ.get("LOGLEVEL", "INFO").upper()
     logging.basicConfig(
         level=effective_level,
