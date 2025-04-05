@@ -1,14 +1,12 @@
 from contextvars import ContextVar
 from typing import ContextManager, Optional
 
-from theoriq.api.common import ExecuteContextBase
-
 request_id_var: ContextVar[Optional[str]] = ContextVar("theoriq_request_id", default=None)
 
 
 class ExecuteLogContext(ContextManager):
-    def __init__(self, context: ExecuteContextBase):
-        self._token = request_id_var.set(context.request_id)
+    def __init__(self, request_id: str):
+        self._token = request_id_var.set(request_id)
 
     def __exit__(self, exc_type, exc_value, traceback, /):
         request_id_var.reset(self._token)

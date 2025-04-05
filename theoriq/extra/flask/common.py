@@ -8,7 +8,7 @@ import flask
 from flask import Blueprint, Request, Response, jsonify, request
 
 from theoriq import Agent
-from theoriq.api.common import ExecuteContextBase
+from theoriq.api.v1alpha2 import RequestContext
 from theoriq.api.v1alpha2.schemas import ChallengeRequestBody
 from theoriq.biscuit import RequestBiscuit, RequestFacts, ResponseBiscuit, TheoriqBiscuitError
 from theoriq.extra import start_time
@@ -116,9 +116,9 @@ def build_error_payload(*, agent_address: str, request_id: str, err: str, status
     return error_response
 
 
-def new_error_response(context: ExecuteContextBase, body: Exception, status_code: int) -> flask.Response:
+def new_error_response(context: RequestContext, body: Exception, status_code: int) -> flask.Response:
     error_response = build_error_payload(
-        agent_address=context.agent_address, request_id=context.request_id, err=str(body), status_code=status_code
+        agent_address=str(context.agent_address), request_id=context.request_id, err=str(body), status_code=status_code
     )
     response_biscuit = context.new_error_response_biscuit(error_response.get_data())
     return add_biscuit_to_response(error_response, response_biscuit)

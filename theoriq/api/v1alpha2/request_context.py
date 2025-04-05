@@ -1,33 +1,37 @@
 from __future__ import annotations
 
-import abc
 from typing import Any, Dict, Optional, Sequence
 
 from theoriq import Agent
 
-from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
-from ..dialog import DialogItem, ErrorItemBlock, ItemBlock
-from ..types import AgentMetadata, Currency, SourceType
-from ..utils import TTLCache
+from ...biscuit import AgentAddress, RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
+from ...dialog import DialogItem, ErrorItemBlock, ItemBlock
+from ...types import AgentMetadata, Currency, SourceType
+from . import ProtocolClient
+from .context_base import ContextBase
 
 
-class ExecuteContextBase:
+class RequestContext(ContextBase):
     """
     Represents the context for executing a request, managing interactions with the agent and protocol client.
     """
 
-    _metadata_cache: TTLCache[AgentMetadata] = TTLCache(ttl=180, max_size=40)
-
-    def __init__(self, agent: Agent, request_biscuit: RequestBiscuit) -> None:
+    def __init__(
+        self,
+        agent: Agent,
+        protocol_client: ProtocolClient,
+        request_biscuit: RequestBiscuit,
+        virtual_address: Optional[AgentAddress] = None,
+    ) -> None:
         """
         Initializes an ExecuteContext instance.
 
         Args:
             agent (Agent): The agent responsible for handling the execution.
-            protocol_client (ProtocolClient): The client responsible for communicating with the protocol.
             request_biscuit (RequestBiscuit): The biscuit associated with the request, containing metadata and permissions.
         """
-        self._agent = agent
+
+        super().__init__(agent, protocol_client, virtual_address)
         self._request_biscuit = request_biscuit
 
     def new_response_biscuit(self, body: bytes, cost: TheoriqCost) -> ResponseBiscuit:
@@ -78,7 +82,7 @@ class ExecuteContextBase:
         Returns:
             ExecuteResponse: The response object with the provided blocks and cost.
         """
-        return ExecuteResponse(dialog_item=DialogItem.new(source=self.agent_address, blocks=blocks), cost=cost)
+        return ExecuteResponse(dialog_item=DialogItem.new(source=str(self.agent_address), blocks=blocks), cost=cost)
 
     def runtime_error_response(self, err: ExecuteRuntimeError) -> ExecuteResponse:
         """
@@ -91,34 +95,6 @@ class ExecuteContextBase:
             ExecuteResponse: The response object encapsulating the error.
         """
         return self.new_free_response(blocks=[ErrorItemBlock.new(err=err.err, message=err.message)])
-
-    @abc.abstractmethod
-    def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
-        """
-        Sends a request to another address, attenuating the biscuit for the request and handling the response.
-
-        Args:
-            blocks (Sequence[ItemBlock]): The blocks of data to include in the request.
-            budget (TheoriqBudget): The budget for processing the request.
-            to_addr (str): The address to which the request is sent.
-
-        Returns:
-            ExecuteResponse: The response received from the request.
-        """
-        pass
-
-    @property
-    def agent_address(self) -> str:
-        """
-        Returns the address of the agent.
-        If the agent is virtual return the virtual address
-
-        Returns:
-            str: The agent's address as a string.
-        """
-        if self._agent.virtual_address.is_null:
-            return str(self._agent.config.address)
-        return str(self._agent.virtual_address)
 
     @property
     def request_id(self) -> str:
@@ -170,18 +146,8 @@ class ExecuteContextBase:
         if self.sender_kind.is_user:
             return None
 
-        key = self._request_biscuit.request_facts.request.from_addr
-        result = self._metadata_cache.get(key)
-        if result is not None:
-            return result
-
-        result = self._sender_metadata(key)
-        self._metadata_cache.set(key, result)
-        return result
-
-    @abc.abstractmethod
-    def _sender_metadata(self, agent_id: str) -> AgentMetadata:
-        pass
+        agent_id = self._request_biscuit.request_facts.request.from_addr
+        return self.get_agent_metadata(agent_id)
 
 
 class ExecuteResponse:
