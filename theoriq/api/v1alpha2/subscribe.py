@@ -6,6 +6,7 @@ from typing import Callable, Optional
 from biscuit_auth import PrivateKey
 from typing_extensions import Self
 
+from theoriq import AgentDeploymentConfiguration
 from theoriq.biscuit import AgentAddress
 
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFromAPIKey, BiscuitProviderFromPrivateKey
@@ -88,3 +89,17 @@ class Subscriber:
             private_key=private_key, address=address, client=protocol_client
         )
         return cls(biscuit_provider=biscuit_provider, client=protocol_client)
+
+    @classmethod
+    def from_env(cls, env_prefix: str = "") -> Self:
+        """
+        Create a Subscriber from an agent's private key from environment variable.
+
+        Args:
+            env_prefix: Optional prefix for environment variable
+
+        Returns:
+            A new Subscriber instance configured with the agent's credentials
+        """
+        config = AgentDeploymentConfiguration.from_env(env_prefix=env_prefix)
+        return cls.from_agent(private_key=config.private_key)
