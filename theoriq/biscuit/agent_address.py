@@ -7,7 +7,17 @@ import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from biscuit_auth import Authorizer, Biscuit, BiscuitBuilder, Check, Policy, PublicKey, Rule  # pylint: disable=E0611
+from biscuit_auth import (  # pylint: disable=E0611
+    Authorizer,
+    Biscuit,
+    BiscuitBuilder,
+    Check,
+    KeyPair,
+    Policy,
+    PrivateKey,
+    PublicKey,
+    Rule,
+)
 
 from .utils import hash_public_key, verify_address
 
@@ -69,6 +79,17 @@ class AgentAddress:
         :return: agent address
         """
         return cls(hash_public_key(key))
+
+    @classmethod
+    def from_private_key(cls, agent_private_key: str) -> AgentAddress:
+        """
+        Create an agent address from a private key
+        :param key: private key
+        :return: agent address
+        """
+        private_key = PrivateKey.from_hex(agent_private_key.removeprefix("0x"))
+        key_pair = KeyPair.from_private_key(private_key)
+        return cls.from_public_key(key_pair.public_key)
 
     @classmethod
     def from_biscuit(cls, biscuit: Biscuit) -> AgentAddress:

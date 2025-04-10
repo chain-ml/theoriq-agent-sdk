@@ -29,6 +29,7 @@ class BiscuitProvider(abc.ABC):
     def should_be_renewed(self) -> bool:
         return self._biscuit is None or time.time() > self._renew_after
 
+
 class BiscuitProviderFromPrivateKey(BiscuitProvider):
     def __init__(self, private_key: PrivateKey, address: Optional[AgentAddress], client: ProtocolClient) -> None:
         super().__init__()

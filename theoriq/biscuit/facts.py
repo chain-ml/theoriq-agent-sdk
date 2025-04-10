@@ -7,6 +7,7 @@ from __future__ import annotations
 import abc
 import itertools
 import time
+from datetime import datetime, timedelta, timezone
 from typing import Generic, TypeVar
 from uuid import UUID
 
@@ -48,9 +49,9 @@ class TheoriqFactBase(abc.ABC):
 class ExpiresAtFact(TheoriqFactBase):
     """`theoriq:expire_at` fact"""
 
-    def __init__(self, *, expires_at: int) -> None:
+    def __init__(self, *, expires_at: int | datetime) -> None:
         super().__init__()
-        self.expires_at = expires_at
+        self.expires_at = expires_at if isinstance(expires_at, int) else int(expires_at.timestamp())
 
     @classmethod
     def biscuit_rule(cls) -> Rule:
@@ -70,13 +71,18 @@ class ExpiresAtFact(TheoriqFactBase):
         timestamp = int(time.time()) + duration_in_second
         return cls(expires_at=timestamp)
 
+    @classmethod
+    def from_now(cls, delay_in_seconds: int) -> Self:
+        expires_at = datetime.now(tz=timezone.utc) + timedelta(seconds=delay_in_seconds)
+        return cls(expires_at=expires_at)
+
 
 class SubjectFact(TheoriqFactBase):
     """`theoriq:subject` fact"""
 
-    def __init__(self, *, agent_id: str):
+    def __init__(self, *, agent_id: str | AgentAddress) -> None:
         super().__init__()
-        self.agent_id = agent_id
+        self.agent_id = agent_id if isinstance(agent_id, str) else agent_id.address
 
     @classmethod
     def biscuit_rule(cls) -> Rule:
@@ -280,6 +286,25 @@ class ExecuteResponseFacts(TheoriqFactBase):
     def to_facts(self) -> list[Fact]:
         facts = [self.response.to_facts(), self.cost.to_facts()]
         return list(itertools.chain.from_iterable(facts))
+
+
+class AuthFacts:
+
+    def __init__(self, *, subject: SubjectFact, expires_at: ExpiresAtFact) -> None:
+        self.subject = subject
+        self.expires_at = expires_at
+
+    def to_facts(self) -> list[Fact]:
+        facts = [self.subject.to_facts(), self.expires_at.to_facts()]
+        return list(itertools.chain.from_iterable(facts))
+
+    @classmethod
+    def from_agent_address(cls, agent_address: str | AgentAddress, expires_at: int | datetime | None) -> Self:
+        subject = SubjectFact(agent_id=agent_address)
+        expires_at = (
+            ExpiresAtFact(expires_at=expires_at) if expires_at else ExpiresAtFact.from_now(delay_in_seconds=86400)
+        )
+        return cls(subject=subject, expires_at=expires_at)
 
 
 T = TypeVar("T", bound=TheoriqFactBase)
