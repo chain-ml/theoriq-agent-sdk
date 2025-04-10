@@ -196,7 +196,7 @@ class ProtocolClient:
         with httpx.Client(timeout=self._timeout) as client:
             with client.stream("GET", url, headers=headers) as response:
                 response.raise_for_status()
-                for chunk in response.iter_text():
+                for chunk in response.iter_text(chunk_size=65536):
                     if not chunk or chunk.strip() == ":":
                         continue
                     chunk = chunk[6:].strip("\n\n")  # remove the "data: " prefix and the trailing newlines
