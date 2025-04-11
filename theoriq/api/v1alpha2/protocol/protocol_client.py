@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Optional, Sequence
+from typing import Any, Dict, Final, Iterator, List, Optional, Sequence
 from uuid import UUID
 
 import httpx
@@ -191,16 +191,27 @@ class ProtocolClient:
             response.raise_for_status()
 
     def subscribe_to_agent_notifications(self, biscuit: TheoriqBiscuit, agent_id: str) -> Iterator[str]:
+        CHUNK_SEP: Final[str] = "\n\n"
+
         url = f"{self._uri}/agents/{agent_id}/notifications"
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
             with client.stream("GET", url, headers=headers) as response:
                 response.raise_for_status()
+                buffer = ""
                 for chunk in response.iter_text():
                     if not chunk or chunk.strip() == ":":
                         continue
-                    chunk = chunk[6:].strip("\n\n")  # remove the "data: " prefix and the trailing newlines
-                    yield chunk
+
+                    buffer += chunk
+
+                    # Process complete messages in buffer
+                    while CHUNK_SEP in buffer:
+                        message, buffer = buffer.split(CHUNK_SEP, 1)
+                        if message.startswith("data: "):
+                            payload = message[6:]  # remove the "data: " prefix
+                            if payload.strip() != ":":
+                                yield payload
 
     @classmethod
     def from_env(cls) -> ProtocolClient:
