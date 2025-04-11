@@ -196,11 +196,20 @@ class ProtocolClient:
         with httpx.Client(timeout=self._timeout) as client:
             with client.stream("GET", url, headers=headers) as response:
                 response.raise_for_status()
+                buffer = ""
                 for chunk in response.iter_text():
                     if not chunk or chunk.strip() == ":":
                         continue
-                    chunk = chunk[6:].strip("\n\n")  # remove the "data: " prefix and the trailing newlines
-                    yield chunk
+
+                    buffer += chunk
+
+                    # Process complete messages in buffer
+                    while "\n\n" in buffer:
+                        message, buffer = buffer.split("\n\n", 1)
+                        if message.startswith("data: "):
+                            payload = message[6:]  # remove the "data: " prefix
+                            if payload.strip() != ":":
+                                yield payload
 
     @classmethod
     def from_env(cls) -> ProtocolClient:
