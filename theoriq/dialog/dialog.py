@@ -109,7 +109,7 @@ class DialogItem:
     def new(cls, source: str, blocks: Sequence[ItemBlock[Any]]) -> DialogItem:
         return cls(
             timestamp=datetime.now(timezone.utc).isoformat(),
-            source_type=SourceType.Agent.value,
+            source_type=SourceType.from_address(source).value,
             source=source,
             blocks=blocks,
         )
@@ -118,7 +118,7 @@ class DialogItem:
     def new_text(cls, source: str, text: str) -> DialogItem:
         return cls(
             timestamp=datetime.now(timezone.utc).isoformat(),
-            source_type=SourceType.Agent.value,
+            source_type=SourceType.from_address(source).value,
             source=source,
             blocks=[TextItemBlock(text)],
         )
@@ -127,7 +127,7 @@ class DialogItem:
     def new_route(cls, source: str, route: str, score) -> DialogItem:
         return cls(
             timestamp=datetime.now(timezone.utc).isoformat(),
-            source_type=SourceType.Agent.value,
+            source_type=SourceType.from_address(source).value,
             source=source,
             blocks=[RouterItemBlock([RouteItem(route, score)])],
         )
@@ -136,7 +136,7 @@ class DialogItem:
     def new_web3(cls, source: str, chain_id: int, method: str, args: Dict[str, Any]) -> DialogItem:
         return cls(
             timestamp=datetime.now(timezone.utc).isoformat(),
-            source_type=SourceType.Agent.value,
+            source_type=SourceType.from_address(source).value,
             source=source,
             blocks=[Web3ItemBlock(item=Web3Item(chain_id=chain_id, method=method, args=args))],
         )
