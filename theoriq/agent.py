@@ -47,7 +47,7 @@ class AgentDeploymentConfiguration:
     def agent_yaml_path(self) -> Optional[str]:
         return os.getenv(f"{self.prefix}AGENT_YAML_PATH")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Address: {self.address}, Public key:0x{self.public_key.to_hex()}"
 
 
@@ -100,7 +100,7 @@ class Agent:
     def attenuate_biscuit(self, biscuit: TheoriqBiscuit, fact: TheoriqFactBase) -> TheoriqBiscuit:
         return biscuit.attenuate_third_party_block(self.config.private_key, fact)
 
-    def authorize_biscuit(self, biscuit: Biscuit):
+    def authorize_biscuit(self, biscuit: Biscuit) -> None:
         """Runs the authorization checks and policies on the given biscuit."""
         authorizer = self.config.address.default_authorizer()
         authorizer.add_token(biscuit)
@@ -137,7 +137,7 @@ class Agent:
         except ValidationError as e:
             raise AgentConfigurationSchemaError(e.message) from e
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Address: {self.config.address}, Public key: 0x{self.config.public_key.to_hex()}"
 
     @property

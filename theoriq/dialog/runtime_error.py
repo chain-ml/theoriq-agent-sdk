@@ -52,7 +52,7 @@ class ErrorItem(BaseData):
         """
         return cls(err=values["error"], message=values.get("message"))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Returns a string representation of the ErrorItem instance.
 

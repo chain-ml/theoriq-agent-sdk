@@ -47,7 +47,7 @@ class Web3Item(BaseData):
         result = [f"```{self.chain_id}", self.method, args, "```"]
         return "\n".join(result)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Converts the web3Item instance into a string.
 

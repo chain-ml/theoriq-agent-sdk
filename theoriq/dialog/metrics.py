@@ -49,7 +49,7 @@ class MetricItem(BaseData):
         """
         return cls(name=values["name"], value=values["value"], trend_percentage=values["trendPercentage"])
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Returns a string representation of the MetricItem instance.
 

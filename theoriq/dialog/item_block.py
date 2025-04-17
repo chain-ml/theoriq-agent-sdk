@@ -9,6 +9,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, Optional, Sequence, Type, TypeVar, Union
 
+from typing_extensions import Self
+
 
 class BaseData(ABC):
     @abstractmethod
@@ -82,13 +84,17 @@ class ItemBlock(Generic[T_Data]):
         return "\n".join(result)
 
     @classmethod
-    def from_dict(cls, data: dict, block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None):
+    def from_dict(
+        cls, data: dict, block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
+    ) -> Self:
         """
         Abstract method to create an instance of ItemBlock from a dictionary.
 
         Args:
             data (dict): The data dictionary from which the block is created.
             block_type (str): The block type of the block being created.
+            block_key (Optional[str]): The key of the block being created.
+            block_ref (Optional[str]): The reference of the block being created.
 
         Raises:
             NotImplementedError: This method should be implemented in a subclass.

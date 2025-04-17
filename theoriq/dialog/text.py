@@ -35,7 +35,7 @@ class TextItem(BaseData):
         result = [f"```{self.type}", self.text, "```"]
         return "\n".join(result)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Returns a string representation of the TextItem instance.
 

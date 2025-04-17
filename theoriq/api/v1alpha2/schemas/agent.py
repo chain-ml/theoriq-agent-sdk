@@ -59,5 +59,5 @@ class AgentResponse(BaseModel):
     metadata: Metadata
     configuration: Configuration
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"AgentResponse(id={self.system.id}, name={self.system.public_key})"

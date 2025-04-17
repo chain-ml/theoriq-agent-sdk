@@ -21,7 +21,7 @@ class AuthenticationFacts:
         biscuit = builder.build(self.private_key)
         return AuthenticationBiscuit(biscuit)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"AuthenticationFacts(agent_address={self.agent_address})"
 
 
@@ -40,5 +40,5 @@ class AuthenticationBiscuit:
             "Authorization": "bearer " + self.biscuit.to_base64(),
         }
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"AuthenticationBiscuit(biscuit={self.biscuit})"

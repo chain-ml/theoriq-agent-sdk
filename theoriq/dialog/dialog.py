@@ -124,7 +124,7 @@ class DialogItem:
         )
 
     @classmethod
-    def new_route(cls, source: str, route: str, score) -> DialogItem:
+    def new_route(cls, source: str, route: str, score: float) -> DialogItem:
         return cls(
             timestamp=datetime.now(timezone.utc).isoformat(),
             source_type=SourceType.Agent.value,

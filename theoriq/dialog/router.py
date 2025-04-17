@@ -54,7 +54,7 @@ class RouteItem(BaseData):
         """
         return cls(name=values["name"], score=values["score"], reason=values.get("reason"))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Returns a string representation of the RouteItem instance.
 

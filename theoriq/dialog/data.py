@@ -37,7 +37,7 @@ class DataItem(BaseData):
         result = [f"```{self.data_type}", self.data, "```"]
         return "\n".join(result)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Returns a string representation of the DataItem instance.
 
