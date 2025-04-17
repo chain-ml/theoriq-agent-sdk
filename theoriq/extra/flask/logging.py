@@ -6,7 +6,7 @@ from flask import Flask
 from ..logging import http_request_context, init
 
 
-def init_logging(app: Flask, level: Optional[Union[str, int]] = None):
+def init_logging(app: Flask, level: Optional[Union[str, int]] = None) -> None:
     init(level)
     app.before_request(http_request_context.before_request)
     app.after_request(http_request_context.after_request)
@@ -15,7 +15,7 @@ def init_logging(app: Flask, level: Optional[Union[str, int]] = None):
     flask_logger.setLevel(logging.WARNING)
 
 
-def list_routes(app: Flask):
+def list_routes(app: Flask) -> None:
     logging.info("registered endpoints:")
     for rule in app.url_map.iter_rules():
         methods = ",".join(rule.methods) if rule.methods else None

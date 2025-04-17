@@ -49,7 +49,7 @@ class TheoriqBiscuit:
             block_builder.merge(theoriq_fact.to_block_builder())
         return self._attenuate_third_party_block(agent_pk, block_builder)
 
-    def _attenuate_third_party_block(self, agent_pk, block_builder) -> TheoriqBiscuit:
+    def _attenuate_third_party_block(self, agent_pk: PrivateKey, block_builder: BlockBuilder) -> TheoriqBiscuit:
         agent_kp = KeyPair.from_private_key(agent_pk)
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, block_builder)  # type: ignore
         return TheoriqBiscuit(attenuated_biscuit)

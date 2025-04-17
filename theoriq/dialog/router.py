@@ -54,7 +54,7 @@ class RouteItem(BaseData):
         """
         return cls(name=values["name"], score=values["score"], reason=values.get("reason"))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Returns a string representation of the RouteItem instance.
 
@@ -88,6 +88,8 @@ class RouterItemBlock(ItemBlock[Sequence[RouteItem]]):
         Args:
             data (Dict[str, Any]): The dictionary containing the route items.
             block_type (str): The type of the block.
+            block_key (Optional[str]): An optional key to uniquely identify the block.
+            block_ref (Optional[str]): An optional reference to external data.
 
         Returns:
             RouterItemBlock: A new instance of RouterItemBlock initialized with the provided data.

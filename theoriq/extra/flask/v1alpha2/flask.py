@@ -47,7 +47,7 @@ def theoriq_blueprint(
     Agent.validate_schema(schema)
 
     @main_blueprint.before_request
-    def set_context():
+    def set_context() -> None:
         agent_var.set(Agent(agent_config, schema))
 
     configure_error_handlers(main_blueprint)

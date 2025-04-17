@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 
 class Currency(Enum):
@@ -9,7 +9,7 @@ class Currency(Enum):
     USDT = "USDT"
 
     @classmethod
-    def _missing_(cls, value: Any):
+    def _missing_(cls, value: Any) -> Optional[Currency]:
         if isinstance(value, str):
             if value.startswith("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"):
                 return Currency.USDC
@@ -17,3 +17,4 @@ class Currency(Enum):
                 return Currency.USDT
 
             return cls.__members__.get(value.upper(), None)
+        return None

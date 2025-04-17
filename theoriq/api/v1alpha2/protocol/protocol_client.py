@@ -103,7 +103,9 @@ class ProtocolClient:
                 self._config_cache.set(key, configuration)
             return configuration
 
-    def post_request(self, request_biscuit: TheoriqBiscuit | RequestBiscuit, content: bytes, to_addr: str):
+    def post_request(
+        self, request_biscuit: TheoriqBiscuit | RequestBiscuit, content: bytes, to_addr: str
+    ) -> Dict[str, Any]:
         url = f'{self._uri}/agents/{to_addr.removeprefix("0x")}/execute'
         headers = request_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
@@ -111,7 +113,7 @@ class ProtocolClient:
             response.raise_for_status()
             return response.json()
 
-    def post_configure(self, biscuit: TheoriqBiscuit, to_addr: str):
+    def post_configure(self, biscuit: TheoriqBiscuit, to_addr: str) -> Dict[str, Any]:
         url = f'{self._uri}/agents/{to_addr.removeprefix("0x")}/configure'
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:

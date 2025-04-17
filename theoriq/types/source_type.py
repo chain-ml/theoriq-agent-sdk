@@ -14,7 +14,7 @@ class SourceType(Enum):
     Agent = "agent"
 
     @staticmethod
-    def from_value(value: Any):
+    def from_value(value: Any) -> SourceType:
         """
         A static method that attempts to convert a given value to a `SourceType` enum.
 

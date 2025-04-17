@@ -32,7 +32,7 @@ class ResponseFacts:
             return self.__dict__ == other.__dict__
         return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"req_id={self.req_id}, response={self.response}, cost={self.cost}"
 
     @staticmethod
