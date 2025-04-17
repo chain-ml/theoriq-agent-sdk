@@ -10,7 +10,7 @@ class ExecuteLogContext(ContextManager):
     def __init__(self, context: ExecuteContextBase) -> None:
         self._token = request_id_var.set(context.request_id)
 
-    def __exit__(self, exc_type, exc_value, traceback, /) -> None:
+    def __exit__(self, exc_type, exc_value, traceback, /):
         request_id_var.reset(self._token)
 
 
