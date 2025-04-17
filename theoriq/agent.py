@@ -151,6 +151,6 @@ class Agent:
         return cls(config)
 
     @classmethod
-    def validate_schema(cls, schema: Optional[Dict]):
+    def validate_schema(cls, schema: Optional[Dict[str, Any]]) -> None:
         if schema is not None:
             Draft7Validator.check_schema(schema)

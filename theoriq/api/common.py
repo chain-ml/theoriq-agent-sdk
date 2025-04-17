@@ -55,7 +55,7 @@ class ExecuteContextBase:
         """
         return self._agent.attenuate_biscuit_for_response(self._request_biscuit, body, TheoriqCost.zero(Currency.USDC))
 
-    def new_free_response(self, blocks=Sequence[ItemBlock]) -> ExecuteResponse:
+    def new_free_response(self, blocks: Sequence[ItemBlock]) -> ExecuteResponse:
         """
         Creates a new response with zero cost.
 

@@ -7,10 +7,10 @@ request_id_var: ContextVar[Optional[str]] = ContextVar("theoriq_request_id", def
 
 
 class ExecuteLogContext(ContextManager):
-    def __init__(self, context: ExecuteContextBase):
+    def __init__(self, context: ExecuteContextBase) -> None:
         self._token = request_id_var.set(context.request_id)
 
-    def __exit__(self, exc_type, exc_value, traceback, /):
+    def __exit__(self, exc_type, exc_value, traceback, /) -> None:
         request_id_var.reset(self._token)
 
 

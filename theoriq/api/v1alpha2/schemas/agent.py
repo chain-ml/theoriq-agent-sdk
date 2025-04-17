@@ -43,7 +43,7 @@ class Configuration(BaseModel):
 
     @classmethod
     @field_validator("virtual", mode="before")
-    def validate_virtual(cls, value):
+    def validate_virtual(cls, value: Any) -> Optional[Any]:
         # Handle cases where `b` is an empty dict or None
         if value is None or value == {}:
             return None

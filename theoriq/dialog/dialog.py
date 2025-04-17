@@ -155,8 +155,9 @@ class Dialog(BaseModel):
 
     items: Sequence[DialogItem]
 
+    @classmethod
     @field_validator("items", mode="before")
-    def validate_items(cls, value):
+    def validate_items(cls, value: Any) -> List[DialogItem]:
         if not isinstance(value, Sequence):
             raise ValueError("items must be a sequence")
 
@@ -176,7 +177,7 @@ class Dialog(BaseModel):
         return items
 
     @field_serializer("items")
-    def serialize_items(self, value: Sequence[DialogItem]):
+    def serialize_items(self, value: Sequence[DialogItem]) -> List[Dict[str, Any]]:
         return [item.to_dict() for item in value]
 
     class Config:
