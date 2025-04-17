@@ -93,8 +93,8 @@ class ItemBlock(Generic[T_Data]):
         Args:
             data (dict): The data dictionary from which the block is created.
             block_type (str): The block type of the block being created.
-            block_key (Optional[str]): The key of the block being created.
-            block_ref (Optional[str]): The reference of the block being created.
+            block_key (Optional[str]): An optional key to uniquely identify the block.
+            block_ref (Optional[str]): An optional reference to external data.
 
         Raises:
             NotImplementedError: This method should be implemented in a subclass.

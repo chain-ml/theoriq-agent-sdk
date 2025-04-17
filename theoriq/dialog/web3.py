@@ -94,6 +94,8 @@ class Web3ItemBlock(ItemBlock[Web3Item]):
         Args:
             data (Dict[str, Any]): The dictionary containing the web3 item.
             block_type (str): The type of the block.
+            block_key (Optional[str]): An optional key to uniquely identify the block.
+            block_ref (Optional[str]): An optional reference to external data.
 
         Returns:
             Web3ItemBlock: A new instance of Web3ItemBlock initialized with the provided data.

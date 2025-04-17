@@ -77,6 +77,8 @@ class TextItemBlock(ItemBlock[TextItem]):
         Args:
             data (Dict[str, Any]): The dictionary containing the text content.
             block_type (str): The type of the block.
+            block_key (Optional[str]): An optional key to uniquely identify the block.
+            block_ref (Optional[str]): An optional reference to external data.
 
         Returns:
             TextItemBlock: A new instance of TextItemBlock initialized with the provided data.

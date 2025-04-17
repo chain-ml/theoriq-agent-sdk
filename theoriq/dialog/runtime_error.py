@@ -91,6 +91,8 @@ class ErrorItemBlock(ItemBlock[ErrorItem]):
         Args:
             data (Dict[str, Any]): The dictionary containing the error item data.
             block_type (str): The type of the block.
+            block_key (Optional[str]): An optional key to uniquely identify the block.
+            block_ref (Optional[str]): An optional reference to external data.
 
         Returns:
             ErrorItemBlock: A new instance of ErrorItemBlock initialized with the provided data.

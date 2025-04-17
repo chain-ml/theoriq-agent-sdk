@@ -78,6 +78,8 @@ class ImageItemBlock(ItemBlock[ImageItem]):
         Args:
             data (Any): The data dictionary containing the base64 encoded image string.
             block_type (str): The type of the block.
+            block_key (Optional[str]): An optional key to uniquely identify the block.
+            block_ref (Optional[str]): An optional reference to external data.
 
         Returns:
             ImageItemBlock: A new instance of ImageItemBlock initialized with the provided data.

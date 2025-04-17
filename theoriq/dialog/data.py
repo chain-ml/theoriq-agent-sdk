@@ -78,6 +78,8 @@ class DataItemBlock(ItemBlock[DataItem]):
         Args:
             data (Dict[str, Any]): The data dictionary containing the data string.
             block_type (str): The type of the block.
+            block_key (Optional[str]): An optional key to uniquely identify the block.
+            block_ref (Optional[str]): An optional reference to external data.
 
         Returns:
             DataItemBlock: A new instance of DataItemBlock initialized with the provided data.
