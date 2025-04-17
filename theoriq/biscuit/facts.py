@@ -299,7 +299,7 @@ class FactConvertibleBase(abc.ABC, Generic[T]):
 class TheoriqRequest(FactConvertibleBase[RequestFact]):
     def __init__(self, *, body_hash: PayloadHash, from_addr: str | AgentAddress, to_addr: str) -> None:
         self.body_hash = body_hash
-        self.from_addr = from_addr if isinstance(from_addr, str) else from_addr.address
+        self.from_addr = from_addr if isinstance(from_addr, str) else str(from_addr)
         self.to_addr = verify_address(to_addr)
 
     def __eq__(self, other: object) -> bool:
