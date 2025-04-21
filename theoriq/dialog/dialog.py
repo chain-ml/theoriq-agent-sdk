@@ -155,7 +155,6 @@ class Dialog(BaseModel):
 
     items: Sequence[DialogItem]
 
-    @classmethod
     @field_validator("items", mode="before")
     def validate_items(cls, value: Any) -> List[DialogItem]:
         if not isinstance(value, Sequence):
