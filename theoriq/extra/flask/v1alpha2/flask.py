@@ -57,16 +57,16 @@ def theoriq_blueprint(
     return main_blueprint
 
 
-def configure_error_handlers(main_blueprint):
+def configure_error_handlers(main_blueprint: Blueprint) -> None:
     @main_blueprint.errorhandler(Exception)
-    def handle_exception(e: Exception):
+    def handle_exception(e: Exception) -> Response:
         logging.exception(e)
         return build_error_payload(
             agent_address=str(agent_var.get().config.address), request_id="", err=str(e), status_code=500
         )
 
     @main_blueprint.errorhandler(TheoriqBiscuitError)
-    def handle_biscuit_exception(e: TheoriqBiscuitError):
+    def handle_biscuit_exception(e: TheoriqBiscuitError) -> Response:
         return build_error_payload(
             agent_address=str(agent_var.get().config.address), request_id="", err=str(e), status_code=401
         )
