@@ -5,7 +5,7 @@ from typing import Optional, Union
 from . import execute_context, http_request_context
 
 
-def init(level: Optional[Union[str, int]]):
+def init(level: Optional[Union[str, int]]) -> None:
     effective_level = level or os.environ.get("LOGLEVEL", "INFO").upper()
     logging.basicConfig(
         level=effective_level,

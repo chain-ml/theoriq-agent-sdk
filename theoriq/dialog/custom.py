@@ -74,6 +74,8 @@ class CustomItemBlock(ItemBlock[CustomData]):
         Args:
             data (Dict[str, Any]): The dictionary containing the data.
             block_type (str): The type of the block (must be a 'custom' block).
+            block_key (Optional[str]): An optional key to uniquely identify the block.
+            block_ref (Optional[str]): An optional reference to external data.
 
         Returns:
             CustomItemBlock: A new instance of CustomItemBlock initialized with the provided data.

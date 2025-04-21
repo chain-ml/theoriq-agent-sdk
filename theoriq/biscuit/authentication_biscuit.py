@@ -15,13 +15,13 @@ class AuthenticationFacts:
         self.agent_address = address
         self.private_key = private_key
 
-    def to_authentication_biscuit(self):
+    def to_authentication_biscuit(self) -> AuthenticationBiscuit:
         expires_at = datetime.now(tz=timezone.utc) + timedelta(seconds=5)
         builder = self.agent_address.new_authority_builder(expires_at)
         biscuit = builder.build(self.private_key)
         return AuthenticationBiscuit(biscuit)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"AuthenticationFacts(agent_address={self.agent_address})"
 
 
@@ -40,5 +40,5 @@ class AuthenticationBiscuit:
             "Authorization": "bearer " + self.biscuit.to_base64(),
         }
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"AuthenticationBiscuit(biscuit={self.biscuit})"

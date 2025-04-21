@@ -59,7 +59,9 @@ class AgentConfigurator:
         self.configure_fn = configure_fn
         self.is_long_running_fn = is_long_running_fn
 
-    def __call__(self, configure_context: ConfigureContext, payload: Any, biscuit: TheoriqBiscuit, agent: Agent):
+    def __call__(
+        self, configure_context: ConfigureContext, payload: Any, biscuit: TheoriqBiscuit, agent: Agent
+    ) -> None:
         try:
             self.configure_fn(configure_context, payload)
         except Exception as e:

@@ -25,7 +25,7 @@ class AgentUrls:
     def to_dict(self) -> Dict[str, Any]:
         return {"endPoint": self.end_point, "icon": self.icon}
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"EndPoint: {self.end_point} - Icon: {self.icon}"
 
 
@@ -43,7 +43,7 @@ class AgentDescriptions:
     def to_dict(self) -> Dict[str, Any]:
         return {"shortDescription": self.short, "longDescription": self.long}
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.short} - {self.long}"
 
 

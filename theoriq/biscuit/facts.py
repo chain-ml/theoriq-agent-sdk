@@ -322,7 +322,7 @@ class TheoriqRequest(FactConvertibleBase[RequestFact]):
         body_hash = PayloadHash(body)
         return cls(body_hash=body_hash, from_addr=from_addr, to_addr=to_addr)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"TheoriqRequest(body_hash={self.body_hash}, from_addr={self.from_addr}, to_addr={self.to_addr})"
 
 
@@ -338,7 +338,7 @@ class TheoriqBudget(FactConvertibleBase[BudgetFact]):
             return self.__dict__ == other.__dict__
         return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         if len(self.voucher) == 0:
             return f"TheoriqBudget(amount={self.amount}, currency={self.currency})"
 
@@ -382,7 +382,7 @@ class TheoriqResponse(FactConvertibleBase[ResponseFact]):
     def from_theoriq_fact(cls, fact: ResponseFact) -> Self:
         return cls(body_hash=fact.body_hash, to_addr=fact.to_addr)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"TheoriqResponse(body_hash={self._body_hash}, to_addr={self.to_addr})"
 
     @classmethod
@@ -414,5 +414,5 @@ class TheoriqCost(FactConvertibleBase[CostFact]):
     def from_theoriq_fact(cls, fact: CostFact) -> Self:
         return cls(amount=fact.amount, currency=Currency(fact.currency))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"TheoriqCost(amount={self.amount}, currency={self.currency.value})"

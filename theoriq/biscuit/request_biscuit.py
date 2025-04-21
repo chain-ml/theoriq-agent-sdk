@@ -59,7 +59,7 @@ class RequestFacts:
         block_builder.merge(budget_fact.to_block_builder())
         return block_builder
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"RequestFacts(req_id={self.req_id}, request={self.request}, budget={self.budget})"
 
     @classmethod
@@ -100,7 +100,7 @@ class RequestBiscuit:
             "Authorization": "bearer " + self.biscuit.to_base64(),
         }
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"RequestBiscuit(biscuit={self.biscuit}, request_facts={self.request_facts})"
 
     @classmethod

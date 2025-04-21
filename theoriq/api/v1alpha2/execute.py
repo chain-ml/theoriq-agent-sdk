@@ -47,7 +47,7 @@ class ExecuteContext(ExecuteContextBase):
         """
         self._protocol_client.post_event(request_biscuit=self._request_biscuit, message=message)
 
-    def send_metrics(self, metrics: List[Metric]):
+    def send_metrics(self, metrics: List[Metric]) -> None:
         """
         Sends agent metrics via the protocol client.
 
@@ -56,7 +56,7 @@ class ExecuteContext(ExecuteContextBase):
         """
         self._protocol_client.post_metrics(request_biscuit=self._request_biscuit, metrics=metrics)
 
-    def send_metric(self, metric: Metric):
+    def send_metric(self, metric: Metric) -> None:
         """
         Sends agent metrics via the protocol client.
 
@@ -94,7 +94,7 @@ class ExecuteContext(ExecuteContextBase):
         response = self._protocol_client.post_request(request_biscuit=request_biscuit, content=body, to_addr=to_addr)
         return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
 
-    def complete_request(self, response_biscuit: ResponseBiscuit, body: bytes):
+    def complete_request(self, response_biscuit: ResponseBiscuit, body: bytes) -> None:
         biscuit = TheoriqBiscuit(response_biscuit.biscuit)
         request_id = response_biscuit.resp_facts.req_id
         self._protocol_client.post_request_complete(
