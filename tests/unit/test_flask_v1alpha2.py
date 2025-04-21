@@ -138,7 +138,7 @@ def echo_last_prompt(context: ExecuteContext, request: ExecuteRequestBody) -> Ex
     if "should fail" in last_prompt:
         raise RuntimeError("Execute function fails")
 
-    response_body = DialogItem.new_text(source="My Test Agent", text=last_prompt)
+    response_body = DialogItem.new_text(source=str(AgentAddress.one()), text=last_prompt)
     return ExecuteResponse(response_body, TheoriqCost(amount="5", currency=Currency.USDC))
 
 

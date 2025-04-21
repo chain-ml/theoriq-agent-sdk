@@ -62,7 +62,7 @@ def test_serialization():
     dialog = Dialog(
         items=[
             DialogItem.new(
-                source="0x012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01234567",
+                source="0x012345689abcdef0123456789abcdef012345689abcdef0123456789abcdef01",
                 blocks=[TextItemBlock(text="Hello World")],
             )
         ]
