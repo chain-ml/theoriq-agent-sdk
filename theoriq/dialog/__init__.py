@@ -18,4 +18,4 @@ from .web3_blocks.eth.web3_eth_sign_typed_data import (
 from .web3_blocks.web3_result import Web3ResultItem
 from .error_message import ErrorMessageItem, ErrorMessageItemBlock
 
-from .dialog import Dialog, DialogItem, DialogItemPredicate
+from .dialog import Dialog, DialogItem, DialogItemPredicate, format_source_and_blocks

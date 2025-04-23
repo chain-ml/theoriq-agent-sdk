@@ -1,8 +1,16 @@
-from typing import Final, Sequence, Tuple
+from typing import Final, Sequence
 from uuid import uuid4
 
 from theoriq.biscuit import AgentAddress
-from theoriq.dialog import CodeItemBlock, DataItemBlock, Dialog, DialogItem, ItemBlock, TextItemBlock
+from theoriq.dialog import (
+    CodeItemBlock,
+    DataItemBlock,
+    Dialog,
+    DialogItem,
+    ItemBlock,
+    TextItemBlock,
+    format_source_and_blocks,
+)
 from theoriq.types import SourceType
 
 USER_ADDRESS: Final[str] = "0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379f"
@@ -77,28 +85,37 @@ def test_format_blocks() -> None:
     assert expected == ["Another text", "```\nSELECT *\n```"]
 
 
-def test_map() -> None:
-    def format_item(dialog_item: DialogItem, with_address: bool = False, source_prefix: str = "") -> Tuple[str, str]:
-        source_str = dialog_item.format_source(with_address=with_address)
-        blocks_str = "\n".join(dialog_item.format_blocks())
-        return f"{source_prefix}{source_str}", blocks_str
-
+def test_map_format_source_and_blocks() -> None:
     d: Dialog = Dialog.model_validate(dialog_payload)
 
-    expected = d.map(format_item)
+    expected = d.map(format_source_and_blocks)
     assert expected == [
-        ("User", "Give me the trending tokens in the last 24 hours"),
-        ("Agent", "The trending tokens in the last 24 hours are ...."),
+        (f"User ({USER_ADDRESS})", "Give me the trending tokens in the last 24 hours"),
+        (f"Agent ({RANDOM_AGENT_ADDRESS})", "The trending tokens in the last 24 hours are ...."),
     ]
 
-    # expected = d.map(format_item)
+    # expected = d.map(format_source_and_blocks, with_address=False)
     # assert expected == [
-    #     (f"User ({USER_ADDRESS})", "Give me the trending tokens in the last 24 hours"),
-    #     (f"Agent ({RANDOM_AGENT_ADDRESS})", "The trending tokens in the last 24 hours are ...."),
+    #     ("User", "Give me the trending tokens in the last 24 hours"),
+    #     ("Agent", "The trending tokens in the last 24 hours are ...."),
     # ]
-
-    # expected = d.map(format_item, with_address=False, source_prefix = "Test ")
+    #
+    # expected = d.map(format_source_and_blocks, with_address=False, source_prefix = "Test ")
     # assert expected == [
     #     (f"Test User", "Give me the trending tokens in the last 24 hours"),
     #     (f"Test Agent", "The trending tokens in the last 24 hours are ...."),
     # ]
+
+
+def test_format_md() -> None:
+    d: Dialog = Dialog.model_validate(dialog_payload)
+
+    expected = d.format_as_markdown(indent=3)
+    assert expected == "\n".join(
+        [
+            f"### User ({USER_ADDRESS})",
+            "Give me the trending tokens in the last 24 hours",
+            f"### Agent ({RANDOM_AGENT_ADDRESS})",
+            "The trending tokens in the last 24 hours are ....",
+        ]
+    )

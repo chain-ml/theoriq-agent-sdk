@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Type
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type
 
 from pydantic import BaseModel, field_serializer, field_validator
 
@@ -150,9 +150,22 @@ class DialogItem:
             blocks=[Web3ItemBlock(item=Web3Item(chain_id=chain_id, method=method, args=args))],
         )
 
+    def __str__(self) -> str:
+        source_str = f"{self.source[:6]}...{self.source[-4:]}"
+        return f"DialogItem(timestamp={self.timestamp}, source_type={self.source_type}, source={source_str}, n_blocks={len(self.blocks)})"
+
 
 DialogItemPredicate = Callable[[DialogItem], bool]
 DialogItemTransformer = Callable[[DialogItem], Any]
+
+
+def format_source_and_blocks(
+    item: DialogItem, with_address: bool = True, block_types_to_format: Optional[Sequence[Type[ItemBlock]]] = None
+) -> Tuple[str, str]:
+    """Format the source and blocks of a dialog item. Helper function to use with Dialog.map()."""
+    source_str = item.format_source(with_address=with_address)
+    blocks_str = "\n".join(item.format_blocks(block_types_to_format=block_types_to_format))
+    return source_str, blocks_str
 
 
 class Dialog(BaseModel):
@@ -168,6 +181,13 @@ class Dialog(BaseModel):
     def map(self, func: DialogItemTransformer) -> List[Any]:
         """Apply a function to each item in the dialog."""
         return [func(item) for item in self.items]
+
+    def format_as_markdown(self, indent: int = 1) -> str:
+        """
+        Formats the dialog as a markdown string.
+        """
+        sources_and_blocks = self.map(format_source_and_blocks)
+        return "\n".join(f"{'#' * indent} {source}\n{blocks}" for source, blocks in sources_and_blocks)
 
     @field_validator("items", mode="before")
     def validate_items(cls, value: Any) -> List[DialogItem]:
