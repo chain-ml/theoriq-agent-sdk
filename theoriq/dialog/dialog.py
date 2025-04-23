@@ -110,20 +110,20 @@ class DialogItem:
         source_type = self.source_type.value.capitalize()
         return source_type if not with_address else f"{source_type} ({self.source})"
 
-    def format(self, block_types_to_format: Optional[Sequence[Type[ItemBlock]]] = None) -> List[str]:
-        """Format all blocks in the current dialog item."""
+    def format_blocks(self, block_types_to_format: Optional[Sequence[Type[ItemBlock]]] = None) -> List[str]:
+        """
+        Return the `to_str()` of each block whose type is in `block_types_to_format`.
+        If `block_types_to_format` is None, return every block.
+        """
 
-        results: List[str] = []
-        for block in self.blocks:
-            if block_types_to_format is None:
-                results.append(block.data.to_str())
-                continue
+        if block_types_to_format is None:
+            return [block.data.to_str() for block in self.blocks]
 
-            for block_type in block_types_to_format:
-                if block_type.is_valid(block.block_type()):
-                    results.append(block.data.to_str())
-
-        return results
+        return [
+            block.data.to_str()
+            for block in self.blocks
+            if any(block_type.is_valid(block.block_type()) for block_type in block_types_to_format)
+        ]
 
     @classmethod
     def new(cls, source: str, blocks: Sequence[ItemBlock[Any]]) -> DialogItem:
@@ -152,6 +152,7 @@ class DialogItem:
 
 
 DialogItemPredicate = Callable[[DialogItem], bool]
+DialogItemTransformer = Callable[[DialogItem], Any]
 
 
 class Dialog(BaseModel):
@@ -163,6 +164,10 @@ class Dialog(BaseModel):
     """
 
     items: Sequence[DialogItem]
+
+    def map(self, func: DialogItemTransformer) -> List[Any]:
+        """Apply a function to each item in the dialog."""
+        return [func(item) for item in self.items]
 
     @field_validator("items", mode="before")
     def validate_items(cls, value: Any) -> List[DialogItem]:
