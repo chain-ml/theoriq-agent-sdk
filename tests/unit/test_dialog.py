@@ -121,8 +121,11 @@ def test_format_md() -> None:
     assert expected == "\n".join(
         [
             f"### User ({USER_ADDRESS})",
+            "",
             "Give me the trending tokens in the last 24 hours",
+            "",
             f"### Agent ({RANDOM_AGENT_ADDRESS})",
+            "",
             "The trending tokens in the last 24 hours are ....",
         ]
     )

@@ -112,8 +112,8 @@ class DialogItem:
 
     def format_blocks(self, block_types_to_format: Optional[Sequence[Type[ItemBlock]]] = None) -> List[str]:
         """
-        Return the `to_str()` of each block whose type is in `block_types_to_format`.
-        If `block_types_to_format` is None, return every block.
+        Format each block with `to_str()` whose type is in `block_types_to_format`.
+        If `block_types_to_format` is None, format every block.
         """
 
         if block_types_to_format is None:
@@ -164,7 +164,7 @@ def format_source_and_blocks(
 ) -> Tuple[str, str]:
     """Format the source and blocks of a dialog item. Helper function to use with Dialog.map()."""
     source_str = item.format_source(with_address=with_address)
-    blocks_str = "\n".join(item.format_blocks(block_types_to_format=block_types_to_format))
+    blocks_str = "\n\n".join(item.format_blocks(block_types_to_format=block_types_to_format))
     return source_str, blocks_str
 
 
@@ -185,7 +185,7 @@ class Dialog(BaseModel):
     def format_as_markdown(self, indent: int = 1) -> str:
         """Formats the dialog as a markdown string with default parameters from `format_source_and_blocks`."""
         sources_and_blocks = self.map(format_source_and_blocks)
-        return "\n".join(f"{'#' * indent} {source}\n{blocks}" for source, blocks in sources_and_blocks)
+        return "\n\n".join(f"{'#' * indent} {source}\n\n{blocks}" for source, blocks in sources_and_blocks)
 
     @field_validator("items", mode="before")
     def validate_items(cls, value: Any) -> List[DialogItem]:
