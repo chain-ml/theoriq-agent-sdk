@@ -107,18 +107,19 @@ class DialogItem:
 
     def format_source(self, with_address: bool = True) -> str:
         """Format the string describing the creator of the dialog item."""
-        # write unit tests
         source_type = self.source_type.value.capitalize()
         return source_type if not with_address else f"{source_type} ({self.source})"
 
-    def format(self, block_types: Optional[Sequence[Type[ItemBlock]]] = None) -> List[str]:
+    def format(self, block_types_to_format: Optional[Sequence[Type[ItemBlock]]] = None) -> List[str]:
         """Format all blocks in the current dialog item."""
-        # write unit tests
-        block_types = block_types or []
 
         results: List[str] = []
         for block in self.blocks:
-            for block_type in block_types:
+            if block_types_to_format is None:
+                results.append(block.data.to_str())
+                continue
+
+            for block_type in block_types_to_format:
                 if block_type.is_valid(block.block_type()):
                     results.append(block.data.to_str())
 
