@@ -2,7 +2,7 @@ from typing import Final, Sequence, Tuple
 from uuid import uuid4
 
 from theoriq.biscuit import AgentAddress
-from theoriq.dialog import DataItemBlock, Dialog, DialogItem, ItemBlock, TextItemBlock
+from theoriq.dialog import CodeItemBlock, DataItemBlock, Dialog, DialogItem, ItemBlock, TextItemBlock
 from theoriq.types import SourceType
 
 USER_ADDRESS: Final[str] = "0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379f"
@@ -57,7 +57,13 @@ def test_format_blocks() -> None:
     d: Dialog = Dialog(
         items=[
             get_test_item([TextItemBlock(text="Some text"), TextItemBlock(text="Some markdown", sub_type="md")]),
-            get_test_item([TextItemBlock(text="Some text"), DataItemBlock(data="1,2,3", data_type="csv")]),
+            get_test_item(
+                [
+                    TextItemBlock(text="Another text"),
+                    CodeItemBlock(code="SELECT *"),
+                    DataItemBlock(data="1,2,3", data_type="csv"),
+                ]
+            ),
         ]
     )
 
@@ -65,10 +71,10 @@ def test_format_blocks() -> None:
     assert expected == ["Some text", "```md\nSome markdown\n```"]
 
     expected = d.items[1].format_blocks()
-    assert expected == ["Some text", "```csv\n1,2,3\n```"]
+    assert expected == ["Another text", "```\nSELECT *\n```", "```csv\n1,2,3\n```"]
 
-    expected = d.items[1].format_blocks(block_types_to_format=[TextItemBlock])
-    assert expected == ["Some text"]
+    expected = d.items[1].format_blocks(block_types_to_format=[TextItemBlock, CodeItemBlock])
+    assert expected == ["Another text", "```\nSELECT *\n```"]
 
 
 def test_map() -> None:
