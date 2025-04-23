@@ -3,6 +3,7 @@ import threading
 import time
 from typing import Callable, Optional
 
+import httpx
 from biscuit_auth import PrivateKey
 from typing_extensions import Self
 
@@ -47,7 +48,7 @@ class Subscriber:
                     for message in self._client.subscribe_to_agent_notifications(biscuit, agent_address.address):
                         handler(message)
                     logger.warning("Connection to server lost. Reconnecting...")
-                except Exception as e:
+                except (httpx.HTTPStatusError, httpx.RequestError, httpx.TimeoutException) as e:
                     logger.warning(f"Something went wrong: {e}. Retrying...")
                 time.sleep(1)  # wait for 1 second before reconnecting
 
