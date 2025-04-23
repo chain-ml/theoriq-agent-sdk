@@ -9,14 +9,18 @@ from theoriq import AgentDeploymentConfiguration, ExecuteResponse
 from theoriq.biscuit import AgentAddress, TheoriqBudget, TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
 
-from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFromPrivateKey
+from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFromAPIKey, BiscuitProviderFromPrivateKey
 from .protocol.protocol_client import ProtocolClient
 from .schemas.request import ExecuteRequestBody
 
 
 class Messenger:
     def __init__(
-        self, private_key: PrivateKey, biscuit_provider: BiscuitProvider, client: Optional[ProtocolClient] = None
+        self,
+        private_key: PrivateKey,
+        biscuit_provider: BiscuitProvider,
+        client: Optional[ProtocolClient] = None,
+        user_address: Optional[str] = None,
     ) -> None:
         """
         Initialize a Messenger instance, that can handle direct communication with other agents.
@@ -25,13 +29,18 @@ class Messenger:
             private_key: Agent private key
             biscuit_provider: The biscuit provider to use for authentication
             client: Optional protocol client, will create one from environment if not provided
+            user_address: Optional user address, required for API key authentication
         """
         self._client = client or ProtocolClient.from_env()
         self._biscuit_provider = biscuit_provider
         self._private_key = private_key
+        self._user_address = user_address
 
-        key_pair = KeyPair.from_private_key(self._private_key)
-        self._address = AgentAddress.from_public_key(key_pair.public_key)
+        if user_address:
+            self._address = user_address
+        else:
+            key_pair = KeyPair.from_private_key(self._private_key)
+            self._address = str(AgentAddress.from_public_key(key_pair.public_key))
 
     def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
         """
@@ -58,6 +67,30 @@ class Messenger:
         )
         response = self._client.post_request(request_biscuit=theoriq_biscuit, content=body, to_addr=to_addr)
         return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
+
+    @classmethod
+    def from_api_key(cls, api_key: str, user_address: str, client: Optional[ProtocolClient] = None) -> Messenger:
+        """
+        Create a Messenger from an API key.
+
+        Args:
+            api_key: The API key used for authentication
+            user_address: The address of the user associated with the API key
+            client: Optional protocol client, will create one from environment if not provided
+
+        Returns:
+            A new Messenger instance configured with the API key credentials
+        """
+        protocol_client = client or ProtocolClient.from_env()
+        biscuit_provider = BiscuitProviderFromAPIKey(api_key=api_key, client=protocol_client)
+
+        kp = KeyPair()  # generating new private key as a placeholder
+        return cls(
+            biscuit_provider=biscuit_provider,
+            client=protocol_client,
+            private_key=kp.private_key,
+            user_address=user_address,
+        )
 
     @classmethod
     def from_agent(
