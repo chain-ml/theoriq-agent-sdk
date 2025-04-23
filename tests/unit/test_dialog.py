@@ -1,4 +1,4 @@
-from typing import Final, Sequence
+from typing import Final, Sequence, Tuple
 from uuid import uuid4
 
 from theoriq.biscuit import AgentAddress
@@ -94,17 +94,24 @@ def test_map_format_source_and_blocks() -> None:
         (f"Agent ({RANDOM_AGENT_ADDRESS})", "The trending tokens in the last 24 hours are ...."),
     ]
 
-    # expected = d.map(format_source_and_blocks, with_address=False)
-    # assert expected == [
-    #     ("User", "Give me the trending tokens in the last 24 hours"),
-    #     ("Agent", "The trending tokens in the last 24 hours are ...."),
-    # ]
-    #
-    # expected = d.map(format_source_and_blocks, with_address=False, source_prefix = "Test ")
-    # assert expected == [
-    #     (f"Test User", "Give me the trending tokens in the last 24 hours"),
-    #     (f"Test Agent", "The trending tokens in the last 24 hours are ...."),
-    # ]
+    def format_source_and_blocks_without_address(item: DialogItem) -> Tuple[str, str]:
+        return format_source_and_blocks(item, with_address=False)
+
+    expected = d.map(format_source_and_blocks_without_address)
+    assert expected == [
+        ("User", "Give me the trending tokens in the last 24 hours"),
+        ("Agent", "The trending tokens in the last 24 hours are ...."),
+    ]
+
+    def format_source_and_blocks_without_address_with_prefix(item: DialogItem) -> Tuple[str, str]:
+        source_str, blocks_str = format_source_and_blocks(item, with_address=False)
+        return f"Test {source_str}", blocks_str
+
+    expected = d.map(format_source_and_blocks_without_address_with_prefix)
+    assert expected == [
+        ("Test User", "Give me the trending tokens in the last 24 hours"),
+        ("Test Agent", "The trending tokens in the last 24 hours are ...."),
+    ]
 
 
 def test_format_md() -> None:

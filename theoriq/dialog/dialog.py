@@ -183,9 +183,7 @@ class Dialog(BaseModel):
         return [func(item) for item in self.items]
 
     def format_as_markdown(self, indent: int = 1) -> str:
-        """
-        Formats the dialog as a markdown string.
-        """
+        """Formats the dialog as a markdown string with default parameters from `format_source_and_blocks`."""
         sources_and_blocks = self.map(format_source_and_blocks)
         return "\n".join(f"{'#' * indent} {source}\n{blocks}" for source, blocks in sources_and_blocks)
 
