@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional, Sequence
 from theoriq import Agent
 
 from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
-from ..dialog import DialogItem, ErrorItemBlock, ItemBlock
+from ..dialog import DialogItem, ErrorItemBlock, ItemBlock, TextItemBlock
 from ..types import AgentMetadata, Currency, SourceType
 from ..utils import TTLCache
 
@@ -24,7 +24,6 @@ class ExecuteContextBase:
 
         Args:
             agent (Agent): The agent responsible for handling the execution.
-            protocol_client (ProtocolClient): The client responsible for communicating with the protocol.
             request_biscuit (RequestBiscuit): The biscuit associated with the request, containing metadata and permissions.
         """
         self._agent = agent
@@ -66,6 +65,18 @@ class ExecuteContextBase:
             ExecuteResponse: The response object with the provided blocks and zero cost.
         """
         return self.new_response(blocks=blocks, cost=TheoriqCost.zero(Currency.USDC))
+
+    def new_free_text_response(self, text: str) -> ExecuteResponse:
+        """
+        Creates a new response containing single TextItemBlock with zero cost.
+
+        Args:
+            text (str): Text to include in the response.
+
+        Returns:
+            ExecuteResponse: The response object with single TextItemBlock and zero cost.
+        """
+        return self.new_free_response(blocks=[TextItemBlock(text=text)])
 
     def new_response(self, blocks: Sequence[ItemBlock], cost: TheoriqCost) -> ExecuteResponse:
         """
