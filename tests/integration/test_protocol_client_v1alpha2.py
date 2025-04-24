@@ -1,22 +1,97 @@
-from theoriq.api import AgentResponseV1alpha2, ProtocolClientV1alpha2
+import glob
+import logging
+import time
+from typing import Dict, List
+
+import dotenv
+import pytest
+from tests import DATA_DIR
+from tests.integration.dev_utils.protocol_utils import delete_agent, mint_agent, register_agent, unmint_agent
+from tests.integration.dev_utils.run_agents_utils import run_echo_agents
+
+from theoriq.api.v1alpha2 import AgentResponse, ProtocolClient
+from theoriq.api.v1alpha2.message import Messenger
+from theoriq.biscuit import TheoriqBudget
+from theoriq.dialog import TextItemBlock
+from theoriq.types import AgentDataObject
+
+dotenv.load_dotenv()
+
+agent_data_objs: List[AgentDataObject] = [AgentDataObject.from_yaml(path) for path in glob.glob(DATA_DIR + "/*.yaml")]
+global_agent_map: Dict[str, AgentResponse] = {}
 
 
-def test_get_agent():
-    pc = ProtocolClientV1alpha2("http://localhost:8080")
-    agent = pc.get_agent("0x75ee7a59a024d9b5e4b3ee6b9784d53e36456650677221a7f56ce4a91b93a9d8")
-    assert isinstance(agent, AgentResponseV1alpha2)
+def nap():
+    time.sleep(0.25)
 
 
+@pytest.fixture(scope="session", autouse=True)
+def flask_apps():
+    logging.basicConfig(level=logging.INFO)
+    threads = run_echo_agents(agent_data_objs)
+    yield
+
+    for thread in threads:
+        thread.join(timeout=2.0)
+
+
+@pytest.mark.order(1)
+def test_registration():
+    for agent_data_obj in agent_data_objs:
+        agent = register_agent(agent_data_obj)
+        print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
+        nap()
+
+        global_agent_map[agent.system.id] = agent
+
+
+@pytest.mark.order(2)
+def test_minting():
+    for agent_id in global_agent_map.keys():
+        mint_agent(agent_id)
+        print(f"Successfully minted `{agent_id}`\n")
+        nap()
+
+
+@pytest.mark.order(3)
 def test_get_agents():
-    pc = ProtocolClientV1alpha2("http://localhost:8080")
-    agents = pc.get_agents()
-
+    client = ProtocolClient.from_env()
+    agents = client.get_agents()
     assert len(agents) > 0
+    nap()
+
     for agent in agents:
-        assert isinstance(agent, AgentResponseV1alpha2)
+        assert agent.system.id in global_agent_map
+        assert agent == global_agent_map[agent.system.id]
+
+        same_agent = client.get_agent(agent.system.id)
+        assert same_agent == agent
+        nap()
 
 
-def test_get_public_key():
-    pc = ProtocolClientV1alpha2("http://localhost:8080")
-    pub_key = pc.get_public_key()
-    assert pub_key.key_type == "ed25519"
+@pytest.mark.order(4)
+def test_unminting():
+    for agent_id in global_agent_map.keys():
+        unmint_agent(agent_id)
+        print(f"Successfully unminted `{agent_id}`\n")
+        nap()
+
+
+@pytest.mark.order(5)
+def test_messenger():
+    messenger = Messenger.from_env(env_prefix="A_")
+    response = messenger.send_request(
+        blocks=[TextItemBlock("Hello")],
+        budget=TheoriqBudget.empty(),
+        to_addr="0x5766206e8ca2ca78267d0682e7d3edf2560c2b4076aea8ad2a77b69b3976483b",
+    )
+    expected = response.body.blocks[0].to_str()
+    assert expected == "Hello from Agent B!"
+
+
+@pytest.mark.order(-1)
+def test_deletion():
+    for agent in global_agent_map.values():
+        delete_agent(agent.system.id)
+        print(f"Successfully deleted `{agent.system.id}`\n")
+        time.sleep(0.5)
