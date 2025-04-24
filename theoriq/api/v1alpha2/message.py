@@ -59,7 +59,10 @@ class Messenger:
             dialog=Dialog(items=[DialogItem.new(source=str(self._address), blocks=blocks)])
         )
         body = execute_request_body.model_dump_json().encode("utf-8")
-        theoriq_request = TheoriqRequest.from_body(body=body, from_addr=self._address, to_addr=to_addr)
+        # removeprefix is needed because self._address is full str containing "0x" now; WIP
+        theoriq_request = TheoriqRequest.from_body(
+            body=body, from_addr=self._address.removeprefix("0x"), to_addr=to_addr
+        )
 
         theoriq_biscuit = self._biscuit_provider.get_biscuit()
         theoriq_biscuit = theoriq_biscuit.attenuate_for_request(
