@@ -1,5 +1,7 @@
 import os
-from typing import Any, Optional
+from typing import Any, Optional, Final
+
+DATA_DIR: Final[str] = os.path.join(os.path.dirname(__file__), "data")
 
 
 class OsEnviron:

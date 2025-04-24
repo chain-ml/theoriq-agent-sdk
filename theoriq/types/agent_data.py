@@ -13,7 +13,7 @@ class AgentUrls:
         self.icon = icon
 
     @classmethod
-    def Undefined(cls) -> AgentUrls:
+    def undefined(cls) -> AgentUrls:
         return AgentUrls(end_point="", icon="")
 
     @classmethod
@@ -64,15 +64,17 @@ class AgentMetadata:
 
     @classmethod
     def from_dict(cls, values: Mapping[str, Any]) -> AgentMetadata:
-        tags = [value for value in values.get("tags", [])]
+        name = values["name"]
         descriptions = AgentDescriptions.from_dict(values.get("descriptions", {}))
+        tags = [value for value in values.get("tags", [])]
         examples = [value for value in values.get("examplePrompts", [])]
         cost_card = values.get("costCard", "")
 
-        return AgentMetadata("", descriptions, tags, examples, cost_card)
+        return AgentMetadata(name=name, descriptions=descriptions, tags=tags, examples=examples, cost_card=cost_card)
 
     def to_dict(self) -> Dict[str, Any]:
         result = {
+            "name": self.name,
             "tags": self.tags,
             "examplePrompts": self.examples,
             "costCard": self.cost_card,
@@ -83,7 +85,7 @@ class AgentMetadata:
 
 class AgentSpec(DataObjectSpecBase):
     def __init__(self, metadata: AgentMetadata, urls: AgentUrls) -> None:
-        self._metadata = metadata
+        self.metadata = metadata
         self.urls = urls
 
     @classmethod
@@ -93,14 +95,12 @@ class AgentSpec(DataObjectSpecBase):
         return AgentSpec(metadata, urls=urls)
 
     def to_dict(self) -> Dict[str, Any]:
-        result = self._metadata.to_dict()
+        result = self.metadata.to_dict()
         result |= {"imageUrl": self.urls.icon}
         return result
 
 
 class AgentDataObject(DataObject[AgentSpec]):
-    """ """
-
     @classmethod
     def from_dict(cls, values: Dict[str, Any]) -> AgentDataObject:
         return super()._from_dict(AgentSpec, values)

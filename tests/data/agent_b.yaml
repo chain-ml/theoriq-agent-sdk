@@ -1,0 +1,21 @@
+kind: TheoriqAgent
+version: 0.1
+metadata:
+  name: Agent B  # should be here?
+  labels:
+    author: ChainML Labs
+    env_prefix: B_
+spec:
+  name: Agent B
+  urls:
+    endPoint: http://192.168.2.36:8091
+    icon: http://192.168.2.36:8091/icon
+  descriptions:
+    short: Shorter description
+    long: An even longer description
+  tags:
+    - tag3
+    - tag4
+  examplePrompts:
+    - Hello
+  costCard: Free
