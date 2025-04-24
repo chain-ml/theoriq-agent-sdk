@@ -63,10 +63,12 @@ class DataItemBlock(ItemBlock[DataItem]):
             data (str): The data string to be stored in the block.
             data_type (Optional[str]): The type of the data. Defaults to None.
         """
-        # Determines the subtype based on the data_type provided, if any.
-        sub_type = f":{data_type}" if data_type is not None else ""
-        block_type = f"{DataItemBlock.block_type()}{sub_type}"
-        super().__init__(block_type=block_type, data=DataItem(data=data), key=key, reference=reference)
+
+        sub_type_str = f":{data_type}" if data_type is not None else ""
+        block_type = f"{DataItemBlock.block_type()}{sub_type_str}"
+        super().__init__(
+            block_type=block_type, data=DataItem(data=data, data_type=data_type), key=key, reference=reference
+        )
 
     @classmethod
     def from_dict(

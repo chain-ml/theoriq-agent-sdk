@@ -61,8 +61,8 @@ class TextItemBlock(ItemBlock[TextItem]):
             sub_type (Optional[str]): An optional subtype to categorize the text block. Defaults to None.
         """
 
-        sub_type = f":{sub_type}" if sub_type is not None else ""
-        block_type = f"{TextItemBlock.block_type()}{sub_type}"
+        sub_type_str = f":{sub_type}" if sub_type is not None else ""
+        block_type = f"{TextItemBlock.block_type()}{sub_type_str}"
         super().__init__(
             block_type=block_type, data=TextItem(text=text, text_type=sub_type), key=key, reference=reference
         )
