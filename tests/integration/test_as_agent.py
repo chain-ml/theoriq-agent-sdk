@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Dict, Final
+from typing import Dict, Final, Generator, Optional
 
 import dotenv
 import pytest
@@ -30,7 +30,7 @@ global_children_agent_map: Dict[str, AgentResponse] = {}
 
 
 @pytest.fixture(scope="session", autouse=True)
-def flask_apps():
+def flask_apps() -> Generator[None, None, None]:
     logging.basicConfig(level=logging.INFO)
     threads = run_echo_agents(TEST_AGENT_DATA_LIST)
     yield
@@ -40,7 +40,7 @@ def flask_apps():
 
 
 @pytest.mark.order(1)
-def test_registration_parent():
+def test_registration_parent() -> None:
     agent = user_manager.create_agent(TEST_PARENT_AGENT_DATA)
     print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
     global_parent_agent_map[agent.system.id] = agent
@@ -48,7 +48,7 @@ def test_registration_parent():
 
 
 @pytest.mark.order(2)
-def test_registration_children():
+def test_registration_children() -> None:
     manager = AgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
     for child_agent_data_obj in TEST_CHILD_AGENT_DATA_LIST:
         agent = manager.create_agent(child_agent_data_obj)
@@ -61,12 +61,12 @@ def test_registration_children():
 
 
 @pytest.mark.order(3)
-def test_messenger():
+def test_messenger() -> None:
     """Test any-to-any messaging."""
     all_agents: Dict[str, AgentResponse] = {**global_parent_agent_map, **global_children_agent_map}
 
     for sender_id, sender in all_agents.items():
-        sender_data: AgentDataObject = next(
+        sender_data: Optional[AgentDataObject] = next(
             (agent for agent in TEST_AGENT_DATA_LIST if agent.metadata.name == sender.metadata.name), None
         )
         if sender_data is None:
@@ -74,8 +74,8 @@ def test_messenger():
         messenger = Messenger.from_env(env_prefix=sender_data.metadata.labels["env_prefix"])
 
         for receiver_id, receiver in all_agents.items():
-            if sender_id == receiver_id:
-                continue
+            # if sender_id == receiver_id:
+            #     continue
 
             message = f"Hello from {sender.metadata.name}"
             blocks = [TextItemBlock(message)]
@@ -86,7 +86,7 @@ def test_messenger():
 
 
 @pytest.mark.order(-2)
-def test_deletion_children():
+def test_deletion_children() -> None:
     manager = AgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
 
     for child_agent in global_children_agent_map.values():
@@ -96,7 +96,7 @@ def test_deletion_children():
 
 
 @pytest.mark.order(-1)
-def test_deletion_parent():
+def test_deletion_parent() -> None:
     for agent in global_parent_agent_map.values():
         user_manager.delete_agent(agent.system.id)
         print(f"Successfully deleted `{agent.system.id}`\n")
