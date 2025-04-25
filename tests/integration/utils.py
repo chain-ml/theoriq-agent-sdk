@@ -1,30 +1,56 @@
+"""
+Utility functions to run agents Flask apps and manage test data objects.
+"""
+
+import glob
 import logging
 import threading
 import time
-from typing import List, Sequence
+from typing import Final, List, Sequence
 
 from flask import Flask
+from tests import DATA_DIR
 
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2 import ExecuteRequestFn
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
-from theoriq.dialog import TextItemBlock
 from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
 from theoriq.types import AgentDataObject
 
 logger = logging.getLogger(__name__)
 
+TEST_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
+    AgentDataObject.from_yaml(path) for path in glob.glob(DATA_DIR + "/*.yaml")
+]
+
+PARENT_AGENT_NAME: Final[str] = "Parent Agent"
+PARENT_AGENT_ENV_PREFIX: Final[str] = "PARENT_"
+
+maybe_parent_agent_data = next(
+    (agent for agent in TEST_AGENT_DATA_LIST if agent.metadata.name == PARENT_AGENT_NAME), None
+)
+if maybe_parent_agent_data is None:
+    raise RuntimeError("Parent agent data object not found")
+TEST_PARENT_AGENT_DATA: Final[AgentDataObject] = maybe_parent_agent_data
+
+TEST_CHILD_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
+    agent for agent in TEST_AGENT_DATA_LIST if agent.metadata.name != PARENT_AGENT_NAME
+]
+
+
+def nap():
+    time.sleep(0.5)
+
+
+def get_echo_execute_output(*, message: str, agent_name: str) -> str:
+    return f"{message} from {agent_name}!"
+
 
 def get_echo_execute(agent_name: str) -> ExecuteRequestFn:
     def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse:
-        last_item = req.last_item
-        if last_item is None:
-            raise RuntimeError("Got empty dialog")
-        text_value = last_item.blocks[-1].data.text
-
-        logger.info(f"Got request for {agent_name}: {text_value}")
-
-        return context.new_free_response(blocks=[TextItemBlock(text=f"{text_value} from {agent_name}!")])
+        message = req.last_text
+        logger.info(f"Got request for {agent_name}: {message}")
+        return context.new_free_text_response(text=get_echo_execute_output(message=message, agent_name=agent_name))
 
     return execute
 

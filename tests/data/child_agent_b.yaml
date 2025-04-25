@@ -1,12 +1,12 @@
 kind: TheoriqAgent
 version: 0.1
 metadata:
-  name: Agent B  # should be here?
+  name: Child Agent B  # should be here?
   labels:
     author: ChainML Labs
-    env_prefix: B_
+    env_prefix: CHILD_B_
 spec:
-  name: Agent B
+  name: Child Agent B
   urls:
     endPoint: http://192.168.2.36:8091
     icon: http://192.168.2.36:8091/icon
