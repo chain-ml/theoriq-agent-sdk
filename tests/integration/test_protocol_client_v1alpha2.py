@@ -1,15 +1,16 @@
 import glob
 import logging
+import os
 import time
 from typing import Dict, List
 
 import dotenv
 import pytest
 from tests import DATA_DIR
-from tests.integration.dev_utils.protocol_utils import delete_agent, mint_agent, register_agent, unmint_agent
 from tests.integration.dev_utils.run_agents_utils import run_echo_agents
 
 from theoriq.api.v1alpha2 import AgentResponse, ProtocolClient
+from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
@@ -19,6 +20,7 @@ dotenv.load_dotenv()
 
 agent_data_objs: List[AgentDataObject] = [AgentDataObject.from_yaml(path) for path in glob.glob(DATA_DIR + "/*.yaml")]
 global_agent_map: Dict[str, AgentResponse] = {}
+manager = AgentManager.from_api_key(api_key=os.environ["API_KEY"])
 
 
 def nap():
@@ -38,7 +40,7 @@ def flask_apps():
 @pytest.mark.order(1)
 def test_registration():
     for agent_data_obj in agent_data_objs:
-        agent = register_agent(agent_data_obj)
+        agent = manager.create_agent(agent_data_obj)
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         nap()
 
@@ -48,7 +50,7 @@ def test_registration():
 @pytest.mark.order(2)
 def test_minting():
     for agent_id in global_agent_map.keys():
-        mint_agent(agent_id)
+        manager.mint_agent(agent_id)
         print(f"Successfully minted `{agent_id}`\n")
         nap()
 
@@ -72,13 +74,13 @@ def test_get_agents():
 @pytest.mark.order(4)
 def test_unminting():
     for agent_id in global_agent_map.keys():
-        unmint_agent(agent_id)
+        manager.unmint_agent(agent_id)
         print(f"Successfully unminted `{agent_id}`\n")
         nap()
 
 
 @pytest.mark.order(5)
-def test_messenger():
+def test_messenger_as_agents():
     messenger = Messenger.from_env(env_prefix="A_")
     response = messenger.send_request(
         blocks=[TextItemBlock("Hello")],
@@ -89,9 +91,14 @@ def test_messenger():
     assert expected == "Hello from Agent B!"
 
 
+@pytest.mark.order(6)
+def test_messenger_as_user():
+    pass
+
+
 @pytest.mark.order(-1)
 def test_deletion():
     for agent in global_agent_map.values():
-        delete_agent(agent.system.id)
+        manager.delete_agent(agent.system.id)
         print(f"Successfully deleted `{agent.system.id}`\n")
         time.sleep(0.5)

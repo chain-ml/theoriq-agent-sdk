@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, Final, Iterator, List, Optional, Sequence
+from typing import Any, Dict, Final, Iterator, List, Optional
 from uuid import UUID
 
 import httpx
