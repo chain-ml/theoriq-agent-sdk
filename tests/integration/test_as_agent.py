@@ -9,6 +9,7 @@ from tests.integration.utils import (
     TEST_AGENT_DATA_LIST,
     TEST_CHILD_AGENT_DATA_LIST,
     TEST_PARENT_AGENT_DATA,
+    get_echo_execute_output,
     nap,
     run_echo_agents,
 )
@@ -18,6 +19,7 @@ from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
+from theoriq.types import AgentDataObject
 
 dotenv.load_dotenv()
 THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
@@ -60,14 +62,27 @@ def test_registration_children():
 
 @pytest.mark.order(3)
 def test_messenger():
-    messenger = Messenger.from_env(env_prefix="A_")
-    response = messenger.send_request(
-        blocks=[TextItemBlock("Hello")],
-        budget=TheoriqBudget.empty(),
-        to_addr="0x5766206e8ca2ca78267d0682e7d3edf2560c2b4076aea8ad2a77b69b3976483b",
-    )
-    expected = response.body.blocks[0].to_str()
-    assert expected == "Hello from Agent B!"
+    """Test any-to-any messaging."""
+    all_agents: Dict[str, AgentResponse] = {**global_parent_agent_map, **global_children_agent_map}
+
+    for sender_id, sender in all_agents.items():
+        sender_data: AgentDataObject = next(
+            (agent for agent in TEST_AGENT_DATA_LIST if agent.metadata.name == sender.metadata.name), None
+        )
+        if sender_data is None:
+            raise RuntimeError("Sender agent data object not found")
+        messenger = Messenger.from_env(env_prefix=sender_data.metadata.labels["env_prefix"])
+
+        for receiver_id, receiver in all_agents.items():
+            if sender_id == receiver_id:
+                continue
+
+            message = f"Hello from {sender.metadata.name}"
+            blocks = [TextItemBlock(message)]
+            response = messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=receiver_id)
+            assert response.body.extract_last_text() == get_echo_execute_output(
+                message=message, agent_name=receiver.metadata.name
+            )
 
 
 @pytest.mark.order(-2)

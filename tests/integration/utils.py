@@ -43,7 +43,7 @@ def nap():
 
 
 def get_echo_execute_output(*, message: str, agent_name: str) -> str:
-    return f"{message} from {agent_name}!"
+    return f"Got `{message}` as {agent_name}!"
 
 
 def get_echo_execute(agent_name: str) -> ExecuteRequestFn:
