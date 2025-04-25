@@ -11,7 +11,24 @@ from ..types import AgentMetadata, Currency, SourceType
 from ..utils import TTLCache
 
 
-class ExecuteContextBase:
+class RequestSenderBase(abc.ABC):
+    @abc.abstractmethod
+    def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
+        """
+        Sends a request to another address, attenuating the biscuit for the request and handling the response.
+
+        Args:
+            blocks (Sequence[ItemBlock]): The blocks of data to include in the request.
+            budget (TheoriqBudget): The budget for processing the request.
+            to_addr (str): The address to which the request is sent.
+
+        Returns:
+            ExecuteResponse: The response received from the request.
+        """
+        pass
+
+
+class ExecuteContextBase(RequestSenderBase):
     """
     Represents the context for executing a request, managing interactions with the agent and protocol client.
     """
@@ -102,21 +119,6 @@ class ExecuteContextBase:
             ExecuteResponse: The response object encapsulating the error.
         """
         return self.new_free_response(blocks=[ErrorItemBlock.new(err=err.err, message=err.message)])
-
-    @abc.abstractmethod
-    def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
-        """
-        Sends a request to another address, attenuating the biscuit for the request and handling the response.
-
-        Args:
-            blocks (Sequence[ItemBlock]): The blocks of data to include in the request.
-            budget (TheoriqBudget): The budget for processing the request.
-            to_addr (str): The address to which the request is sent.
-
-        Returns:
-            ExecuteResponse: The response received from the request.
-        """
-        pass
 
     @property
     def agent_address(self) -> str:

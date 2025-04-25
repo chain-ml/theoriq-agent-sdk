@@ -9,12 +9,13 @@ from theoriq import AgentDeploymentConfiguration, ExecuteResponse
 from theoriq.biscuit import AgentAddress, TheoriqBudget, TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
 
+from ..common import RequestSenderBase
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFromAPIKey, BiscuitProviderFromPrivateKey
 from .protocol.protocol_client import ProtocolClient
 from .schemas.request import ExecuteRequestBody
 
 
-class Messenger:
+class Messenger(RequestSenderBase):
     def __init__(
         self,
         private_key: PrivateKey,
