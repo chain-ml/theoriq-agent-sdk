@@ -1,15 +1,25 @@
 import logging
 import os
+from copy import deepcopy
 from typing import Dict, Final, Generator
 
 import dotenv
 import pytest
-from tests.integration.utils import TEST_AGENT_DATA_LIST, get_echo_execute_output, nap, run_echo_agents
+from biscuit_auth import KeyPair
+from tests.integration.utils import (
+    PARENT_AGENT_ENV_PREFIX,
+    TEST_AGENT_DATA_LIST,
+    TEST_PARENT_AGENT_DATA,
+    get_echo_execute_output,
+    nap,
+    run_echo_agents,
+)
 
+from theoriq import AgentDeploymentConfiguration
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
-from theoriq.biscuit import TheoriqBudget
+from theoriq.biscuit import AgentAddress, TheoriqBudget
 from theoriq.dialog import TextItemBlock
 
 dotenv.load_dotenv()
@@ -33,7 +43,7 @@ def flask_apps() -> Generator[None, None, None]:
 @pytest.mark.order(1)
 def test_registration() -> None:
     for agent_data_obj in TEST_AGENT_DATA_LIST:
-        agent = user_manager.create_agent(agent_data_obj)
+        agent = user_manager.create_agent(agent_data_obj.spec)
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         global_agent_map[agent.system.id] = agent
         nap()
@@ -81,6 +91,19 @@ def test_messenger() -> None:
         assert response.body.extract_last_text() == get_echo_execute_output(
             message=message, agent_name=agent.metadata.name
         )
+
+
+@pytest.mark.order(6)
+def test_updating() -> None:
+    spec = deepcopy(TEST_PARENT_AGENT_DATA.spec)
+    spec.metadata.name = "Updated Parent Agent"
+
+    config = AgentDeploymentConfiguration.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+    key_pair = KeyPair.from_private_key(config.private_key)
+    address = AgentAddress.from_public_key(key_pair.public_key)
+    response = user_manager.update_agent(spec, agent_id=str(address))
+
+    assert response.metadata.name == "Updated Parent Agent"
 
 
 @pytest.mark.order(-1)

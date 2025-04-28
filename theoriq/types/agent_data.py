@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, Sequence
+from typing import Any, Dict, Mapping, Optional, Sequence
 
 import yaml
 
@@ -98,6 +98,32 @@ class AgentSpec(DataObjectSpecBase):
         result = self.metadata.to_dict()
         result |= {"imageUrl": self.urls.icon}
         return result
+
+    def to_payload(self, headers: Optional[Sequence[Dict[str, str]]] = None) -> Dict[str, Any]:
+        """
+        Convert to payload expected by create agent endpoint.
+
+        Args:
+            headers (Optional[Sequence[Dict[str, str]]]): Optional headers to be added to the request,
+                each header is a dictionary with `name` and `value`
+        """
+        return {
+            "configuration": {
+                "deployment": {
+                    "headers": headers or [],
+                    "url": self.urls.end_point,
+                },
+            },
+            "metadata": {
+                "name": self.metadata.name,
+                "shortDescription": self.metadata.descriptions.short,
+                "longDescription": self.metadata.descriptions.long,
+                "tags": self.metadata.tags,
+                "examplePrompts": self.metadata.examples,
+                "imageUrl": self.urls.icon,
+                "costCard": self.metadata.cost_card,
+            },
+        }
 
 
 class AgentDataObject(DataObject[AgentSpec]):

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 
 from biscuit_auth import PrivateKey
 
 from theoriq import AgentDeploymentConfiguration
 from theoriq.biscuit import AgentAddress
 
-from ...types import AgentDataObject
+from ...types.agent_data import AgentSpec
 from . import AgentResponse
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFromAPIKey, BiscuitProviderFromPrivateKey
 from .protocol.protocol_client import ProtocolClient
@@ -25,36 +25,15 @@ class AgentManager:
     def get_agent(self, agent_id: str) -> AgentResponse:
         return self._client.get_agent(agent_id=agent_id)
 
-    @staticmethod
-    def _agent_data_obj_to_payload(agent_data_obj: AgentDataObject) -> Dict[str, Any]:
-        # TODO: clarify/fix AgentDataObject schema; provide to_payload()
-        return {
-            "configuration": {
-                "deployment": {
-                    "headers": [{"name": "name", "value": "value"}],
-                    "url": agent_data_obj.spec.urls.end_point,
-                },
-            },
-            "metadata": {
-                "name": agent_data_obj.spec.metadata.name,
-                "shortDescription": agent_data_obj.spec.metadata.descriptions.short,
-                "longDescription": agent_data_obj.spec.metadata.descriptions.long,
-                "tags": agent_data_obj.spec.metadata.tags,
-                "examplePrompts": agent_data_obj.spec.metadata.examples,
-                "imageUrl": agent_data_obj.spec.urls.icon,
-                "costCard": agent_data_obj.spec.metadata.cost_card,
-            },
-        }
-
-    def create_agent(self, agent_data_obj: AgentDataObject) -> AgentResponse:
-        payload = json.dumps(self._agent_data_obj_to_payload(agent_data_obj)).encode("utf-8")
-
+    def create_agent(self, agent_spec: AgentSpec, headers: Optional[Sequence[Dict[str, str]]] = None) -> AgentResponse:
+        payload = json.dumps(agent_spec.to_payload(headers)).encode("utf-8")
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.post_agent(biscuit=biscuit, content=payload)
 
-    def update_agent(self, agent_data_obj: AgentDataObject, agent_id: str) -> AgentResponse:
-        payload = json.dumps(self._agent_data_obj_to_payload(agent_data_obj)).encode("utf-8")
-
+    def update_agent(
+        self, agent_spec: AgentSpec, agent_id: str, headers: Optional[Sequence[Dict[str, str]]] = None
+    ) -> AgentResponse:
+        payload = json.dumps(agent_spec.to_payload(headers)).encode("utf-8")
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.patch_agent(biscuit=biscuit, content=payload, agent_id=agent_id)
 
