@@ -1,12 +1,11 @@
 kind: TheoriqAgent
 version: 0.1
 metadata:
-  name: Parent Agent  # should be here?
+  name: Parent Agent
   labels:
     author: ChainML Labs
     env_prefix: PARENT_
 spec:
-  name: Parent Agent
   urls:
     endPoint: http://192.168.2.36:8089
     icon: http://192.168.2.36:8089/icon

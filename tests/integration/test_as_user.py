@@ -43,7 +43,7 @@ def flask_apps() -> Generator[None, None, None]:
 @pytest.mark.order(1)
 def test_registration() -> None:
     for agent_data_obj in TEST_AGENT_DATA_LIST:
-        agent = user_manager.create_agent(agent_data_obj.spec)
+        agent = user_manager.create_agent(agent_data_obj)
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         global_agent_map[agent.system.id] = agent
         nap()
@@ -95,13 +95,13 @@ def test_messenger() -> None:
 
 @pytest.mark.order(6)
 def test_updating() -> None:
-    spec = deepcopy(TEST_PARENT_AGENT_DATA.spec)
-    spec.metadata.name = "Updated Parent Agent"
+    agent_data_obj = deepcopy(TEST_PARENT_AGENT_DATA)
+    agent_data_obj.metadata.name = "Updated Parent Agent"
 
     config = AgentDeploymentConfiguration.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
     key_pair = KeyPair.from_private_key(config.private_key)
     address = AgentAddress.from_public_key(key_pair.public_key)
-    response = user_manager.update_agent(spec, agent_id=str(address))
+    response = user_manager.update_agent(agent_data_obj, agent_id=str(address))
 
     assert response.metadata.name == "Updated Parent Agent"
 

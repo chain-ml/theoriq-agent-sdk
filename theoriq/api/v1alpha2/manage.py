@@ -8,7 +8,7 @@ from biscuit_auth import PrivateKey
 from theoriq import AgentDeploymentConfiguration
 from theoriq.biscuit import AgentAddress
 
-from ...types.agent_data import AgentSpec
+from ...types import AgentDataObject
 from . import AgentResponse
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFromAPIKey, BiscuitProviderFromPrivateKey
 from .protocol.protocol_client import ProtocolClient
@@ -25,15 +25,17 @@ class AgentManager:
     def get_agent(self, agent_id: str) -> AgentResponse:
         return self._client.get_agent(agent_id=agent_id)
 
-    def create_agent(self, agent_spec: AgentSpec, headers: Optional[Sequence[Dict[str, str]]] = None) -> AgentResponse:
-        payload = json.dumps(agent_spec.to_payload(headers)).encode("utf-8")
+    def create_agent(
+        self, agent_data_obj: AgentDataObject, headers: Optional[Sequence[Dict[str, str]]] = None
+    ) -> AgentResponse:
+        payload = json.dumps(agent_data_obj.to_payload(headers)).encode("utf-8")
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.post_agent(biscuit=biscuit, content=payload)
 
     def update_agent(
-        self, agent_spec: AgentSpec, agent_id: str, headers: Optional[Sequence[Dict[str, str]]] = None
+        self, agent_data_obj: AgentDataObject, agent_id: str, headers: Optional[Sequence[Dict[str, str]]] = None
     ) -> AgentResponse:
-        payload = json.dumps(agent_spec.to_payload(headers)).encode("utf-8")
+        payload = json.dumps(agent_data_obj.to_payload(headers)).encode("utf-8")
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.patch_agent(biscuit=biscuit, content=payload, agent_id=agent_id)
 

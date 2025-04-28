@@ -56,7 +56,7 @@ class AgentMetadata:
         examples: Sequence[str],
         cost_card: str,
     ) -> None:
-        self.name = name
+        self.name = name  # duplicated with DataObjectMetadata.name
         self.descriptions = descriptions
         self.tags = tags
         self.examples = examples
@@ -74,7 +74,6 @@ class AgentMetadata:
 
     def to_dict(self) -> Dict[str, Any]:
         result = {
-            "name": self.name,
             "tags": self.tags,
             "examplePrompts": self.examples,
             "costCard": self.cost_card,
@@ -99,32 +98,6 @@ class AgentSpec(DataObjectSpecBase):
         result |= {"imageUrl": self.urls.icon}
         return result
 
-    def to_payload(self, headers: Optional[Sequence[Dict[str, str]]] = None) -> Dict[str, Any]:
-        """
-        Convert to payload expected by create agent endpoint.
-
-        Args:
-            headers (Optional[Sequence[Dict[str, str]]]): Optional headers to be added to the request,
-                each header is a dictionary with `name` and `value`
-        """
-        return {
-            "configuration": {
-                "deployment": {
-                    "headers": headers or [],
-                    "url": self.urls.end_point,
-                },
-            },
-            "metadata": {
-                "name": self.metadata.name,
-                "shortDescription": self.metadata.descriptions.short,
-                "longDescription": self.metadata.descriptions.long,
-                "tags": self.metadata.tags,
-                "examplePrompts": self.metadata.examples,
-                "imageUrl": self.urls.icon,
-                "costCard": self.metadata.cost_card,
-            },
-        }
-
 
 class AgentDataObject(DataObject[AgentSpec]):
     @classmethod
@@ -137,3 +110,29 @@ class AgentDataObject(DataObject[AgentSpec]):
             values = yaml.safe_load(f)
             cls._check_kind(values, "TheoriqAgent")
             return AgentDataObject.from_dict(values)
+
+    def to_payload(self, headers: Optional[Sequence[Dict[str, str]]] = None) -> Dict[str, Any]:
+        """
+        Convert to payload expected by create agent endpoint.
+
+        Args:
+            headers (Optional[Sequence[Dict[str, str]]]): Optional headers to be added to the request,
+                each header is a dictionary with `name` and `value`
+        """
+        return {
+            "configuration": {
+                "deployment": {
+                    "headers": headers or [],
+                    "url": self.spec.urls.end_point,
+                },
+            },
+            "metadata": {
+                "name": self.metadata.name,
+                "shortDescription": self.spec.metadata.descriptions.short,
+                "longDescription": self.spec.metadata.descriptions.long,
+                "tags": self.spec.metadata.tags,
+                "examplePrompts": self.spec.metadata.examples,
+                "imageUrl": self.spec.urls.icon,
+                "costCard": self.spec.metadata.cost_card,
+            },
+        }
