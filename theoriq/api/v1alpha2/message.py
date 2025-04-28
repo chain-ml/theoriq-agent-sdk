@@ -56,7 +56,7 @@ class Messenger(RequestSenderBase):
             ExecuteResponse: The response received from the request.
         """
         # current implementation hacks two ways to send request (as user and as agent)
-        is_user_mode: bool = self._user_address is None
+        is_user_mode: bool = self._user_address is not None
         user_address_str = self._user_address if self._user_address is not None else ""  # for mypy
 
         address: str = user_address_str if is_user_mode else str(self._agent_address)

@@ -82,7 +82,7 @@ def test_unminting() -> None:
 
 @pytest.mark.order(5)
 def test_messenger() -> None:
-    message = "Hello"
+    message = "Hello from user"
     blocks = [TextItemBlock(message)]
     messenger = Messenger.from_api_key(api_key=THEORIQ_API_KEY)
 

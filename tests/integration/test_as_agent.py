@@ -57,7 +57,7 @@ def test_registration_children() -> None:
         nap()
 
 
-# TODO: test mint, get, unmint here when minting functionality is implemented
+# test mint, get, unmint here when minting functionality is implemented
 
 
 @pytest.mark.order(3)
