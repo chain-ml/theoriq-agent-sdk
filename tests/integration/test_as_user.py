@@ -84,7 +84,7 @@ def test_unminting() -> None:
 def test_messenger() -> None:
     message = "Hello"
     blocks = [TextItemBlock(message)]
-    messenger = Messenger.from_api_key(api_key=THEORIQ_API_KEY, user_address=os.environ["USER_ADDRESS"])
+    messenger = Messenger.from_api_key(api_key=THEORIQ_API_KEY)
 
     for agent_id, agent in global_agent_map.items():
         response = messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=agent_id)

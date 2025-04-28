@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 
 from biscuit_auth import KeyPair, PrivateKey
 
@@ -9,6 +9,7 @@ from theoriq import AgentDeploymentConfiguration, ExecuteResponse
 from theoriq.biscuit import AgentAddress, TheoriqBudget, TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
 
+from ...biscuit.utils import get_user_address_from_biscuit
 from ..common import RequestSenderBase
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFromAPIKey, BiscuitProviderFromPrivateKey
 from .protocol.protocol_client import ProtocolClient
@@ -21,7 +22,6 @@ class Messenger(RequestSenderBase):
         private_key: PrivateKey,
         biscuit_provider: BiscuitProvider,
         client: Optional[ProtocolClient] = None,
-        user_address: Optional[str] = None,
     ) -> None:
         """
         Initialize a Messenger instance, that can handle direct communication with other agents.
@@ -30,18 +30,18 @@ class Messenger(RequestSenderBase):
             private_key: Agent private key
             biscuit_provider: The biscuit provider to use for authentication
             client: Optional protocol client, will create one from environment if not provided
-            user_address: Optional user address, required for API key authentication
         """
         self._client = client or ProtocolClient.from_env()
         self._biscuit_provider = biscuit_provider
         self._private_key = private_key
-        self._user_address = user_address
 
-        if user_address:
-            self._address = user_address
-        else:
-            key_pair = KeyPair.from_private_key(self._private_key)
-            self._address = str(AgentAddress.from_public_key(key_pair.public_key))
+        key_pair = KeyPair.from_private_key(self._private_key)
+        self._agent_address = AgentAddress.from_public_key(key_pair.public_key)
+
+        self._user_address: Optional[str] = None
+        if isinstance(biscuit_provider, BiscuitProviderFromAPIKey):
+            theoriq_biscuit = biscuit_provider.get_biscuit()
+            self._user_address = get_user_address_from_biscuit(theoriq_biscuit.biscuit)
 
     def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
         """
@@ -55,16 +55,18 @@ class Messenger(RequestSenderBase):
         Returns:
             ExecuteResponse: The response received from the request.
         """
+        # current implementation hacks two ways to send request (as user and as agent)
+        is_user_mode: bool = self._user_address is None
+        user_address_str = self._user_address if self._user_address is not None else ""  # for mypy
 
-        execute_request_body = ExecuteRequestBody(
-            dialog=Dialog(items=[DialogItem.new(source=str(self._address), blocks=blocks)])
-        )
+        address: str = user_address_str if is_user_mode else str(self._agent_address)
+
+        execute_request_body = ExecuteRequestBody(dialog=Dialog(items=[DialogItem.new(source=address, blocks=blocks)]))
         body = execute_request_body.model_dump_json().encode("utf-8")
-        # removeprefix is needed for agent-agent request because self._address is full str containing "0x" now
-        # but NOT needed for user-agent request
-        # WIP
-        theoriq_request = TheoriqRequest.from_body(body=body, from_addr=self._address, to_addr=to_addr)
 
+        from_addr: Union[str, AgentAddress] = user_address_str if is_user_mode else self._agent_address
+
+        theoriq_request = TheoriqRequest.from_body(body=body, from_addr=from_addr, to_addr=to_addr)
         theoriq_biscuit = self._biscuit_provider.get_biscuit()
         theoriq_biscuit = theoriq_biscuit.attenuate_for_request(
             agent_pk=self._private_key, request_id=uuid.uuid4(), facts=[theoriq_request, budget]
@@ -73,13 +75,12 @@ class Messenger(RequestSenderBase):
         return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
 
     @classmethod
-    def from_api_key(cls, api_key: str, user_address: str, client: Optional[ProtocolClient] = None) -> Messenger:
+    def from_api_key(cls, api_key: str, client: Optional[ProtocolClient] = None) -> Messenger:
         """
         Create a Messenger from an API key.
 
         Args:
             api_key: The API key used for authentication
-            user_address: The address of the user associated with the API key
             client: Optional protocol client, will create one from environment if not provided
 
         Returns:
@@ -88,12 +89,11 @@ class Messenger(RequestSenderBase):
         protocol_client = client or ProtocolClient.from_env()
         biscuit_provider = BiscuitProviderFromAPIKey(api_key=api_key, client=protocol_client)
 
-        kp = KeyPair()  # generating new private key as a placeholder
         return cls(
             biscuit_provider=biscuit_provider,
             client=protocol_client,
-            private_key=kp.private_key,
-            user_address=user_address,
+            # generating new private key as a placeholder, should use different attenuate function
+            private_key=KeyPair().private_key,
         )
 
     @classmethod
