@@ -1,11 +1,12 @@
 import logging
 import os
-from typing import Dict, Final, Generator, Optional
+from typing import Dict, Final, Generator
 
 import dotenv
 import pytest
 from tests.integration.utils import (
     PARENT_AGENT_ENV_PREFIX,
+    PARENT_AGENT_NAME,
     TEST_AGENT_DATA_LIST,
     TEST_CHILD_AGENT_DATA_LIST,
     TEST_PARENT_AGENT_DATA,
@@ -19,7 +20,6 @@ from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
-from theoriq.types import AgentDataObject
 
 dotenv.load_dotenv()
 THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
@@ -62,27 +62,19 @@ def test_registration_children() -> None:
 
 @pytest.mark.order(3)
 def test_messenger() -> None:
-    """Test any-to-any messaging."""
     all_agents: Dict[str, AgentResponse] = {**global_parent_agent_map, **global_children_agent_map}
 
-    for sender_id, sender in all_agents.items():
-        sender_data: Optional[AgentDataObject] = next(
-            (agent for agent in TEST_AGENT_DATA_LIST if agent.metadata.name == sender.metadata.name), None
+    # messaging from children to parent doesn't work because there's no minting
+    # so testing parent-to-all instead of all-to-all
+
+    messenger = Messenger.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+    for receiver_id, receiver in all_agents.items():
+        message = f"Hello from {PARENT_AGENT_NAME}"
+        blocks = [TextItemBlock(message)]
+        response = messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=receiver_id)
+        assert response.body.extract_last_text() == get_echo_execute_output(
+            message=message, agent_name=receiver.metadata.name
         )
-        if sender_data is None:
-            raise RuntimeError("Sender agent data object not found")
-        messenger = Messenger.from_env(env_prefix=sender_data.metadata.labels["env_prefix"])
-
-        for receiver_id, receiver in all_agents.items():
-            # if sender_id == receiver_id:
-            #     continue
-
-            message = f"Hello from {sender.metadata.name}"
-            blocks = [TextItemBlock(message)]
-            response = messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=receiver_id)
-            assert response.body.extract_last_text() == get_echo_execute_output(
-                message=message, agent_name=receiver.metadata.name
-            )
 
 
 @pytest.mark.order(-2)

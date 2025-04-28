@@ -56,7 +56,7 @@ class AgentMetadata:
         examples: Sequence[str],
         cost_card: str,
     ) -> None:
-        self.name = name  # duplicated with DataObjectMetadata.name
+        self.name = name  # duplicated with DataObjectMetadata.name; not really used
         self.descriptions = descriptions
         self.tags = tags
         self.examples = examples
@@ -64,13 +64,12 @@ class AgentMetadata:
 
     @classmethod
     def from_dict(cls, values: Mapping[str, Any]) -> AgentMetadata:
-        name = values["name"]
         descriptions = AgentDescriptions.from_dict(values.get("descriptions", {}))
         tags = [value for value in values.get("tags", [])]
         examples = [value for value in values.get("examplePrompts", [])]
         cost_card = values.get("costCard", "")
 
-        return AgentMetadata(name=name, descriptions=descriptions, tags=tags, examples=examples, cost_card=cost_card)
+        return AgentMetadata(name="", descriptions=descriptions, tags=tags, examples=examples, cost_card=cost_card)
 
     def to_dict(self) -> Dict[str, Any]:
         result = {
