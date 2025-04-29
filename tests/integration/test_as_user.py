@@ -59,7 +59,7 @@ def test_minting() -> None:
 @pytest.mark.order(3)
 def test_get_agents() -> None:
     agents = user_manager.get_agents()
-    assert len(agents) > 0
+    assert len(agents) == len(global_agent_map.keys())
     nap()
 
     for agent in agents:
