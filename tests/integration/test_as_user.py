@@ -5,7 +5,6 @@ from typing import Dict, Final, Generator
 
 import dotenv
 import pytest
-from biscuit_auth import KeyPair
 from tests.integration.utils import (
     PARENT_AGENT_ENV_PREFIX,
     TEST_AGENT_DATA_LIST,
@@ -19,7 +18,7 @@ from theoriq import AgentDeploymentConfiguration
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
-from theoriq.biscuit import AgentAddress, TheoriqBudget
+from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
 
 dotenv.load_dotenv()
@@ -99,9 +98,7 @@ def test_updating() -> None:
     agent_data_obj.metadata.name = "Updated Parent Agent"
 
     config = AgentDeploymentConfiguration.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
-    key_pair = KeyPair.from_private_key(config.private_key)
-    address = AgentAddress.from_public_key(key_pair.public_key)
-    response = user_manager.update_agent(agent_data_obj, agent_id=str(address))
+    response = user_manager.update_agent(agent_data_obj, agent_id=str(config.address))
 
     assert response.metadata.name == "Updated Parent Agent"
 
