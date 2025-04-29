@@ -38,10 +38,6 @@ TEST_CHILD_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
 ]
 
 
-def nap():
-    time.sleep(0.5)
-
-
 def get_echo_execute_output(*, message: str, agent_name: str) -> str:
     return f"Got `{message}` as {agent_name}!"
 
@@ -76,7 +72,7 @@ def run_echo_agent(agent_data_obj: AgentDataObject) -> threading.Thread:
     return thread
 
 
-def run_echo_agents(agent_data_objs: Sequence[AgentDataObject], sleep_time: float = 2.0) -> List[threading.Thread]:
+def run_echo_agents(agent_data_objs: Sequence[AgentDataObject], sleep_time: float = 0.5) -> List[threading.Thread]:
     """Run a list of agents in separate threads."""
 
     threads: List[threading.Thread] = []
@@ -85,3 +81,10 @@ def run_echo_agents(agent_data_objs: Sequence[AgentDataObject], sleep_time: floa
         time.sleep(sleep_time)
 
     return threads
+
+
+def join_threads(threads: List[threading.Thread], timeout: float = 0.5) -> None:
+    """Shout down a list of agent threads."""
+
+    for thread in threads:
+        thread.join(timeout=timeout)

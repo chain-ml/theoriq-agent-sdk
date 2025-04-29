@@ -11,7 +11,7 @@ from tests.integration.utils import (
     TEST_CHILD_AGENT_DATA_LIST,
     TEST_PARENT_AGENT_DATA,
     get_echo_execute_output,
-    nap,
+    join_threads,
     run_echo_agents,
 )
 
@@ -34,9 +34,7 @@ def flask_apps() -> Generator[None, None, None]:
     logging.basicConfig(level=logging.INFO)
     threads = run_echo_agents(TEST_AGENT_DATA_LIST)
     yield
-
-    for thread in threads:
-        thread.join(timeout=2.0)
+    join_threads(threads)
 
 
 @pytest.mark.order(1)
@@ -44,7 +42,6 @@ def test_registration_parent() -> None:
     agent = user_manager.create_agent(TEST_PARENT_AGENT_DATA)
     print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
     global_parent_agent_map[agent.system.id] = agent
-    nap()
 
 
 @pytest.mark.order(2)
@@ -54,7 +51,6 @@ def test_registration_children() -> None:
         agent = manager.create_agent(child_agent_data_obj)
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         global_children_agent_map[agent.system.id] = agent
-        nap()
 
 
 # test mint, get, unmint here when minting functionality is implemented
@@ -84,7 +80,6 @@ def test_deletion_children() -> None:
     for child_agent in global_children_agent_map.values():
         manager.delete_agent(child_agent.system.id)
         print(f"Successfully deleted `{child_agent.system.id}`\n")
-        nap()
 
 
 @pytest.mark.order(-1)
@@ -92,4 +87,3 @@ def test_deletion_parent() -> None:
     for agent in global_parent_agent_map.values():
         user_manager.delete_agent(agent.system.id)
         print(f"Successfully deleted `{agent.system.id}`\n")
-        nap()

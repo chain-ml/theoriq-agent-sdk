@@ -10,7 +10,7 @@ from tests.integration.utils import (
     TEST_AGENT_DATA_LIST,
     TEST_PARENT_AGENT_DATA,
     get_echo_execute_output,
-    nap,
+    join_threads,
     run_echo_agents,
 )
 
@@ -34,9 +34,7 @@ def flask_apps() -> Generator[None, None, None]:
     logging.basicConfig(level=logging.INFO)
     threads = run_echo_agents(TEST_AGENT_DATA_LIST)
     yield
-
-    for thread in threads:
-        thread.join(timeout=2.0)
+    join_threads(threads)
 
 
 @pytest.mark.order(1)
@@ -45,7 +43,6 @@ def test_registration() -> None:
         agent = user_manager.create_agent(agent_data_obj)
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         global_agent_map[agent.system.id] = agent
-        nap()
 
 
 @pytest.mark.order(2)
@@ -53,14 +50,12 @@ def test_minting() -> None:
     for agent_id in global_agent_map.keys():
         user_manager.mint_agent(agent_id)
         print(f"Successfully minted `{agent_id}`\n")
-        nap()
 
 
 @pytest.mark.order(3)
 def test_get_agents() -> None:
     agents = user_manager.get_agents()
     assert len(agents) == len(global_agent_map.keys())
-    nap()
 
     for agent in agents:
         assert agent.system.id in global_agent_map
@@ -68,7 +63,6 @@ def test_get_agents() -> None:
 
         same_agent = user_manager.get_agent(agent.system.id)
         assert same_agent == agent
-        nap()
 
 
 @pytest.mark.order(4)
@@ -76,7 +70,6 @@ def test_unminting() -> None:
     for agent_id in global_agent_map.keys():
         user_manager.unmint_agent(agent_id)
         print(f"Successfully unminted `{agent_id}`\n")
-        nap()
 
 
 @pytest.mark.order(5)
@@ -108,4 +101,3 @@ def test_deletion() -> None:
     for agent in global_agent_map.values():
         user_manager.delete_agent(agent.system.id)
         print(f"Successfully deleted `{agent.system.id}`\n")
-        nap()
