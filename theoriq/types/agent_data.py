@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, Sequence
+from typing import Any, Dict, Mapping, Optional, Sequence
 
 import yaml
 
@@ -54,7 +54,7 @@ class AgentMetadata:
         descriptions: AgentDescriptions,
         tags: Sequence[str],
         examples: Sequence[str],
-        cost_card: str,
+        cost_card: Optional[str],
     ) -> None:
         self.name = name
         self.descriptions = descriptions
@@ -67,7 +67,7 @@ class AgentMetadata:
         tags = [value for value in values.get("tags", [])]
         descriptions = AgentDescriptions.from_dict(values.get("descriptions", {}))
         examples = [value for value in values.get("examplePrompts", [])]
-        cost_card = values.get("costCard", "")
+        cost_card = values.get("costCard")
 
         return AgentMetadata("", descriptions, tags, examples, cost_card)
 

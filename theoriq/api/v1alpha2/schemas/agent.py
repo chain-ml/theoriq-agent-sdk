@@ -19,7 +19,7 @@ class Metadata(BaseModel):
     short_description: str = Field(..., alias="shortDescription")
     long_description: str = Field(..., alias="longDescription")
     tags: List[str]
-    cost_card: str = Field(..., alias="costCard")
+    cost_card: Optional[str] = Field(None, alias="costCard")
     example_prompts: List[str] = Field(..., alias="examplePrompts")
 
 
