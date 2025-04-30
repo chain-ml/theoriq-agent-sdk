@@ -11,7 +11,7 @@ requires-python = ">=3.9,<4.0"
 authors = []
 
 dependencies = [
-    "biscuit-python @ git+https://github.com/chain-ml/biscuit-python.git@2cd8292",
+    "biscuit-python @ git+https://github.com/chain-ml/biscuit-python.git@8b20458",
     "safe-pysha3 (>=1.0,<2.0)",
     "pydantic (>=2.8.0,<3.0)",
     "cryptography (>=43.0,<44.0)",
