@@ -46,6 +46,23 @@ class ExecuteRequestBody(BaseModel):
         # Finds and returns the dialog item with the latest timestamp.
         return max(self.dialog.items, key=lambda obj: obj.timestamp)
 
+    @property
+    def last_text(self) -> str:
+        """
+        Returns the last text item from the dialog.
+
+        Returns:
+            str: The last text item from the dialog.
+
+        Raises:
+            RuntimeError: If the dialog is empty or no text blocks are found in the last dialog item.
+        """
+        last_item = self.last_item
+        if last_item is None:
+            raise RuntimeError("Got empty dialog")
+
+        return last_item.extract_last_text()
+
     def last_item_from(self, source_type: SourceType) -> Optional[DialogItem]:
         """
         Returns the last dialog item from a specific source type based on the timestamp.

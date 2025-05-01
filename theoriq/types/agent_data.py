@@ -13,7 +13,7 @@ class AgentUrls:
         self.icon = icon
 
     @classmethod
-    def Undefined(cls) -> AgentUrls:
+    def undefined(cls) -> AgentUrls:
         return AgentUrls(end_point="", icon="")
 
     @classmethod
@@ -56,7 +56,7 @@ class AgentMetadata:
         examples: Sequence[str],
         cost_card: Optional[str],
     ) -> None:
-        self.name = name
+        self.name = name  # duplicated with DataObjectMetadata.name; not really used
         self.descriptions = descriptions
         self.tags = tags
         self.examples = examples
@@ -64,12 +64,12 @@ class AgentMetadata:
 
     @classmethod
     def from_dict(cls, values: Mapping[str, Any]) -> AgentMetadata:
-        tags = [value for value in values.get("tags", [])]
         descriptions = AgentDescriptions.from_dict(values.get("descriptions", {}))
+        tags = [value for value in values.get("tags", [])]
         examples = [value for value in values.get("examplePrompts", [])]
         cost_card = values.get("costCard")
 
-        return AgentMetadata("", descriptions, tags, examples, cost_card)
+        return AgentMetadata(name="", descriptions=descriptions, tags=tags, examples=examples, cost_card=cost_card)
 
     def to_dict(self) -> Dict[str, Any]:
         result = {
@@ -83,7 +83,7 @@ class AgentMetadata:
 
 class AgentSpec(DataObjectSpecBase):
     def __init__(self, metadata: AgentMetadata, urls: AgentUrls) -> None:
-        self._metadata = metadata
+        self.metadata = metadata
         self.urls = urls
 
     @classmethod
@@ -93,14 +93,12 @@ class AgentSpec(DataObjectSpecBase):
         return AgentSpec(metadata, urls=urls)
 
     def to_dict(self) -> Dict[str, Any]:
-        result = self._metadata.to_dict()
+        result = self.metadata.to_dict()
         result |= {"imageUrl": self.urls.icon}
         return result
 
 
 class AgentDataObject(DataObject[AgentSpec]):
-    """ """
-
     @classmethod
     def from_dict(cls, values: Dict[str, Any]) -> AgentDataObject:
         return super()._from_dict(AgentSpec, values)
@@ -111,3 +109,29 @@ class AgentDataObject(DataObject[AgentSpec]):
             values = yaml.safe_load(f)
             cls._check_kind(values, "TheoriqAgent")
             return AgentDataObject.from_dict(values)
+
+    def to_payload(self, headers: Optional[Sequence[Dict[str, str]]] = None) -> Dict[str, Any]:
+        """
+        Convert to payload expected by create agent endpoint.
+
+        Args:
+            headers (Optional[Sequence[Dict[str, str]]]): Optional headers to be added to the request,
+                each header is a dictionary with `name` and `value`
+        """
+        return {
+            "configuration": {
+                "deployment": {
+                    "headers": headers or [],
+                    "url": self.spec.urls.end_point,
+                },
+            },
+            "metadata": {
+                "name": self.metadata.name,
+                "shortDescription": self.spec.metadata.descriptions.short,
+                "longDescription": self.spec.metadata.descriptions.long,
+                "tags": self.spec.metadata.tags,
+                "examplePrompts": self.spec.metadata.examples,
+                "imageUrl": self.spec.urls.icon,
+                "costCard": self.spec.metadata.cost_card,
+            },
+        }

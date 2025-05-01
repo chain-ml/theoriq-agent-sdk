@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from biscuit_auth import Biscuit, BiscuitValidationError, KeyPair, PublicKey  # pylint: disable=E0611
+from biscuit_auth import Authorizer, Biscuit, BiscuitValidationError, KeyPair, PublicKey, Rule  # pylint: disable=E0611
 from sha3 import keccak_256  # type: ignore
 
 from .error import ParseBiscuitError
@@ -36,3 +36,12 @@ def verify_address(address: str) -> str:
         raise TypeError(f"address must only contain hex digits: {address}") from e
     else:
         return add
+
+
+def get_user_address_from_biscuit(biscuit: Biscuit) -> str:
+    # sibling of AgentAddress.from_biscuit() without verify_address() restrictions
+    rule = Rule("""address($address) <- theoriq:subject("user", $address)""")
+    authorizer = Authorizer()
+    authorizer.add_token(biscuit)
+    facts = authorizer.query(rule)
+    return facts[0].terms[0]
