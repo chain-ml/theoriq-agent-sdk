@@ -15,8 +15,8 @@ from .protocol.protocol_client import ProtocolClient
 
 
 class AgentManager:
-    def __init__(self, biscuit_provider: BiscuitProvider, client: Optional[ProtocolClient] = None) -> None:
-        self._client = client or ProtocolClient.from_env()
+    def __init__(self, biscuit_provider: BiscuitProvider, client: ProtocolClient) -> None:
+        self._client = client
         self._biscuit_provider = biscuit_provider
 
     def get_agents(self) -> List[AgentResponse]:

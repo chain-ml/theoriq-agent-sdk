@@ -21,7 +21,7 @@ class Messenger(RequestSenderBase):
         self,
         private_key: PrivateKey,
         biscuit_provider: BiscuitProvider,
-        client: Optional[ProtocolClient] = None,
+        client: ProtocolClient,
     ) -> None:
         """
         Initialize a Messenger instance, that can handle direct communication with other agents.
@@ -31,7 +31,7 @@ class Messenger(RequestSenderBase):
             biscuit_provider: The biscuit provider to use for authentication
             client: Optional protocol client, will create one from environment if not provided
         """
-        self._client = client or ProtocolClient.from_env()
+        self._client = client
         self._biscuit_provider = biscuit_provider
         self._private_key = private_key
 

@@ -83,7 +83,7 @@ def run_echo_agents(agent_data_objs: Sequence[AgentDataObject], sleep_time: floa
     return threads
 
 
-def join_threads(threads: List[threading.Thread], timeout: float = 0.5) -> None:
+def join_threads(threads: Sequence[threading.Thread], timeout: float = 0.5) -> None:
     """Shout down a list of agent threads."""
 
     for thread in threads:
