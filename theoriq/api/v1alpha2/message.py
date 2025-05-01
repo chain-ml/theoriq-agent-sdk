@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence
 
 from biscuit_auth import KeyPair, PrivateKey
 
@@ -55,16 +55,13 @@ class Messenger(RequestSenderBase):
         Returns:
             ExecuteResponse: The response received from the request.
         """
-        # current implementation hacks two ways to send request (as user and as agent)
-        is_user_mode: bool = self._user_address is not None
-        user_address_str = self._user_address if self._user_address is not None else ""  # for mypy
-
-        address: str = user_address_str if is_user_mode else str(self._agent_address)
+        address: str = str(self._user_address or self._agent_address)
 
         execute_request_body = ExecuteRequestBody(dialog=Dialog(items=[DialogItem.new(source=address, blocks=blocks)]))
         body = execute_request_body.model_dump_json().encode("utf-8")
 
-        from_addr: Union[str, AgentAddress] = user_address_str if is_user_mode else self._agent_address
+        # 0x prefix required for users only; must be omitted for agents
+        from_addr = self._user_address if self._user_address is not None else self._agent_address
 
         theoriq_request = TheoriqRequest.from_body(body=body, from_addr=from_addr, to_addr=to_addr)
         theoriq_biscuit = self._biscuit_provider.get_biscuit()
