@@ -187,7 +187,9 @@ class Dialog(BaseModel):
         sources_and_blocks = self.map(format_source_and_blocks)
         return "\n\n".join(f"{'#' * indent} {source}\n\n{blocks}" for source, blocks in sources_and_blocks)
 
+    # noinspection PyNestedDecorators
     @field_validator("items", mode="before")
+    @classmethod
     def validate_items(cls, value: Any) -> List[DialogItem]:
         if not isinstance(value, Sequence):
             raise ValueError("items must be a sequence")

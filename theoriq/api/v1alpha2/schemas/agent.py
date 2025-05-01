@@ -41,6 +41,7 @@ class Configuration(BaseModel):
     deployment: Optional[Dict[str, Any]] = None
     virtual: Optional[Virtual] = Field(default=None)
 
+    # noinspection PyNestedDecorators
     @field_validator("virtual", mode="before")
     @classmethod
     def validate_virtual(cls, value: Any) -> Optional[Any]:
