@@ -20,10 +20,12 @@ class AgentManager:
         self._biscuit_provider = biscuit_provider
 
     def get_agents(self) -> List[AgentResponse]:
-        return self._client.get_agents()
+        biscuit = self._biscuit_provider.get_biscuit()
+        return self._client.get_agents(biscuit)
 
     def get_agent(self, agent_id: str) -> AgentResponse:
-        return self._client.get_agent(agent_id=agent_id)
+        biscuit = self._biscuit_provider.get_biscuit()
+        return self._client.get_agent(agent_id=agent_id, biscuit=biscuit)
 
     def create_agent(
         self, agent_data_obj: AgentDataObject, headers: Optional[Sequence[Dict[str, str]]] = None
