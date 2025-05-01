@@ -9,6 +9,7 @@ from tests.integration.utils import (
     PARENT_AGENT_ENV_PREFIX,
     TEST_AGENT_DATA_LIST,
     TEST_PARENT_AGENT_DATA,
+    agents_are_equal,
     get_echo_execute_output,
     join_threads,
     run_echo_agents,
@@ -60,10 +61,10 @@ def test_get_agents() -> None:
 
     for agent in agents:
         assert agent.system.id in global_agent_map
-        assert agent == global_agent_map[agent.system.id]
+        assert agents_are_equal(agent, global_agent_map[agent.system.id])
 
         same_agent = user_manager.get_agent(agent.system.id)
-        assert same_agent == agent
+        assert agents_are_equal(agent, same_agent)
 
 
 @pytest.mark.order(4)

@@ -61,24 +61,3 @@ class AgentResponse(BaseModel):
 
     def __str__(self) -> str:
         return f"AgentResponse(id={self.system.id}, name={self.system.public_key})"
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, AgentResponse):
-            return False
-
-        # state is different before and after minting
-        return (
-            self.system.id == other.system.id
-            and self.system.public_key == other.system.public_key
-            and self.system.owner_address == other.system.owner_address
-            # and self.system.state == other.system.state
-            and self.system.metadata_hash == other.system.metadata_hash
-            and self.system.configuration_hash == other.system.configuration_hash
-            and self.system.tags == other.system.tags
-            and self.metadata.name == other.metadata.name
-            and self.metadata.short_description == other.metadata.short_description
-            and self.metadata.long_description == other.metadata.long_description
-            and self.metadata.tags == other.metadata.tags
-            and self.metadata.cost_card == other.metadata.cost_card
-            and self.metadata.example_prompts == other.metadata.example_prompts
-        )
