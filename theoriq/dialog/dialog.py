@@ -105,6 +105,23 @@ class DialogItem:
                 yield block
         return
 
+    def extract_last_text(self) -> str:
+        """
+        Returns the text from the last text block from the dialog item.
+
+        Returns:
+            str: Text from the last text.
+
+        Raises:
+            RuntimeError: If no text blocks are found in the dialog item.
+        """
+
+        text_blocks = list(self.find_blocks_of_type("text"))
+        if len(text_blocks) == 0:
+            raise RuntimeError("No text blocks found in the dialog item")
+
+        return text_blocks[-1].data.text
+
     def format_source(self, with_address: bool = True) -> str:
         """Format the string describing the creator of the dialog item."""
         source_type = self.source_type.value.capitalize()

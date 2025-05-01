@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, Final, Iterator, List, Optional, Sequence
+from typing import Any, Dict, Final, Iterator, List, Optional
 from uuid import UUID
 
 import httpx
@@ -79,12 +79,51 @@ class ProtocolClient:
             response.raise_for_status()
             return AgentResponse.model_validate(response.json())
 
-    def get_agents(self) -> Sequence[AgentResponse]:
+    def get_agents(self) -> List[AgentResponse]:
         with httpx.Client(timeout=self._timeout) as client:
             response = client.get(url=f"{self._uri}/agents")
             response.raise_for_status()
             data = response.json()
             return [AgentResponse(**item) for item in data["items"]]
+
+    def post_agent(self, biscuit: TheoriqBiscuit, content: bytes) -> AgentResponse:
+        url = f"{self._uri}/agents"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, content=content, headers=headers)
+            response.raise_for_status()
+            return AgentResponse.model_validate(response.json())
+
+    def patch_agent(self, biscuit: TheoriqBiscuit, content: bytes, agent_id: str) -> AgentResponse:
+        url = f"{self._uri}/agents/0x{agent_id.removeprefix('0x')}"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.patch(url=url, content=content, headers=headers)
+            response.raise_for_status()
+            return AgentResponse.model_validate(response.json())
+
+    def delete_agent(self, biscuit: TheoriqBiscuit, agent_id: str) -> None:
+        url = f"{self._uri}/agents/0x{agent_id.removeprefix('0x')}"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.delete(url=url, headers=headers)
+            response.raise_for_status()
+
+    def post_mint(self, biscuit: TheoriqBiscuit, agent_id: str) -> AgentResponse:
+        url = f"{self._uri}/agents/0x{agent_id.removeprefix('0x')}/mint"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, headers=headers)
+            response.raise_for_status()
+            return AgentResponse.model_validate(response.json())
+
+    def post_unmint(self, biscuit: TheoriqBiscuit, agent_id: str) -> AgentResponse:
+        url = f"{self._uri}/agents/0x{agent_id.removeprefix('0x')}/unmint"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, headers=headers)
+            response.raise_for_status()
+            return AgentResponse.model_validate(response.json())
 
     def get_configuration(
         self, request_biscuit: RequestBiscuit, agent_address: AgentAddress, configuration_hash: str
