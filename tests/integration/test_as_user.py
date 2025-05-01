@@ -48,7 +48,8 @@ def test_registration() -> None:
 @pytest.mark.order(2)
 def test_minting() -> None:
     for agent_id in global_agent_map.keys():
-        user_manager.mint_agent(agent_id)
+        agent = user_manager.mint_agent(agent_id)
+        assert agent.system.state == "online"
         print(f"Successfully minted `{agent_id}`\n")
 
 
@@ -68,7 +69,8 @@ def test_get_agents() -> None:
 @pytest.mark.order(4)
 def test_unminting() -> None:
     for agent_id in global_agent_map.keys():
-        user_manager.unmint_agent(agent_id)
+        agent = user_manager.unmint_agent(agent_id)
+        assert agent.system.state == "configured"
         print(f"Successfully unminted `{agent_id}`\n")
 
 
