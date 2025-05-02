@@ -1,13 +1,14 @@
 import logging
 import threading
 import time
-from typing import Callable
+from typing import Callable, Optional
 
 import httpx
 
 from theoriq.biscuit import AgentAddress
 
-from ..common import AuthRepresentative
+from .protocol.biscuit_provider import BiscuitProvider
+from .protocol.protocol_client import ProtocolClient
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,11 @@ logger = logging.getLogger(__name__)
 SubscribeHandlerFn = Callable[[str], None]
 
 
-class Subscriber(AuthRepresentative):
+class Subscriber:
+    def __init__(self, biscuit_provider: BiscuitProvider, client: Optional[ProtocolClient] = None) -> None:
+        self._client = client or ProtocolClient.from_env()
+        self._biscuit_provider = biscuit_provider
+
     def new_job(
         self, agent_address: AgentAddress, handler: SubscribeHandlerFn, background: bool = False
     ) -> threading.Thread:

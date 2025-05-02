@@ -29,7 +29,7 @@ PublishJob = Callable[[PublisherContext], None]
 
 class Publisher:
     def __init__(self, agent: Agent, client: Optional[ProtocolClient] = None) -> None:
-        self._context = PublisherContext(agent, client or ProtocolClient.from_env())
+        self._context = PublisherContext(agent=agent, client=client or ProtocolClient.from_env())
 
     @classmethod
     def from_env(cls) -> Publisher:

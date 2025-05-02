@@ -15,15 +15,17 @@ from tests.integration.utils import (
     run_echo_agents,
 )
 
+from theoriq import AgentDeploymentConfiguration
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
+from theoriq.api.v1alpha2.protocol.biscuit_provider import BiscuitProviderFactory
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
 
 dotenv.load_dotenv()
 THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
-user_manager = AgentManager.from_api_key(api_key=THEORIQ_API_KEY)
+user_manager = AgentManager(biscuit_provider=BiscuitProviderFactory.from_api_key(api_key=THEORIQ_API_KEY))
 
 global_parent_agent_map: Dict[str, AgentResponse] = {}
 global_children_agent_map: Dict[str, AgentResponse] = {}
@@ -46,7 +48,7 @@ def test_registration_parent() -> None:
 
 @pytest.mark.order(2)
 def test_registration_children() -> None:
-    manager = AgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+    manager = AgentManager(biscuit_provider=BiscuitProviderFactory.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX))
     for child_agent_data_obj in TEST_CHILD_AGENT_DATA_LIST:
         agent = manager.create_agent(child_agent_data_obj)
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
@@ -63,7 +65,11 @@ def test_messenger() -> None:
     # messaging from children to parent doesn't work because there's no minting
     # so testing parent-to-all instead of all-to-all
 
-    messenger = Messenger.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+    config = AgentDeploymentConfiguration.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+    messenger = Messenger(
+        private_key=config.private_key,
+        biscuit_provider=BiscuitProviderFactory.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX),
+    )
     for receiver_id, receiver in all_agents.items():
         message = f"Hello from {PARENT_AGENT_NAME}"
         blocks = [TextItemBlock(message)]
@@ -75,7 +81,7 @@ def test_messenger() -> None:
 
 @pytest.mark.order(-2)
 def test_deletion_children() -> None:
-    manager = AgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+    manager = AgentManager(biscuit_provider=BiscuitProviderFactory.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX))
 
     for child_agent in global_children_agent_map.values():
         manager.delete_agent(child_agent.system.id)

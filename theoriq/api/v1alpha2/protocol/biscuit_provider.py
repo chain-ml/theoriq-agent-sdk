@@ -57,56 +57,48 @@ class BiscuitProviderFromAPIKey(BiscuitProvider):
 
 
 class BiscuitProviderFactory:
-    """
-    Factory class for creating BiscuitProvider instances.
-    """
-    
     @staticmethod
-    def from_api_key(api_key: str, client: Optional[ProtocolClient] = None) -> BiscuitProvider:
+    def from_api_key(api_key: str, client: Optional[ProtocolClient] = None) -> BiscuitProviderFromAPIKey:
         """
         Create a BiscuitProvider from an API key.
-        
+
         Args:
             api_key: The API key used for authentication
             client: Optional protocol client, will create one from environment if not provided
-            
+
         Returns:
             A BiscuitProvider instance configured with the API key
         """
         protocol_client = client or ProtocolClient.from_env()
         return BiscuitProviderFromAPIKey(api_key=api_key, client=protocol_client)
-    
+
     @staticmethod
     def from_agent(
-        private_key: PrivateKey, 
-        address: Optional[AgentAddress] = None, 
-        client: Optional[ProtocolClient] = None
-    ) -> BiscuitProvider:
+        private_key: PrivateKey, address: Optional[AgentAddress] = None, client: Optional[ProtocolClient] = None
+    ) -> BiscuitProviderFromPrivateKey:
         """
         Create a BiscuitProvider from an agent's private key and address.
-        
+
         Args:
             private_key: The agent's private key used for authentication
             address: Optional agent's address, will derive from a private key if not provided
             client: Optional protocol client, will create one from environment if not provided
-            
+
         Returns:
             A BiscuitProvider instance configured with the agent's credentials
         """
         protocol_client = client or ProtocolClient.from_env()
-        return BiscuitProviderFromPrivateKey(
-            private_key=private_key, address=address, client=protocol_client
-        )
-    
+        return BiscuitProviderFromPrivateKey(private_key=private_key, address=address, client=protocol_client)
+
     @staticmethod
-    def from_env(env_prefix: str = "", client: Optional[ProtocolClient] = None) -> BiscuitProvider:
+    def from_env(env_prefix: str = "", client: Optional[ProtocolClient] = None) -> BiscuitProviderFromPrivateKey:
         """
-        Create a BiscuitProvider from an agent's private key from environment variable.
-        
+        Create a BiscuitProvider from an agent's private key environment variable.
+
         Args:
             env_prefix: Optional prefix for environment variable
             client: Optional protocol client, will create one from environment if not provided
-            
+
         Returns:
             A BiscuitProvider instance configured with the agent's credentials from environment
         """

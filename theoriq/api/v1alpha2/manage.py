@@ -2,11 +2,15 @@ import json
 from typing import Dict, List, Optional, Sequence
 
 from ...types import AgentDataObject
-from ..common import AuthRepresentative
-from . import AgentResponse
+from . import AgentResponse, ProtocolClient
+from .protocol.biscuit_provider import BiscuitProvider
 
 
-class AgentManager(AuthRepresentative):
+class AgentManager:
+    def __init__(self, biscuit_provider: BiscuitProvider, client: Optional[ProtocolClient] = None) -> None:
+        self._client = client or ProtocolClient.from_env()
+        self._biscuit_provider = biscuit_provider
+
     def get_agents(self) -> List[AgentResponse]:
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.get_agents(biscuit)

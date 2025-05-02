@@ -21,8 +21,10 @@ def hello_job(context: PublisherContext) -> None:
 
 
 if __name__ == "__main__":
-    dotenv.load_dotenv()
     logging.basicConfig(level=logging.INFO)
 
+    # Load agent configuration from env
+    dotenv.load_dotenv()
     agent = Agent.from_env()
+
     Publisher(agent).new_job(job=hello_job).start()
