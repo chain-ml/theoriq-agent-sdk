@@ -9,6 +9,8 @@ from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 
 
 class AgentManager:
+    """Provides capabilities to create, update, mint, unmint and manage agents."""
+
     def __init__(self, biscuit_provider: BiscuitProvider, client: Optional[ProtocolClient] = None) -> None:
         self._client = client or ProtocolClient.from_env()
         self._biscuit_provider = biscuit_provider

@@ -21,6 +21,8 @@ SubscribeHandlerFn = Callable[[str], None]
 
 
 class Subscriber:
+    """Enables subscribing to agent notifications."""
+
     def __init__(self, biscuit_provider: BiscuitProvider, client: Optional[ProtocolClient] = None) -> None:
         self._client = client or ProtocolClient.from_env()
         self._biscuit_provider = biscuit_provider

@@ -17,6 +17,8 @@ from .schemas.request import ExecuteRequestBody
 
 
 class Messenger(RequestSenderBase):
+    """Handles direct communications with other agents."""
+
     def __init__(
         self, private_key: PrivateKey, biscuit_provider: BiscuitProvider, client: Optional[ProtocolClient] = None
     ) -> None:
