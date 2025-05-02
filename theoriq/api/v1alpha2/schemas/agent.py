@@ -19,7 +19,7 @@ class Metadata(BaseModel):
     short_description: str = Field(..., alias="shortDescription")
     long_description: str = Field(..., alias="longDescription")
     tags: List[str]
-    cost_card: str = Field(..., alias="costCard")
+    cost_card: Optional[str] = Field(None, alias="costCard")
     example_prompts: List[str] = Field(..., alias="examplePrompts")
 
 
@@ -41,10 +41,11 @@ class Configuration(BaseModel):
     deployment: Optional[Dict[str, Any]] = None
     virtual: Optional[Virtual] = Field(default=None)
 
-    @classmethod
+    # noinspection PyNestedDecorators
     @field_validator("virtual", mode="before")
+    @classmethod
     def validate_virtual(cls, value: Any) -> Optional[Any]:
-        # Handle cases where `b` is an empty dict or None
+        # Handle cases where `virtual` is an empty dict or None
         if value is None or value == {}:
             return None
         if isinstance(value, dict):
