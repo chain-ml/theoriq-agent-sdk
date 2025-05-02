@@ -20,8 +20,6 @@ class Messenger(RequestSenderBase):
     def __init__(
         self, private_key: PrivateKey, biscuit_provider: BiscuitProvider, client: Optional[ProtocolClient] = None
     ) -> None:
-        # note: for user (e.g. BiscuitProviderFromAPIKey) pass any private key as a placeholder
-        # implementation should use different attenuate function
         self._client = client or ProtocolClient.from_env()
         self._biscuit_provider = biscuit_provider
         self._private_key = private_key
