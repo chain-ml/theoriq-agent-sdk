@@ -5,13 +5,13 @@ from typing import Optional, Sequence
 
 from biscuit_auth import KeyPair, PrivateKey
 
-from theoriq import ExecuteResponse
+from theoriq import AgentDeploymentConfiguration, ExecuteResponse
 from theoriq.biscuit import AgentAddress, TheoriqBudget, TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
 
 from ...biscuit.utils import get_user_address_from_biscuit
 from ..common import RequestSenderBase
-from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFromAPIKey
+from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory, BiscuitProviderFromAPIKey
 from .protocol.protocol_client import ProtocolClient
 from .schemas.request import ExecuteRequestBody
 
@@ -61,3 +61,17 @@ class Messenger(RequestSenderBase):
         )
         response = self._client.post_request(request_biscuit=theoriq_biscuit, content=body, to_addr=to_addr)
         return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
+
+    @classmethod
+    def from_api_key(cls, api_key: str) -> Messenger:
+        return Messenger(
+            # generating new private key as a placeholder, should use different attenuate function
+            private_key=KeyPair().private_key,
+            biscuit_provider=BiscuitProviderFactory.from_api_key(api_key=api_key),
+        )
+
+    @classmethod
+    def from_env(cls, env_prefix: str = "") -> Messenger:
+        config = AgentDeploymentConfiguration.from_env(env_prefix=env_prefix)
+        biscuit_provider = BiscuitProviderFactory.from_env(env_prefix=env_prefix)
+        return Messenger(private_key=config.private_key, biscuit_provider=biscuit_provider)

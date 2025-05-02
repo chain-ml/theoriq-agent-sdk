@@ -5,7 +5,6 @@ from typing import Dict, Final, Generator
 
 import dotenv
 import pytest
-from biscuit_auth import KeyPair
 from tests.integration.utils import (
     PARENT_AGENT_ENV_PREFIX,
     TEST_AGENT_DATA_LIST,
@@ -20,14 +19,13 @@ from theoriq import AgentDeploymentConfiguration
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
-from theoriq.api.v1alpha2.protocol.biscuit_provider import BiscuitProviderFactory
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
 
 dotenv.load_dotenv()
 
 THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
-user_manager = AgentManager(biscuit_provider=BiscuitProviderFactory.from_api_key(api_key=THEORIQ_API_KEY))
+user_manager = AgentManager.from_api_key(api_key=THEORIQ_API_KEY)
 
 global_agent_map: Dict[str, AgentResponse] = {}
 
@@ -81,9 +79,7 @@ def test_unminting() -> None:
 def test_messenger() -> None:
     message = "Hello from user"
     blocks = [TextItemBlock(message)]
-    messenger = Messenger(
-        private_key=KeyPair().private_key, biscuit_provider=BiscuitProviderFactory.from_api_key(api_key=THEORIQ_API_KEY)
-    )
+    messenger = Messenger.from_api_key(api_key=THEORIQ_API_KEY)
 
     for agent_id, agent in global_agent_map.items():
         response = messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=agent_id)

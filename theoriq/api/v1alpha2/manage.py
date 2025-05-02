@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import json
 from typing import Dict, List, Optional, Sequence
 
 from ...types import AgentDataObject
 from . import AgentResponse, ProtocolClient
-from .protocol.biscuit_provider import BiscuitProvider
+from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 
 
 class AgentManager:
@@ -41,3 +43,11 @@ class AgentManager:
 
     def delete_agent(self, agent_id: str) -> None:
         self._client.delete_agent(biscuit=self._biscuit_provider.get_biscuit(), agent_id=agent_id)
+
+    @classmethod
+    def from_api_key(cls, api_key: str) -> AgentManager:
+        return AgentManager(biscuit_provider=BiscuitProviderFactory.from_api_key(api_key=api_key))
+
+    @classmethod
+    def from_env(cls, env_prefix: str = "") -> AgentManager:
+        return AgentManager(biscuit_provider=BiscuitProviderFactory.from_env(env_prefix=env_prefix))

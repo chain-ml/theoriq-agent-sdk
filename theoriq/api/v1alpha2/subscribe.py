@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import threading
 import time
@@ -7,7 +9,7 @@ import httpx
 
 from theoriq.biscuit import AgentAddress
 
-from .protocol.biscuit_provider import BiscuitProvider
+from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 from .protocol.protocol_client import ProtocolClient
 
 logger = logging.getLogger(__name__)
@@ -50,3 +52,11 @@ class Subscriber:
                 time.sleep(1)  # wait for 1 second before reconnecting
 
         return threading.Thread(target=_subscribe_job, daemon=background)
+
+    @classmethod
+    def from_api_key(cls, api_key: str) -> Subscriber:
+        return Subscriber(biscuit_provider=BiscuitProviderFactory.from_api_key(api_key=api_key))
+
+    @classmethod
+    def from_env(cls, env_prefix: str = "") -> Subscriber:
+        return Subscriber(biscuit_provider=BiscuitProviderFactory.from_env(env_prefix=env_prefix))

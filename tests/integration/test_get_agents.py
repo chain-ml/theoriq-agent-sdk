@@ -5,7 +5,7 @@ import dotenv
 
 from theoriq.api.v1alpha2 import AgentResponse, ProtocolClient
 from theoriq.api.v1alpha2.manage import AgentManager
-from theoriq.api.v1alpha2.protocol.biscuit_provider import BiscuitProviderFactory, BiscuitProviderFromAPIKey
+from theoriq.api.v1alpha2.protocol.biscuit_provider import BiscuitProviderFromAPIKey
 from theoriq.biscuit.utils import get_user_address_from_biscuit
 
 dotenv.load_dotenv()
@@ -28,7 +28,7 @@ def test_get_agents_with_client() -> None:
 
 
 def test_get_agents_with_manager() -> None:
-    manager = AgentManager(biscuit_provider=BiscuitProviderFactory.from_api_key(api_key=THEORIQ_API_KEY))
+    manager = AgentManager.from_api_key(api_key=THEORIQ_API_KEY)
     user_address = get_user_address_from_api_key(THEORIQ_API_KEY)
 
     agents = manager.get_agents()
