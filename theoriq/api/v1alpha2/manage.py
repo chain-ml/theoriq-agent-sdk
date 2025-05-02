@@ -1,24 +1,12 @@
-from __future__ import annotations
-
 import json
 from typing import Dict, List, Optional, Sequence
 
-from biscuit_auth import PrivateKey
-
-from theoriq import AgentDeploymentConfiguration
-from theoriq.biscuit import AgentAddress
-
 from ...types import AgentDataObject
+from ..common import AuthRepresentative
 from . import AgentResponse
-from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFromAPIKey, BiscuitProviderFromPrivateKey
-from .protocol.protocol_client import ProtocolClient
 
 
-class AgentManager:
-    def __init__(self, biscuit_provider: BiscuitProvider, client: ProtocolClient) -> None:
-        self._client = client
-        self._biscuit_provider = biscuit_provider
-
+class AgentManager(AuthRepresentative):
     def get_agents(self) -> List[AgentResponse]:
         return self._client.get_agents()
 
@@ -47,24 +35,3 @@ class AgentManager:
 
     def delete_agent(self, agent_id: str) -> None:
         self._client.delete_agent(biscuit=self._biscuit_provider.get_biscuit(), agent_id=agent_id)
-
-    @classmethod
-    def from_api_key(cls, api_key: str, client: Optional[ProtocolClient] = None) -> AgentManager:
-        protocol_client = client or ProtocolClient.from_env()
-        biscuit_provider = BiscuitProviderFromAPIKey(api_key=api_key, client=protocol_client)
-        return cls(biscuit_provider=biscuit_provider, client=protocol_client)
-
-    @classmethod
-    def from_agent(
-        cls, private_key: PrivateKey, address: Optional[AgentAddress] = None, client: Optional[ProtocolClient] = None
-    ) -> AgentManager:
-        protocol_client = client or ProtocolClient.from_env()
-        biscuit_provider = BiscuitProviderFromPrivateKey(
-            private_key=private_key, address=address, client=protocol_client
-        )
-        return cls(biscuit_provider=biscuit_provider, client=protocol_client)
-
-    @classmethod
-    def from_env(cls, env_prefix: str = "") -> AgentManager:
-        config = AgentDeploymentConfiguration.from_env(env_prefix=env_prefix)
-        return cls.from_agent(private_key=config.private_key)

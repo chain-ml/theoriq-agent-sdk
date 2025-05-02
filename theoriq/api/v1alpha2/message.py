@@ -5,34 +5,28 @@ from typing import Optional, Sequence
 
 from biscuit_auth import KeyPair, PrivateKey
 
-from theoriq import AgentDeploymentConfiguration, ExecuteResponse
+from theoriq import ExecuteResponse
 from theoriq.biscuit import AgentAddress, TheoriqBudget, TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
 
 from ...biscuit.utils import get_user_address_from_biscuit
-from ..common import RequestSenderBase
+from ..common import AuthRepresentative, RequestSenderBase
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFromAPIKey, BiscuitProviderFromPrivateKey
 from .protocol.protocol_client import ProtocolClient
 from .schemas.request import ExecuteRequestBody
 
 
-class Messenger(RequestSenderBase):
-    def __init__(
-        self,
-        private_key: PrivateKey,
-        biscuit_provider: BiscuitProvider,
-        client: ProtocolClient,
-    ) -> None:
+class Messenger(AuthRepresentative, RequestSenderBase):
+    def __init__(self, private_key: PrivateKey, biscuit_provider: BiscuitProvider, client: ProtocolClient) -> None:
         """
         Initialize a Messenger instance, that can handle direct communication with other agents.
 
         Args:
             private_key: Agent private key
             biscuit_provider: The biscuit provider to use for authentication
-            client: Optional protocol client, will create one from environment if not provided
+            client: Protocol client
         """
-        self._client = client
-        self._biscuit_provider = biscuit_provider
+        super().__init__(biscuit_provider=biscuit_provider, client=client)
         self._private_key = private_key
 
         key_pair = KeyPair.from_private_key(self._private_key)
@@ -113,17 +107,3 @@ class Messenger(RequestSenderBase):
             private_key=private_key, address=address, client=protocol_client
         )
         return cls(private_key=private_key, biscuit_provider=biscuit_provider, client=protocol_client)
-
-    @classmethod
-    def from_env(cls, env_prefix: str = "") -> Messenger:
-        """
-        Create a Messenger from an agent's private key from environment variable.
-
-        Args:
-            env_prefix: Optional prefix for environment variable
-
-        Returns:
-            A new Messenger instance configured with the agent's credentials
-        """
-        config = AgentDeploymentConfiguration.from_env(env_prefix=env_prefix)
-        return cls.from_agent(private_key=config.private_key)

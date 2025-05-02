@@ -3,12 +3,85 @@ from __future__ import annotations
 import abc
 from typing import Any, Dict, Optional, Sequence
 
-from theoriq import Agent
+from biscuit_auth import PrivateKey
+from typing_extensions import Self
 
-from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
+from theoriq import Agent, AgentDeploymentConfiguration
+
+from ..biscuit import AgentAddress, RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
 from ..dialog import DialogItem, ErrorItemBlock, ItemBlock, TextItemBlock
 from ..types import AgentMetadata, Currency, SourceType
 from ..utils import TTLCache
+from .v1alpha2.protocol.biscuit_provider import (
+    BiscuitProvider,
+    BiscuitProviderFromAPIKey,
+    BiscuitProviderFromPrivateKey,
+)
+from .v1alpha2.protocol.protocol_client import ProtocolClient
+
+
+class AuthRepresentative:
+    """
+    Base class for classes that need authentication and protocol client functionality.
+    Provides common initialization methods for creating instances with different authentication methods:
+    - from API key - instance acts on behalf of the user (API key owner)
+    - from agent PrivateKey - instance acts on behalf of the agent
+    """
+
+    def __init__(self, biscuit_provider: BiscuitProvider, client: ProtocolClient) -> None:
+        self._client = client
+        self._biscuit_provider = biscuit_provider
+
+    @classmethod
+    def from_api_key(cls, api_key: str, client: Optional[ProtocolClient] = None) -> Self:
+        """
+        Create an instance from an API key.
+
+        Args:
+            api_key: The API key used for authentication
+            client: Optional protocol client, will create one from environment if not provided
+
+        Returns:
+            A new instance configured with the API key credentials
+        """
+        protocol_client = client or ProtocolClient.from_env()
+        biscuit_provider = BiscuitProviderFromAPIKey(api_key=api_key, client=protocol_client)
+        return cls(biscuit_provider=biscuit_provider, client=protocol_client)
+
+    @classmethod
+    def from_agent(
+        cls, private_key: PrivateKey, address: Optional[AgentAddress] = None, client: Optional[ProtocolClient] = None
+    ) -> Self:
+        """
+        Create an instance from an agent's private key and address.
+
+        Args:
+            private_key: The agent's private key used for authentication
+            address: Optional agent's address, will derive from a private key if not provided
+            client: Optional protocol client, will create one from environment if not provided
+
+        Returns:
+            A new instance configured with the agent's credentials
+        """
+        protocol_client = client or ProtocolClient.from_env()
+        biscuit_provider = BiscuitProviderFromPrivateKey(
+            private_key=private_key, address=address, client=protocol_client
+        )
+        return cls(biscuit_provider=biscuit_provider, client=protocol_client)
+
+    @classmethod
+    def from_env(cls, env_prefix: str = "") -> Self:
+        """
+        Create an instance from an agent's private key from environment variable.
+
+        Args:
+            env_prefix: Optional prefix for environment variable
+
+        Returns:
+            A new instance configured with the agent's credentials from environment
+        """
+        config = AgentDeploymentConfiguration.from_env(env_prefix=env_prefix)
+        return cls.from_agent(private_key=config.private_key)
 
 
 class RequestSenderBase(abc.ABC):
