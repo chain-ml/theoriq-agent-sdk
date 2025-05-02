@@ -73,15 +73,17 @@ class ProtocolClient:
             response.raise_for_status()
             return BiscuitResponse.model_validate(response.json())
 
-    def get_agent(self, agent_id: str) -> AgentResponse:
+    def get_agent(self, agent_id: str, biscuit: Optional[TheoriqBiscuit] = None) -> AgentResponse:
+        headers = biscuit.to_headers() if biscuit is not None else None
         with httpx.Client(timeout=self._timeout) as client:
-            response = client.get(url=f'{self._uri}/agents/0x{agent_id.removeprefix("0x")}')
+            response = client.get(url=f'{self._uri}/agents/0x{agent_id.removeprefix("0x")}', headers=headers)
             response.raise_for_status()
             return AgentResponse.model_validate(response.json())
 
-    def get_agents(self) -> List[AgentResponse]:
+    def get_agents(self, biscuit: Optional[TheoriqBiscuit] = None) -> List[AgentResponse]:
+        headers = biscuit.to_headers() if biscuit is not None else None
         with httpx.Client(timeout=self._timeout) as client:
-            response = client.get(url=f"{self._uri}/agents")
+            response = client.get(url=f"{self._uri}/agents", headers=headers)
             response.raise_for_status()
             data = response.json()
             return [AgentResponse(**item) for item in data["items"]]

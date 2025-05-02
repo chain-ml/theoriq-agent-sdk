@@ -54,7 +54,7 @@ class AgentMetadata:
         descriptions: AgentDescriptions,
         tags: Sequence[str],
         examples: Sequence[str],
-        cost_card: str,
+        cost_card: Optional[str],
     ) -> None:
         self.name = name  # duplicated with DataObjectMetadata.name; not really used
         self.descriptions = descriptions
@@ -67,7 +67,7 @@ class AgentMetadata:
         descriptions = AgentDescriptions.from_dict(values.get("descriptions", {}))
         tags = [value for value in values.get("tags", [])]
         examples = [value for value in values.get("examplePrompts", [])]
-        cost_card = values.get("costCard", "")
+        cost_card = values.get("costCard")
 
         return AgentMetadata(name="", descriptions=descriptions, tags=tags, examples=examples, cost_card=cost_card)
 
