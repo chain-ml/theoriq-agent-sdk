@@ -14,13 +14,11 @@ def notification_handler(notification: str) -> None:
 
 
 if __name__ == "__main__":
-
-    # Logging
     logging.basicConfig(level=logging.INFO)
 
     # Load agent configuration from env
     dotenv.load_dotenv()
-    publisher = AgentAddress(os.getenv("PUBLISHER_AGENT_ID"))
+    publisher = AgentAddress.from_env("PUBLISHER_AGENT_ID")
     api_key = os.getenv("API_KEY")
 
     logger.info(f"Subscribing to agent {publisher}")

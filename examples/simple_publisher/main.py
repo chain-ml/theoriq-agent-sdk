@@ -3,7 +3,6 @@ import time
 
 import dotenv
 
-from theoriq import Agent
 from theoriq.api.v1alpha2.publish import Publisher, PublisherContext
 
 logger = logging.getLogger(__name__)
@@ -21,8 +20,9 @@ def hello_job(context: PublisherContext) -> None:
 
 
 if __name__ == "__main__":
-    dotenv.load_dotenv()
     logging.basicConfig(level=logging.INFO)
 
-    agent = Agent.from_env()
-    Publisher(agent).new_job(job=hello_job).start()
+    # Load agent configuration from env
+    dotenv.load_dotenv()
+
+    Publisher.from_env().new_job(job=hello_job).start()

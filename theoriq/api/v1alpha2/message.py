@@ -11,27 +11,18 @@ from theoriq.dialog import Dialog, DialogItem, ItemBlock
 
 from ...biscuit.utils import get_user_address_from_biscuit
 from ..common import RequestSenderBase
-from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFromAPIKey, BiscuitProviderFromPrivateKey
+from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory, BiscuitProviderFromAPIKey
 from .protocol.protocol_client import ProtocolClient
 from .schemas.request import ExecuteRequestBody
 
 
 class Messenger(RequestSenderBase):
-    def __init__(
-        self,
-        private_key: PrivateKey,
-        biscuit_provider: BiscuitProvider,
-        client: ProtocolClient,
-    ) -> None:
-        """
-        Initialize a Messenger instance, that can handle direct communication with other agents.
+    """Handles direct communications with other agents."""
 
-        Args:
-            private_key: Agent private key
-            biscuit_provider: The biscuit provider to use for authentication
-            client: Optional protocol client, will create one from environment if not provided
-        """
-        self._client = client
+    def __init__(
+        self, private_key: PrivateKey, biscuit_provider: BiscuitProvider, client: Optional[ProtocolClient] = None
+    ) -> None:
+        self._client = client or ProtocolClient.from_env()
         self._biscuit_provider = biscuit_provider
         self._private_key = private_key
 
@@ -72,58 +63,15 @@ class Messenger(RequestSenderBase):
         return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
 
     @classmethod
-    def from_api_key(cls, api_key: str, client: Optional[ProtocolClient] = None) -> Messenger:
-        """
-        Create a Messenger from an API key.
-
-        Args:
-            api_key: The API key used for authentication
-            client: Optional protocol client, will create one from environment if not provided
-
-        Returns:
-            A new Messenger instance configured with the API key credentials
-        """
-        protocol_client = client or ProtocolClient.from_env()
-        biscuit_provider = BiscuitProviderFromAPIKey(api_key=api_key, client=protocol_client)
-
-        return cls(
-            biscuit_provider=biscuit_provider,
-            client=protocol_client,
+    def from_api_key(cls, api_key: str) -> Messenger:
+        return Messenger(
             # generating new private key as a placeholder, should use different attenuate function
             private_key=KeyPair().private_key,
+            biscuit_provider=BiscuitProviderFactory.from_api_key(api_key=api_key),
         )
-
-    @classmethod
-    def from_agent(
-        cls, private_key: PrivateKey, address: Optional[AgentAddress] = None, client: Optional[ProtocolClient] = None
-    ) -> Messenger:
-        """
-        Create a Messenger from an agent's private key and address.
-
-        Args:
-            private_key: The agent's private key used for authentication
-            address: Optional agent's address, will derive from a private key if not provided
-            client: Optional protocol client, will create one from environment if not provided
-
-        Returns:
-            A new Messenger instance configured with the agent's credentials
-        """
-        protocol_client = client or ProtocolClient.from_env()
-        biscuit_provider = BiscuitProviderFromPrivateKey(
-            private_key=private_key, address=address, client=protocol_client
-        )
-        return cls(private_key=private_key, biscuit_provider=biscuit_provider, client=protocol_client)
 
     @classmethod
     def from_env(cls, env_prefix: str = "") -> Messenger:
-        """
-        Create a Messenger from an agent's private key from environment variable.
-
-        Args:
-            env_prefix: Optional prefix for environment variable
-
-        Returns:
-            A new Messenger instance configured with the agent's credentials
-        """
         config = AgentDeploymentConfiguration.from_env(env_prefix=env_prefix)
-        return cls.from_agent(private_key=config.private_key)
+        biscuit_provider = BiscuitProviderFactory.from_env(env_prefix=env_prefix)
+        return Messenger(private_key=config.private_key, biscuit_provider=biscuit_provider)

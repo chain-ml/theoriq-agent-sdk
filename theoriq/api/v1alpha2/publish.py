@@ -28,12 +28,14 @@ PublishJob = Callable[[PublisherContext], None]
 
 
 class Publisher:
+    """Manages publishing messages from an agent its notification channel."""
+
     def __init__(self, agent: Agent, client: Optional[ProtocolClient] = None) -> None:
-        self._context = PublisherContext(agent, client or ProtocolClient.from_env())
+        self._context = PublisherContext(agent=agent, client=client or ProtocolClient.from_env())
 
     @classmethod
-    def from_env(cls) -> Publisher:
-        return cls(agent=Agent.from_env(), client=ProtocolClient.from_env())
+    def from_env(cls, env_prefix: str = "") -> Publisher:
+        return cls(agent=Agent.from_env(env_prefix=env_prefix), client=ProtocolClient.from_env())
 
     def new_job(self, job: PublishJob, background: bool = False) -> threading.Thread:
         """
