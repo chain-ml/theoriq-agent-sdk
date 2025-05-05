@@ -146,8 +146,8 @@ class Agent:
         return f"0x{pk}"
 
     @classmethod
-    def from_env(cls) -> Agent:
-        config = AgentDeploymentConfiguration.from_env()
+    def from_env(cls, env_prefix: str = "") -> Agent:
+        config = AgentDeploymentConfiguration.from_env(env_prefix=env_prefix)
         return cls(config)
 
     @classmethod
