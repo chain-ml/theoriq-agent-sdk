@@ -51,10 +51,7 @@ class Messenger(RequestSenderBase):
         execute_request_body = ExecuteRequestBody(dialog=Dialog(items=[DialogItem.new(source=address, blocks=blocks)]))
         body = execute_request_body.model_dump_json().encode("utf-8")
 
-        # 0x prefix required for users only; must be omitted for agents
-        from_addr = self._user_address if self._user_address is not None else self._agent_address
-
-        theoriq_request = TheoriqRequest.from_body(body=body, from_addr=from_addr, to_addr=to_addr)
+        theoriq_request = TheoriqRequest.from_body(body=body, from_addr=address, to_addr=to_addr)
         theoriq_biscuit = self._biscuit_provider.get_biscuit()
         theoriq_biscuit = theoriq_biscuit.attenuate_for_request(
             agent_pk=self._private_key, request_id=uuid.uuid4(), facts=[theoriq_request, budget]
