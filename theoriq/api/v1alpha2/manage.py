@@ -30,6 +30,10 @@ class AgentManager:
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.post_agent(biscuit=biscuit, content=payload)
 
+    def configure_agent(self, agent_id: str):
+        biscuit = self._biscuit_provider.get_biscuit()
+        return self._client.post_configure(biscuit=biscuit, to_addr=agent_id)
+
     def update_agent(
         self, agent_data_obj: AgentDataObject, agent_id: str, headers: Optional[Sequence[Dict[str, str]]] = None
     ) -> AgentResponse:
