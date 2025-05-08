@@ -77,7 +77,9 @@ def run_agent_flask_app(
 ) -> None:
     app = Flask(f"{agent_config.prefix} on port {port}")
 
-    blueprint = theoriq_blueprint(agent_config=agent_config, execute_fn=execute, schema=schema, agent_configurator=agent_configurator)
+    blueprint = theoriq_blueprint(
+        agent_config=agent_config, execute_fn=execute, schema=schema, agent_configurator=agent_configurator
+    )
     app.register_blueprint(blueprint)
     app.run(host="0.0.0.0", port=port)
 

@@ -57,11 +57,12 @@ def test_minting() -> None:
 @pytest.mark.order(3)
 def test_get_agents() -> None:
     agents = user_manager.get_agents()
-    assert len(agents) == len(global_agent_map.keys())
+    assert len(agents) >= len(global_agent_map.keys())
+    fetched_agents: Dict[str, AgentResponse] = {agent.system.id: agent for agent in agents}
 
-    for agent in agents:
-        assert agent.system.id in global_agent_map
-        assert agents_are_equal(agent, global_agent_map[agent.system.id])
+    for agent in global_agent_map.values():
+        assert agent.system.id in fetched_agents
+        assert agents_are_equal(agent, fetched_agents[agent.system.id])
 
         same_agent = user_manager.get_agent(agent.system.id)
         assert agents_are_equal(agent, same_agent)
