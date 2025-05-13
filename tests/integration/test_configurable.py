@@ -6,11 +6,17 @@ import dotenv
 import httpx
 import pytest
 from pydantic import BaseModel, Field
-from tests.integration.utils import TEST_PARENT_AGENT_DATA, join_threads, run_configurable_agent
+from tests.integration.utils import (
+    TEST_PARENT_AGENT_DATA,
+    agent_data_obj_to_metadata,
+    agent_data_obj_to_deployment_configuration,
+    join_threads,
+    run_configurable_agent,
+)
 
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.configure import AgentConfigurator
-from theoriq.api.v1alpha2.manage import AgentManager
+from theoriq.api.v1alpha2.manage import AgentManager, Configuration, VirtualConfiguration, Metadata
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
@@ -42,17 +48,27 @@ def flask_apps() -> Generator[None, None, None]:
 
 @pytest.mark.order(1)
 def test_registration() -> None:
-    agent = user_manager.create_agent(TEST_PARENT_AGENT_DATA)
+    metadata = agent_data_obj_to_metadata(TEST_PARENT_AGENT_DATA)
+    configuration = agent_data_obj_to_deployment_configuration(TEST_PARENT_AGENT_DATA)
+    agent = user_manager.create_agent(metadata=metadata, configuration=configuration)
     print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
     global_agent_map[agent.system.id] = agent
 
 
-# @pytest.mark.order(2)
-# def test_configuration() -> None:
-#     for agent_id in global_agent_map.keys():
-#         agent = user_manager.configure_agent(agent_id)
-#         # assert agent.system.state == "online"
-#         print(f"Successfully configured `{agent_id}`\n")
+@pytest.mark.order(2)
+def test_configuration() -> None:
+    for agent_id in global_agent_map.keys():
+        metadata = Metadata(
+            name="Name",
+            shortDescription="agent.spec.metadata.descriptions.short",
+            longDescription="agent.spec.metadata.descriptions.long",
+            tags=[],
+            examplePrompts=[],
+        )
+
+        agent = user_manager.configure_agent(agent_id, metadata=metadata, config={"test": "abc"})
+        # assert agent.system.state == "online"
+        print(f"Successfully configured `{agent_id}`\n")
 
 
 @pytest.mark.order(5)

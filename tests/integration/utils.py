@@ -15,6 +15,7 @@ from tests import DATA_DIR
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2 import AgentResponse, ExecuteRequestFn
 from theoriq.api.v1alpha2.configure import AgentConfigurator
+from theoriq.api.v1alpha2.manage import Configuration, DeploymentConfiguration, Metadata, VirtualConfiguration
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
 from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
 from theoriq.types import AgentDataObject
@@ -38,6 +39,31 @@ TEST_PARENT_AGENT_DATA: Final[AgentDataObject] = maybe_parent_agent_data
 TEST_CHILD_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
     agent for agent in TEST_AGENT_DATA_LIST if agent.metadata.name != PARENT_AGENT_NAME
 ]
+
+
+def agent_data_obj_to_metadata(agent: AgentDataObject) -> Metadata:
+    return Metadata(
+        name=agent.metadata.name,
+        shortDescription=agent.spec.metadata.descriptions.short,
+        longDescription=agent.spec.metadata.descriptions.long,
+        tags=list(agent.spec.metadata.tags),
+        examplePrompts=list(agent.spec.metadata.examples),
+        imageUrl=agent.spec.urls.icon,
+        costCard=agent.spec.metadata.cost_card,
+    )
+
+
+def agent_data_obj_to_deployment_configuration(agent: AgentDataObject) -> Configuration:
+    return Configuration(
+        deployment=DeploymentConfiguration(
+            headers=[],
+            url=agent.spec.urls.end_point,
+        )
+    )
+
+
+def agent_data_obj_to_virtual_configuration(agent: AgentDataObject) -> Configuration:
+    return Configuration(virtual=VirtualConfiguration(agentId="0xabc", configuration={}))
 
 
 def get_echo_execute_output(*, message: str, agent_name: str) -> str:

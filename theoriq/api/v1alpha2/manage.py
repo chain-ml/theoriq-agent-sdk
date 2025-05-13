@@ -1,11 +1,45 @@
 from __future__ import annotations
 
 import json
-from typing import Dict, List, Optional, Sequence
+import uuid
+from typing import Any, Dict, List, Optional
 
-from ...types import AgentDataObject
+from biscuit_auth import KeyPair
+from pydantic import BaseModel
+
 from . import AgentResponse, ProtocolClient
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
+from ...biscuit import TheoriqRequest
+
+
+class Metadata(BaseModel):
+    name: str
+    shortDescription: str
+    longDescription: str
+    tags: List[str]
+    examplePrompts: List[str]
+    costCard: Optional[str] = None
+    imageUrl: Optional[str] = None
+
+
+class Header(BaseModel):
+    name: str
+    value: str
+
+
+class DeploymentConfiguration(BaseModel):
+    headers: List[Header]
+    url: str
+
+
+class VirtualConfiguration(BaseModel):
+    agentId: str
+    configuration: Dict[str, Any]
+
+
+class Configuration(BaseModel):
+    deployment: Optional[DeploymentConfiguration] = None
+    virtual: Optional[VirtualConfiguration] = None
 
 
 class AgentManager:
@@ -23,21 +57,44 @@ class AgentManager:
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.get_agent(agent_id=agent_id, biscuit=biscuit)
 
-    def create_agent(
-        self, agent_data_obj: AgentDataObject, headers: Optional[Sequence[Dict[str, str]]] = None
-    ) -> AgentResponse:
-        payload = json.dumps(agent_data_obj.to_payload(headers)).encode("utf-8")
+    def create_agent(self, metadata: Metadata, configuration: Configuration) -> AgentResponse:
+        payload_dict = {"metadata": metadata.model_dump(), "configuration": configuration.model_dump(exclude_none=True)}
+        payload = json.dumps(payload_dict).encode("utf-8")
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.post_agent(biscuit=biscuit, content=payload)
 
-    def configure_agent(self, agent_id: str):
-        biscuit = self._biscuit_provider.get_biscuit()
-        return self._client.post_configure(biscuit=biscuit, to_addr=agent_id)
+    def configure_agent(self, agent_id: str, metadata: Metadata, config: Dict[str, Any]):
+        configuration = Configuration(virtual=VirtualConfiguration(agentId=agent_id, configuration=config))
+        agent = self.create_agent(metadata=metadata, configuration=configuration)
+
+        payload_dict = {"metadata": metadata.model_dump(), "configuration": configuration.model_dump(exclude_none=True)}
+        body = json.dumps(payload_dict).encode("utf-8")
+        # using body or agent.configuration.virtual.configuration_hash?
+        # agent.configuration.virtual.configuration_hash vs. agent.system.configuration_hash
+        # new a newly generated private key to attenuate?
+
+        theoriq_request = TheoriqRequest.from_body(
+            body=agent.configuration.virtual.configuration_hash.encode("utf-8"),
+            from_addr=agent_id,
+            to_addr=agent.system.id,
+        )
+        theoriq_biscuit = self._biscuit_provider.get_biscuit()
+        theoriq_biscuit = theoriq_biscuit.attenuate_for_request(
+            agent_pk=KeyPair().private_key, request_id=uuid.uuid4(), facts=[theoriq_request]
+        )
+
+        return self._client.post_configure(biscuit=theoriq_biscuit, to_addr=agent_id)
 
     def update_agent(
-        self, agent_data_obj: AgentDataObject, agent_id: str, headers: Optional[Sequence[Dict[str, str]]] = None
+        self, agent_id: str, metadata: Optional[Metadata] = None, configuration: Optional[Configuration] = None
     ) -> AgentResponse:
-        payload = json.dumps(agent_data_obj.to_payload(headers)).encode("utf-8")
+        payload_dict: Dict[str, Any] = {}
+        if metadata is not None:
+            payload_dict["metadata"] = metadata.model_dump()
+        if configuration is not None:
+            payload_dict["configuration"] = configuration.model_dump(exclude_none=True)
+
+        payload = json.dumps(payload_dict).encode("utf-8")
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.patch_agent(biscuit=biscuit, content=payload, agent_id=agent_id)
 

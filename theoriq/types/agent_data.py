@@ -111,6 +111,7 @@ class AgentDataObject(DataObject[AgentSpec]):
             return AgentDataObject.from_dict(values)
 
     def to_payload(self, headers: Optional[Sequence[Dict[str, str]]] = None) -> Dict[str, Any]:
+        # TODO: either delete or reframe AgentDataObject
         """
         Convert to payload expected by create agent endpoint.
 
