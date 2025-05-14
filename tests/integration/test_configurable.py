@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 from typing import Dict, Final, Generator
@@ -59,14 +60,14 @@ def test_registration() -> None:
 def test_configuration() -> None:
     for agent_id in global_agent_map.keys():
         metadata = Metadata(
-            name="Name",
-            shortDescription="agent.spec.metadata.descriptions.short",
-            longDescription="agent.spec.metadata.descriptions.long",
+            name=f"Configurable {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            shortDescription="short",
+            longDescription="long",
             tags=[],
             examplePrompts=[],
         )
 
-        agent = user_manager.configure_agent(agent_id, metadata=metadata, config={"test": "abc"})
+        agent = user_manager.configure_agent(agent_id, metadata=metadata, config={"field": "abc", "number": 123})
         # assert agent.system.state == "online"
         print(f"Successfully configured `{agent_id}`\n")
 

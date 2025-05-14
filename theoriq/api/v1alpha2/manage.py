@@ -67,23 +67,15 @@ class AgentManager:
         configuration = Configuration(virtual=VirtualConfiguration(agentId=agent_id, configuration=config))
         agent = self.create_agent(metadata=metadata, configuration=configuration)
 
-        payload_dict = {"metadata": metadata.model_dump(), "configuration": configuration.model_dump(exclude_none=True)}
-        body = json.dumps(payload_dict).encode("utf-8")
-        # using body or agent.configuration.virtual.configuration_hash?
-        # agent.configuration.virtual.configuration_hash vs. agent.system.configuration_hash
-        # new a newly generated private key to attenuate?
-
         theoriq_request = TheoriqRequest.from_body(
             body=agent.configuration.virtual.configuration_hash.encode("utf-8"),
-            from_addr=agent_id,
+            from_addr="USER_ADDRESS",  # user address
             to_addr=agent.system.id,
         )
         theoriq_biscuit = self._biscuit_provider.get_biscuit()
-        theoriq_biscuit = theoriq_biscuit.attenuate_for_request(
-            agent_pk=KeyPair().private_key, request_id=uuid.uuid4(), facts=[theoriq_request]
-        )
+        theoriq_biscuit = theoriq_biscuit.attenuate(theoriq_request.to_theoriq_fact(uuid.uuid4()))
 
-        return self._client.post_configure(biscuit=theoriq_biscuit, to_addr=agent_id)
+        return self._client.post_configure(biscuit=theoriq_biscuit, to_addr=agent.system.id)
 
     def update_agent(
         self, agent_id: str, metadata: Optional[Metadata] = None, configuration: Optional[Configuration] = None
