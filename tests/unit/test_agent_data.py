@@ -9,7 +9,7 @@ def test_agent_data_parent() -> None:
     filename = os.path.join(DATA_DIR, "parent_agent.yaml")
     ad = AgentDataObject.from_yaml(filename)
     assert ad.spec.metadata.name == "Parent Agent"
-    assert ad.spec.configuration is not None
+    assert ad.spec.maybe_configuration is not None
     assert ad.spec.configuration.deployment is not None
     assert ad.spec.configuration.deployment.url == "http://192.168.2.36:8089"
     assert ad.metadata.has_label("env_prefix")

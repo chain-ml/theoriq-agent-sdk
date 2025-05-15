@@ -87,10 +87,8 @@ class AgentSpec(DataObjectSpecBase):
         return AgentSpec(metadata=metadata, configuration=configuration)
 
     def to_dict(self) -> Dict[str, Any]:
-        result: Dict[str, Any] = {}
-        if self.metadata is not None:
-            result["metadata"] = self.metadata.to_dict()
-        if self.configuration is not None:
+        result: Dict[str, Any] = {"metadata": self.metadata.to_dict()}
+        if self.has_configuration:
             result["configuration"] = self.configuration.to_dict()
         return result
 
