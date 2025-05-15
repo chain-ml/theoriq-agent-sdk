@@ -1,100 +1,139 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, Optional, Sequence
+from typing import Any, Dict, Mapping, Optional, Sequence, List
 
 import yaml
+from pydantic import BaseModel, Field, model_validator
 
 from .data_object import DataObject, DataObjectSpecBase
 
 
-class AgentUrls:
-    def __init__(self, *, end_point: str, icon: str) -> None:
-        self.end_point = end_point
-        self.icon = icon
+class Header(BaseModel):
+    name: str
+    value: str
+
+
+class DeploymentConfiguration(BaseModel):
+    headers: List[Header]
+    url: str
+
+
+class VirtualConfiguration(BaseModel):
+    agent_id: str = Field(..., alias="agentId")
+    configuration: Dict[str, Any]
+
+
+class AgentConfiguration:
+    def __init__(
+        self,
+        deployment: Optional[DeploymentConfiguration] = None,
+        virtual: Optional[VirtualConfiguration] = None,
+    ) -> None:
+        if deployment is None and virtual is None:
+            raise ValueError("At least one of deployment or virtual must be provided")
+            # at least one or exactly one?
+
+        self.deployment = deployment
+        self.virtual = virtual
 
     @classmethod
-    def undefined(cls) -> AgentUrls:
-        return AgentUrls(end_point="", icon="")
-
-    @classmethod
-    def from_dict(cls, values: Mapping[str, Any]) -> AgentUrls:
-        end_point = values.get("endPoint", "")
-        icon = values.get("icon", "")
-        return cls(end_point=end_point, icon=icon)
+    def from_dict(cls, values: Dict[str, Any]) -> AgentConfiguration:
+        deployment_values = values.get("deployment")
+        virtual_values = values.get("virtual")
+        deployment = (
+            DeploymentConfiguration.model_validate(deployment_values) if deployment_values is not None else None
+        )
+        virtual = VirtualConfiguration.model_validate(virtual_values) if virtual_values is not None else None
+        return cls(deployment=deployment, virtual=virtual)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"endPoint": self.end_point, "icon": self.icon}
-
-    def __str__(self) -> str:
-        return f"EndPoint: {self.end_point} - Icon: {self.icon}"
-
-
-class AgentDescriptions:
-    def __init__(self, *, short: str, long: str) -> None:
-        self.short = short
-        self.long = long
-
-    @classmethod
-    def from_dict(cls, values: Mapping[str, Any]) -> AgentDescriptions:
-        short = values.get("short", "")
-        long = values.get("long", "")
-        return cls(short=short, long=long)
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {"shortDescription": self.short, "longDescription": self.long}
-
-    def __str__(self) -> str:
-        return f"{self.short} - {self.long}"
+        result = {}
+        if self.deployment is not None:
+            result["deployment"] = self.deployment.model_dump()
+        if self.virtual is not None:
+            result["virtual"] = self.virtual.model_dump(by_alias=True)
+        return result
 
 
 class AgentMetadata:
     def __init__(
         self,
         name: str,
-        descriptions: AgentDescriptions,
-        tags: Sequence[str],
-        examples: Sequence[str],
-        cost_card: Optional[str],
+        short_description: str,
+        long_description: str,
+        tags: List[str],
+        example_prompts: List[str],
+        cost_card: Optional[str] = None,
+        image_url: Optional[str] = None,
     ) -> None:
-        self.name = name  # duplicated with DataObjectMetadata.name; not really used
-        self.descriptions = descriptions
+        self.name = name
+        self.short_description = short_description
+        self.long_description = long_description
         self.tags = tags
-        self.examples = examples
+        self.example_prompts = example_prompts
         self.cost_card = cost_card
+        self.image_url = image_url
 
     @classmethod
-    def from_dict(cls, values: Mapping[str, Any]) -> AgentMetadata:
-        descriptions = AgentDescriptions.from_dict(values.get("descriptions", {}))
-        tags = [value for value in values.get("tags", [])]
-        examples = [value for value in values.get("examplePrompts", [])]
+    def from_dict(cls, values: Dict[str, Any]) -> AgentMetadata:
+        name = values["name"]
+        short_description = values["shortDescription"]
+        long_description = values["longDescription"]
+        tags = values.get("tags", [])
+        example_prompts = values.get("examplePrompts", [])
         cost_card = values.get("costCard")
+        image_url = values.get("imageUrl")
 
-        return AgentMetadata(name="", descriptions=descriptions, tags=tags, examples=examples, cost_card=cost_card)
+        return cls(
+            name=name,
+            short_description=short_description,
+            long_description=long_description,
+            tags=tags,
+            example_prompts=example_prompts,
+            cost_card=cost_card,
+            image_url=image_url,
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         result = {
+            "name": self.name,
+            "shortDescription": self.short_description,
+            "longDescription": self.long_description,
             "tags": self.tags,
-            "examplePrompts": self.examples,
-            "costCard": self.cost_card,
+            "examplePrompts": self.example_prompts,
         }
-        result |= {**self.descriptions.to_dict()}
+        if self.cost_card is not None:
+            result["costCard"] = self.cost_card
+        if self.image_url is not None:
+            result["imageUrl"] = self.image_url
+
         return result
 
 
 class AgentSpec(DataObjectSpecBase):
-    def __init__(self, metadata: AgentMetadata, urls: AgentUrls) -> None:
-        self.metadata = metadata
-        self.urls = urls
+    def __init__(
+        self, metadata: Optional[AgentMetadata] = None, configuration: Optional[AgentConfiguration] = None
+    ) -> None:
+        if metadata is None and configuration is None:
+            raise ValueError("At least one of metadata or configuration must be provided")
+
+        self.metadata: Optional[AgentMetadata] = metadata
+        self.configuration: Optional[AgentConfiguration] = configuration
 
     @classmethod
     def from_dict(cls, values: Mapping[str, Any]) -> AgentSpec:
-        metadata = AgentMetadata.from_dict(values)
-        urls = AgentUrls.from_dict(values.get("urls", {}))
-        return AgentSpec(metadata, urls=urls)
+        metadata_values = values.get("metadata")
+        config_values = values.get("configuration")
+        metadata = AgentMetadata.from_dict(metadata_values) if metadata_values is not None else None
+        configuration = AgentConfiguration.from_dict(config_values) if config_values is not None else None
+        return AgentSpec(metadata=metadata, configuration=configuration)
 
     def to_dict(self) -> Dict[str, Any]:
-        result = self.metadata.to_dict()
-        result |= {"imageUrl": self.urls.icon}
+        result: Dict[str, Any] = {}
+        if self.metadata is not None:
+            result["metadata"] = self.metadata.to_dict()
+        if self.configuration is not None:
+            result["configuration"] = self.configuration.to_dict()
         return result
 
 
@@ -109,29 +148,3 @@ class AgentDataObject(DataObject[AgentSpec]):
             values = yaml.safe_load(f)
             cls._check_kind(values, "TheoriqAgent")
             return AgentDataObject.from_dict(values)
-
-    def to_payload(self, headers: Optional[Sequence[Dict[str, str]]] = None) -> Dict[str, Any]:
-        """
-        Convert to payload expected by create agent endpoint.
-
-        Args:
-            headers (Optional[Sequence[Dict[str, str]]]): Optional headers to be added to the request,
-                each header is a dictionary with `name` and `value`
-        """
-        return {
-            "configuration": {
-                "deployment": {
-                    "headers": headers or [],
-                    "url": self.spec.urls.end_point,
-                },
-            },
-            "metadata": {
-                "name": self.metadata.name,
-                "shortDescription": self.spec.metadata.descriptions.short,
-                "longDescription": self.spec.metadata.descriptions.long,
-                "tags": self.spec.metadata.tags,
-                "examplePrompts": self.spec.metadata.examples,
-                "imageUrl": self.spec.urls.icon,
-                "costCard": self.spec.metadata.cost_card,
-            },
-        }

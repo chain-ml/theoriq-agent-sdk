@@ -64,7 +64,10 @@ def run_echo_agent(agent_data_obj: AgentDataObject) -> threading.Thread:
     agent_name = agent_data_obj.metadata.name
     execute = get_echo_execute(agent_name)
     agent_config = AgentDeploymentConfiguration.from_env(env_prefix=agent_data_obj.metadata.labels["env_prefix"])
-    port = int(agent_data_obj.spec.urls.end_point.split(":")[-1])
+    configuration = agent_data_obj.spec.configuration
+    if configuration is None or configuration.deployment is None:
+        raise RuntimeError("No deployment information")
+    port = int(configuration.deployment.url.split(":")[-1])
 
     thread = threading.Thread(target=run_agent_flask_app, args=(execute, agent_config, port))
     thread.daemon = True
