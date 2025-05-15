@@ -35,7 +35,7 @@ if maybe_parent_agent_data is None:
 TEST_PARENT_AGENT_DATA: Final[AgentDataObject] = maybe_parent_agent_data
 
 TEST_CHILD_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
-    agent for agent in TEST_AGENT_DATA_LIST if agent.metadata.name != PARENT_AGENT_NAME
+    agent for agent in TEST_AGENT_DATA_LIST if agent.spec.metadata.name != PARENT_AGENT_NAME
 ]
 
 
