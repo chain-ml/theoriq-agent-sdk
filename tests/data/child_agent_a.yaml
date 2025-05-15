@@ -1,20 +1,21 @@
 kind: TheoriqAgent
 version: 0.1
 metadata:
-  name: Child Agent A
+  name: Agent Data Object
   labels:
     author: ChainML Labs
     env_prefix: CHILD_A_
 spec:
-  urls:
-    endPoint: http://192.168.2.36:8090
-    icon: http://192.168.2.36:8090/icon
-  descriptions:
-    short: Short description
-    long: A much longer description
-  tags:
-    - tag1
-    - tag2
-  examplePrompts:
-    - Hi
-  costCard: Free
+  metadata:
+    name: Child Agent A
+    shortDescription: Short description
+    longDescription: A much longer description
+    tags:
+      - tag1
+      - tag2
+    examplePrompts:
+      - Hi
+  configuration:
+    deployment:
+      headers: []
+      url: http://192.168.2.36:8090

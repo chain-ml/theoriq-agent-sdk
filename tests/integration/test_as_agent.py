@@ -39,7 +39,9 @@ def flask_apps() -> Generator[None, None, None]:
 
 @pytest.mark.order(1)
 def test_registration_parent() -> None:
-    agent = user_manager.create_agent(TEST_PARENT_AGENT_DATA)
+    agent = user_manager.create_agent(
+        metadata=TEST_PARENT_AGENT_DATA.spec.metadata, configuration=TEST_PARENT_AGENT_DATA.spec.configuration
+    )
     print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
     global_parent_agent_map[agent.system.id] = agent
 
@@ -48,7 +50,9 @@ def test_registration_parent() -> None:
 def test_registration_children() -> None:
     manager = AgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
     for child_agent_data_obj in TEST_CHILD_AGENT_DATA_LIST:
-        agent = manager.create_agent(child_agent_data_obj)
+        agent = manager.create_agent(
+            metadata=child_agent_data_obj.spec.metadata, configuration=child_agent_data_obj.spec.configuration
+        )
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         global_children_agent_map[agent.system.id] = agent
 

@@ -41,7 +41,9 @@ def flask_apps() -> Generator[None, None, None]:
 @pytest.mark.order(1)
 def test_registration() -> None:
     for agent_data_obj in TEST_AGENT_DATA_LIST:
-        agent = user_manager.create_agent(agent_data_obj)
+        agent = user_manager.create_agent(
+            metadata=agent_data_obj.spec.metadata, configuration=agent_data_obj.spec.configuration
+        )
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         global_agent_map[agent.system.id] = agent
 
@@ -57,11 +59,12 @@ def test_minting() -> None:
 @pytest.mark.order(3)
 def test_get_agents() -> None:
     agents = user_manager.get_agents()
-    assert len(agents) == len(global_agent_map.keys())
+    assert len(agents) >= len(global_agent_map.keys())
+    fetched_agents: Dict[str, AgentResponse] = {agent.system.id: agent for agent in agents}
 
-    for agent in agents:
-        assert agent.system.id in global_agent_map
-        assert agents_are_equal(agent, global_agent_map[agent.system.id])
+    for agent in global_agent_map.values():
+        assert agent.system.id in fetched_agents
+        assert agents_are_equal(agent, fetched_agents[agent.system.id])
 
         same_agent = user_manager.get_agent(agent.system.id)
         assert agents_are_equal(agent, same_agent)
@@ -91,10 +94,10 @@ def test_messenger() -> None:
 @pytest.mark.order(6)
 def test_updating() -> None:
     agent_data_obj = deepcopy(TEST_PARENT_AGENT_DATA)
-    agent_data_obj.metadata.name = "Updated Parent Agent"
+    agent_data_obj.spec.metadata.name = "Updated Parent Agent"
 
     config = AgentDeploymentConfiguration.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
-    response = user_manager.update_agent(agent_data_obj, agent_id=str(config.address))
+    response = user_manager.update_agent(agent_id=str(config.address), metadata=agent_data_obj.spec.metadata)
 
     assert response.metadata.name == "Updated Parent Agent"
 

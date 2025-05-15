@@ -14,7 +14,6 @@ from theoriq.biscuit.facts import TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
 from theoriq.types import AgentMetadata, Metric
 
-from ...types.agent_data import AgentDescriptions
 from ..common import ExecuteContextBase, ExecuteResponse
 from .protocol.protocol_client import ProtocolClient, RequestStatus
 from .schemas.request import Configuration, ExecuteRequestBody
@@ -133,12 +132,12 @@ class ExecuteContext(ExecuteContextBase):
     def _sender_metadata(self, agent_id: str) -> AgentMetadata:
         agent_response = self._protocol_client.get_agent(agent_id=agent_id)
         metadata = agent_response.metadata
-        descriptions = AgentDescriptions(short=metadata.short_description, long=metadata.long_description)
         return AgentMetadata(
             name=metadata.name,
-            descriptions=descriptions,
+            short_description=metadata.short_description,
+            long_description=metadata.long_description,
             tags=metadata.tags,
-            examples=metadata.example_prompts,
+            example_prompts=metadata.example_prompts,
             cost_card=metadata.cost_card,
         )
 

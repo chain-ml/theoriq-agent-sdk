@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import json
-from typing import Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional
 
-from ...types import AgentDataObject
+from ...types import AgentConfiguration, AgentMetadata
 from . import AgentResponse, ProtocolClient
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 
@@ -23,17 +23,25 @@ class AgentManager:
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.get_agent(agent_id=agent_id, biscuit=biscuit)
 
-    def create_agent(
-        self, agent_data_obj: AgentDataObject, headers: Optional[Sequence[Dict[str, str]]] = None
-    ) -> AgentResponse:
-        payload = json.dumps(agent_data_obj.to_payload(headers)).encode("utf-8")
+    def create_agent(self, metadata: AgentMetadata, configuration: AgentConfiguration) -> AgentResponse:
+        payload_dict = {"metadata": metadata.to_dict(), "configuration": configuration.to_dict()}
+        payload = json.dumps(payload_dict).encode("utf-8")
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.post_agent(biscuit=biscuit, content=payload)
 
     def update_agent(
-        self, agent_data_obj: AgentDataObject, agent_id: str, headers: Optional[Sequence[Dict[str, str]]] = None
+        self,
+        agent_id: str,
+        metadata: Optional[AgentMetadata] = None,
+        configuration: Optional[AgentConfiguration] = None,
     ) -> AgentResponse:
-        payload = json.dumps(agent_data_obj.to_payload(headers)).encode("utf-8")
+        payload_dict: Dict[str, Any] = {}
+        if metadata is not None:
+            payload_dict["metadata"] = metadata.to_dict()
+        if configuration is not None:
+            payload_dict["configuration"] = configuration.to_dict()
+
+        payload = json.dumps(payload_dict).encode("utf-8")
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.patch_agent(biscuit=biscuit, content=payload, agent_id=agent_id)
 
