@@ -15,12 +15,14 @@ class Header(BaseModel):
 
 
 class DeploymentConfiguration(BaseModel):
-    headers: List[Header]
+    headers: List[Header] = Field(default_factory=list)
     url: str
 
 
 class VirtualConfiguration(BaseModel):
-    agent_id: str = Field(..., alias="agentId")
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    agent_id: str
     configuration: Dict[str, Any]
 
 

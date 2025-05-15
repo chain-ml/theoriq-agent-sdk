@@ -6,5 +6,6 @@ from .agent_data import (
     AgentConfiguration,
     DeploymentConfiguration,
     VirtualConfiguration,
+    Header,
 )
 from .metric import Metric
