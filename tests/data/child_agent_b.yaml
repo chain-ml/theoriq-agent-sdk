@@ -1,7 +1,7 @@
 kind: TheoriqAgent
 version: 0.1
 metadata:
-  name: TheoriqAgentDataObject
+  name: Child Agent Data Object
   labels:
     author: ChainML Labs
     env_prefix: CHILD_B_
