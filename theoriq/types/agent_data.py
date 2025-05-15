@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import Any, Dict, List, Mapping, Optional
 
 import yaml
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic.alias_generators import to_camel
 
 from .data_object import DataObject, DataObjectSpecBase
 
@@ -41,13 +42,15 @@ class AgentConfiguration(BaseModel):
 
 
 class AgentMetadata(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     name: str
-    short_description: str = Field(..., alias="shortDescription")
-    long_description: str = Field(..., alias="longDescription")
+    short_description: str
+    long_description: str
     tags: List[str]
-    example_prompts: List[str] = Field(..., alias="examplePrompts")
-    cost_card: Optional[str] = Field(None, alias="costCard")
-    image_url: Optional[str] = Field(None, alias="imageUrl")
+    example_prompts: List[str]
+    cost_card: Optional[str] = None
+    image_url: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return self.model_dump(by_alias=True)
