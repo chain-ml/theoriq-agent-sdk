@@ -29,9 +29,10 @@ class AgentConfiguration(BaseModel):
 
     @model_validator(mode="after")
     def validate_configuration(self) -> AgentConfiguration:
-        if self.deployment is None and self.virtual is None:
-            raise ValueError("At least one of deployment or virtual must be provided")
-            # at least one or exactly one?
+        both_are_none = self.deployment is None and self.virtual is None
+        both_are_not_none = self.deployment is not None and self.virtual is not None
+        if both_are_none or both_are_not_none:
+            raise ValueError("Exactly one of deployment or virtual must be provided")
 
         return self
 
