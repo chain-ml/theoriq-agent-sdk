@@ -10,8 +10,6 @@ from tests.integration.utils import (
     PARENT_AGENT_NAME,
     TEST_AGENT_DATA_LIST,
     TEST_CHILD_AGENT_DATA_LIST,
-    ensure_configuration,
-    ensure_metadata,
     join_threads,
     run_echo_agents,
 )
@@ -73,7 +71,7 @@ def flask_apps() -> Generator[None, None, None]:
 def test_registration() -> None:
     for agent_data_obj in TEST_AGENT_DATA_LIST:
         agent = user_manager.create_agent(
-            metadata=ensure_metadata(agent_data_obj), configuration=ensure_configuration(agent_data_obj)
+            metadata=agent_data_obj.spec.metadata, configuration=agent_data_obj.spec.ensure_configuration
         )
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         global_agent_map[agent.system.id] = agent

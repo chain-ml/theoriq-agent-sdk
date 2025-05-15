@@ -15,7 +15,7 @@ from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteRespons
 from theoriq.api.v1alpha2 import AgentResponse, ExecuteRequestFn
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
 from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
-from theoriq.types import AgentConfiguration, AgentDataObject, AgentMetadata
+from theoriq.types import AgentDataObject
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +27,7 @@ PARENT_AGENT_NAME: Final[str] = "Parent Agent"
 PARENT_AGENT_ENV_PREFIX: Final[str] = "PARENT_"
 
 maybe_parent_agent_data = next(
-    (
-        agent
-        for agent in TEST_AGENT_DATA_LIST
-        if agent.spec.metadata is not None and agent.spec.metadata.name == PARENT_AGENT_NAME
-    ),
+    (agent for agent in TEST_AGENT_DATA_LIST if agent.spec.metadata.name == PARENT_AGENT_NAME),
     None,
 )
 if maybe_parent_agent_data is None:
@@ -41,18 +37,6 @@ TEST_PARENT_AGENT_DATA: Final[AgentDataObject] = maybe_parent_agent_data
 TEST_CHILD_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
     agent for agent in TEST_AGENT_DATA_LIST if agent.metadata.name != PARENT_AGENT_NAME
 ]
-
-
-def ensure_metadata(agent_data_obj: AgentDataObject) -> AgentMetadata:
-    if agent_data_obj.spec.metadata is None:
-        raise RuntimeError("ensure_metadata got None metadata")
-    return agent_data_obj.spec.metadata
-
-
-def ensure_configuration(agent_data_obj: AgentDataObject) -> AgentConfiguration:
-    if agent_data_obj.spec.configuration is None:
-        raise RuntimeError("ensure_configuration got None configuration")
-    return agent_data_obj.spec.configuration
 
 
 def get_echo_execute_output(*, message: str, agent_name: str) -> str:

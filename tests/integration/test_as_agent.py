@@ -10,8 +10,6 @@ from tests.integration.utils import (
     TEST_AGENT_DATA_LIST,
     TEST_CHILD_AGENT_DATA_LIST,
     TEST_PARENT_AGENT_DATA,
-    ensure_configuration,
-    ensure_metadata,
     get_echo_execute_output,
     join_threads,
     run_echo_agents,
@@ -42,7 +40,7 @@ def flask_apps() -> Generator[None, None, None]:
 @pytest.mark.order(1)
 def test_registration_parent() -> None:
     agent = user_manager.create_agent(
-        metadata=ensure_metadata(TEST_PARENT_AGENT_DATA), configuration=ensure_configuration(TEST_PARENT_AGENT_DATA)
+        metadata=TEST_PARENT_AGENT_DATA.spec.metadata, configuration=TEST_PARENT_AGENT_DATA.spec.ensure_configuration
     )
     print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
     global_parent_agent_map[agent.system.id] = agent
@@ -53,7 +51,7 @@ def test_registration_children() -> None:
     manager = AgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
     for child_agent_data_obj in TEST_CHILD_AGENT_DATA_LIST:
         agent = manager.create_agent(
-            metadata=ensure_metadata(child_agent_data_obj), configuration=ensure_configuration(child_agent_data_obj)
+            metadata=child_agent_data_obj.spec.metadata, configuration=child_agent_data_obj.spec.ensure_configuration
         )
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         global_children_agent_map[agent.system.id] = agent
