@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Mapping, Optional
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from .data_object import DataObject, DataObjectSpecBase
 
@@ -23,91 +23,33 @@ class VirtualConfiguration(BaseModel):
     configuration: Dict[str, Any]
 
 
-class AgentConfiguration:
-    def __init__(
-        self,
-        deployment: Optional[DeploymentConfiguration] = None,
-        virtual: Optional[VirtualConfiguration] = None,
-    ) -> None:
-        if deployment is None and virtual is None:
+class AgentConfiguration(BaseModel):
+    deployment: Optional[DeploymentConfiguration] = None
+    virtual: Optional[VirtualConfiguration] = None
+
+    @model_validator(mode="after")
+    def validate_configuration(self) -> AgentConfiguration:
+        if self.deployment is None and self.virtual is None:
             raise ValueError("At least one of deployment or virtual must be provided")
             # at least one or exactly one?
 
-        self.deployment = deployment
-        self.virtual = virtual
-
-    @classmethod
-    def from_dict(cls, values: Dict[str, Any]) -> AgentConfiguration:
-        deployment_values = values.get("deployment")
-        virtual_values = values.get("virtual")
-        deployment = (
-            DeploymentConfiguration.model_validate(deployment_values) if deployment_values is not None else None
-        )
-        virtual = VirtualConfiguration.model_validate(virtual_values) if virtual_values is not None else None
-        return cls(deployment=deployment, virtual=virtual)
+        return self
 
     def to_dict(self) -> Dict[str, Any]:
-        result = {}
-        if self.deployment is not None:
-            result["deployment"] = self.deployment.model_dump()
-        if self.virtual is not None:
-            result["virtual"] = self.virtual.model_dump(by_alias=True)
-        return result
+        return self.model_dump(by_alias=True, exclude_none=True)
 
 
-class AgentMetadata:
-    def __init__(
-        self,
-        name: str,
-        short_description: str,
-        long_description: str,
-        tags: List[str],
-        example_prompts: List[str],
-        cost_card: Optional[str] = None,
-        image_url: Optional[str] = None,
-    ) -> None:
-        self.name = name
-        self.short_description = short_description
-        self.long_description = long_description
-        self.tags = tags
-        self.example_prompts = example_prompts
-        self.cost_card = cost_card
-        self.image_url = image_url
-
-    @classmethod
-    def from_dict(cls, values: Dict[str, Any]) -> AgentMetadata:
-        name = values["name"]
-        short_description = values["shortDescription"]
-        long_description = values["longDescription"]
-        tags = values.get("tags", [])
-        example_prompts = values.get("examplePrompts", [])
-        cost_card = values.get("costCard")
-        image_url = values.get("imageUrl")
-
-        return cls(
-            name=name,
-            short_description=short_description,
-            long_description=long_description,
-            tags=tags,
-            example_prompts=example_prompts,
-            cost_card=cost_card,
-            image_url=image_url,
-        )
+class AgentMetadata(BaseModel):
+    name: str
+    short_description: str = Field(..., alias="shortDescription")
+    long_description: str = Field(..., alias="longDescription")
+    tags: List[str]
+    example_prompts: List[str] = Field(..., alias="examplePrompts")
+    cost_card: Optional[str] = Field(None, alias="costCard")
+    image_url: Optional[str] = Field(None, alias="imageUrl")
 
     def to_dict(self) -> Dict[str, Any]:
-        result = {
-            "name": self.name,
-            "shortDescription": self.short_description,
-            "longDescription": self.long_description,
-            "tags": self.tags,
-            "examplePrompts": self.example_prompts,
-        }
-        if self.cost_card is not None:
-            result["costCard"] = self.cost_card
-        if self.image_url is not None:
-            result["imageUrl"] = self.image_url
-
-        return result
+        return self.model_dump(by_alias=True)
 
 
 class AgentSpec(DataObjectSpecBase):
@@ -135,9 +77,9 @@ class AgentSpec(DataObjectSpecBase):
 
     @classmethod
     def from_dict(cls, values: Mapping[str, Any]) -> AgentSpec:
-        metadata = AgentMetadata.from_dict(values["metadata"])
+        metadata = AgentMetadata.model_validate(values["metadata"])
         config_values = values.get("configuration")
-        configuration = AgentConfiguration.from_dict(config_values) if config_values is not None else None
+        configuration = AgentConfiguration.model_validate(config_values) if config_values is not None else None
         return AgentSpec(metadata=metadata, configuration=configuration)
 
     def to_dict(self) -> Dict[str, Any]:
