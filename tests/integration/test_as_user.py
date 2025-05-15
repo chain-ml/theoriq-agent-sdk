@@ -9,8 +9,6 @@ from tests.integration.utils import (
     PARENT_AGENT_ENV_PREFIX,
     TEST_AGENT_DATA_LIST,
     TEST_PARENT_AGENT_DATA,
-    agent_data_obj_to_deployment_configuration,
-    agent_data_obj_to_metadata,
     agents_are_equal,
     get_echo_execute_output,
     join_threads,
@@ -43,9 +41,9 @@ def flask_apps() -> Generator[None, None, None]:
 @pytest.mark.order(1)
 def test_registration() -> None:
     for agent_data_obj in TEST_AGENT_DATA_LIST:
-        metadata = agent_data_obj_to_metadata(agent_data_obj)
-        configuration = agent_data_obj_to_deployment_configuration(agent_data_obj)
-        agent = user_manager.create_agent(metadata=metadata, configuration=configuration)
+        agent = user_manager.create_agent(
+            metadata=agent_data_obj.spec.metadata, configuration=agent_data_obj.spec.configuration
+        )
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         global_agent_map[agent.system.id] = agent
 
@@ -96,11 +94,10 @@ def test_messenger() -> None:
 @pytest.mark.order(6)
 def test_updating() -> None:
     agent_data_obj = deepcopy(TEST_PARENT_AGENT_DATA)
-    agent_data_obj.metadata.name = "Updated Parent Agent"
+    agent_data_obj.spec.metadata.name = "Updated Parent Agent"
 
     config = AgentDeploymentConfiguration.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
-    metadata = agent_data_obj_to_metadata(agent_data_obj)
-    response = user_manager.update_agent(agent_id=str(config.address), metadata=metadata)
+    response = user_manager.update_agent(agent_id=str(config.address), metadata=agent_data_obj.spec.metadata)
 
     assert response.metadata.name == "Updated Parent Agent"
 

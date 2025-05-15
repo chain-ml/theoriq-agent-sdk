@@ -30,14 +30,15 @@ PARENT_AGENT_NAME: Final[str] = "Parent Agent"
 PARENT_AGENT_ENV_PREFIX: Final[str] = "PARENT_"
 
 maybe_parent_agent_data = next(
-    (agent for agent in TEST_AGENT_DATA_LIST if agent.metadata.name == PARENT_AGENT_NAME), None
+    (agent for agent in TEST_AGENT_DATA_LIST if agent.spec.metadata.name == PARENT_AGENT_NAME),
+    None,
 )
 if maybe_parent_agent_data is None:
     raise RuntimeError("Parent agent data object not found")
 TEST_PARENT_AGENT_DATA: Final[AgentDataObject] = maybe_parent_agent_data
 
 TEST_CHILD_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
-    agent for agent in TEST_AGENT_DATA_LIST if agent.metadata.name != PARENT_AGENT_NAME
+    agent for agent in TEST_AGENT_DATA_LIST if agent.spec.metadata.name != PARENT_AGENT_NAME
 ]
 
 
@@ -127,10 +128,13 @@ def run_configurable_agent(
 
 def run_echo_agent(agent_data_obj: AgentDataObject) -> threading.Thread:
     """Run echo agent in a separate daemon thread with the assumption that env_prefix is contained in labels."""
-    agent_name = agent_data_obj.metadata.name
+    agent_name = agent_data_obj.spec.metadata.name
     execute = get_echo_execute(agent_name)
     agent_config = AgentDeploymentConfiguration.from_env(env_prefix=agent_data_obj.metadata.labels["env_prefix"])
-    port = int(agent_data_obj.spec.urls.end_point.split(":")[-1])
+    configuration = agent_data_obj.spec.configuration
+    if configuration is None or configuration.deployment is None:
+        raise RuntimeError("No deployment information")
+    port = int(configuration.deployment.url.split(":")[-1])
 
     thread = threading.Thread(target=run_agent_flask_app, args=(port, agent_config, execute))
     thread.daemon = True

@@ -4,42 +4,12 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional
 
+from ...types import AgentConfiguration, AgentMetadata
 from biscuit_auth import KeyPair
 from pydantic import BaseModel
 
 from . import AgentResponse, ProtocolClient
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
-from ...biscuit import TheoriqRequest
-
-
-class Metadata(BaseModel):
-    name: str
-    shortDescription: str
-    longDescription: str
-    tags: List[str]
-    examplePrompts: List[str]
-    costCard: Optional[str] = None
-    imageUrl: Optional[str] = None
-
-
-class Header(BaseModel):
-    name: str
-    value: str
-
-
-class DeploymentConfiguration(BaseModel):
-    headers: List[Header]
-    url: str
-
-
-class VirtualConfiguration(BaseModel):
-    agentId: str
-    configuration: Dict[str, Any]
-
-
-class Configuration(BaseModel):
-    deployment: Optional[DeploymentConfiguration] = None
-    virtual: Optional[VirtualConfiguration] = None
 
 
 class AgentManager:
@@ -57,8 +27,8 @@ class AgentManager:
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.get_agent(agent_id=agent_id, biscuit=biscuit)
 
-    def create_agent(self, metadata: Metadata, configuration: Configuration) -> AgentResponse:
-        payload_dict = {"metadata": metadata.model_dump(), "configuration": configuration.model_dump(exclude_none=True)}
+    def create_agent(self, metadata: AgentMetadata, configuration: AgentConfiguration) -> AgentResponse:
+        payload_dict = {"metadata": metadata.to_dict(), "configuration": configuration.to_dict()}
         payload = json.dumps(payload_dict).encode("utf-8")
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.post_agent(biscuit=biscuit, content=payload)
@@ -78,13 +48,16 @@ class AgentManager:
         return self._client.post_configure(biscuit=theoriq_biscuit, to_addr=agent.system.id)
 
     def update_agent(
-        self, agent_id: str, metadata: Optional[Metadata] = None, configuration: Optional[Configuration] = None
+        self,
+        agent_id: str,
+        metadata: Optional[AgentMetadata] = None,
+        configuration: Optional[AgentConfiguration] = None,
     ) -> AgentResponse:
         payload_dict: Dict[str, Any] = {}
         if metadata is not None:
-            payload_dict["metadata"] = metadata.model_dump()
+            payload_dict["metadata"] = metadata.to_dict()
         if configuration is not None:
-            payload_dict["configuration"] = configuration.model_dump(exclude_none=True)
+            payload_dict["configuration"] = configuration.to_dict()
 
         payload = json.dumps(payload_dict).encode("utf-8")
         biscuit = self._biscuit_provider.get_biscuit()

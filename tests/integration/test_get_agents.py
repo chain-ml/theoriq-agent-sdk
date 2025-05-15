@@ -21,7 +21,7 @@ def get_user_address_from_api_key(api_key: str) -> str:
 def test_get_agents_with_client() -> None:
     client = ProtocolClient.from_env()
     agents = client.get_agents()
-    assert len(agents) > 0
+    assert len(agents) > 0  # require at least one minted agent
 
     for agent in agents:
         assert isinstance(agent, AgentResponse)
