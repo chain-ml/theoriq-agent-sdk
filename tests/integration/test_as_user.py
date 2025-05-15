@@ -10,6 +10,8 @@ from tests.integration.utils import (
     TEST_AGENT_DATA_LIST,
     TEST_PARENT_AGENT_DATA,
     agents_are_equal,
+    ensure_configuration,
+    ensure_metadata,
     get_echo_execute_output,
     join_threads,
     run_echo_agents,
@@ -41,7 +43,9 @@ def flask_apps() -> Generator[None, None, None]:
 @pytest.mark.order(1)
 def test_registration() -> None:
     for agent_data_obj in TEST_AGENT_DATA_LIST:
-        agent = user_manager.create_agent(agent_data_obj)
+        agent = user_manager.create_agent(
+            metadata=ensure_metadata(agent_data_obj), configuration=ensure_configuration(agent_data_obj)
+        )
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         global_agent_map[agent.system.id] = agent
 
@@ -94,7 +98,7 @@ def test_updating() -> None:
     agent_data_obj.metadata.name = "Updated Parent Agent"
 
     config = AgentDeploymentConfiguration.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
-    response = user_manager.update_agent(agent_data_obj, agent_id=str(config.address))
+    response = user_manager.update_agent(agent_id=str(config.address), metadata=ensure_metadata(agent_data_obj))
 
     assert response.metadata.name == "Updated Parent Agent"
 

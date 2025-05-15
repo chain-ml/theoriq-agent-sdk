@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, Optional, Sequence, List
+from typing import Any, Dict, List, Mapping, Optional
 
 import yaml
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from .data_object import DataObject, DataObjectSpecBase
 
