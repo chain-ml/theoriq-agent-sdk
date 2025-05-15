@@ -12,7 +12,7 @@ from tests.integration.utils import (
     agent_data_obj_to_metadata,
     agent_data_obj_to_deployment_configuration,
     join_threads,
-    run_configurable_agent,
+    run_configurable_agent, get_configurable_execute_output,
 )
 
 from theoriq.api.v1alpha2 import AgentResponse
@@ -58,18 +58,22 @@ def test_registration() -> None:
 
 @pytest.mark.order(2)
 def test_configuration() -> None:
-    for agent_id in global_agent_map.keys():
-        metadata = Metadata(
-            name=f"Configurable {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            shortDescription="short",
-            longDescription="long",
-            tags=[],
-            examplePrompts=[],
-        )
+    parent_agent_id = list(global_agent_map.keys())[0]
 
-        agent = user_manager.configure_agent(agent_id, metadata=metadata, config={"field": "abc", "number": 123})
-        # assert agent.system.state == "online"
-        print(f"Successfully configured `{agent_id}`\n")
+    metadata = Metadata(
+        name=f"Configurable {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        shortDescription="short",
+        longDescription="long",
+        tags=[],
+        examplePrompts=[],
+    )
+
+    config = {"field": "test", "number": 5}
+
+    agent = user_manager.configure_agent(agent_id=parent_agent_id, metadata=metadata, config=config)
+    assert agent.system.state == "configured"
+    print(f"Successfully configured new `{agent.system.id}` with {config=}\n")
+    global_agent_map[agent.system.id] = agent
 
 
 @pytest.mark.order(5)
@@ -79,12 +83,10 @@ def test_messenger() -> None:
     messenger = Messenger.from_api_key(api_key=THEORIQ_API_KEY)
 
     for agent_id, agent in global_agent_map.items():
-        # if not agent.is_configurable:
-        #     response = messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=agent_id)
-        #     assert response.body.extract_last_text() == get_echo_execute_output(
-        #         message=message, agent_name=agent.metadata.name
-        #     )
-        #     continue
+        if agent.system.state == "configured" and "requireConfiguration" not in agent.system.tags:
+            response = messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=agent_id)
+            assert response.body.extract_last_text() == get_configurable_execute_output(agent.configuration.virtual.configuration)
+            continue
 
         with pytest.raises(httpx.HTTPStatusError) as e:
             messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=agent_id)

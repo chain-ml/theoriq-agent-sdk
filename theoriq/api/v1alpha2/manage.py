@@ -63,7 +63,7 @@ class AgentManager:
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.post_agent(biscuit=biscuit, content=payload)
 
-    def configure_agent(self, agent_id: str, metadata: Metadata, config: Dict[str, Any]):
+    def configure_agent(self, agent_id: str, metadata: Metadata, config: Dict[str, Any]) -> AgentResponse:
         configuration = Configuration(virtual=VirtualConfiguration(agentId=agent_id, configuration=config))
         agent = self.create_agent(metadata=metadata, configuration=configuration)
 
