@@ -112,18 +112,26 @@ class AgentMetadata:
 
 class AgentSpec(DataObjectSpecBase):
     def __init__(self, metadata: AgentMetadata, configuration: Optional[AgentConfiguration] = None) -> None:
-        self.metadata = metadata
-        self.configuration = configuration
+        self._metadata = metadata
+        self._configuration = configuration
+
+    @property
+    def metadata(self) -> AgentMetadata:
+        return self._metadata
+
+    @property
+    def configuration(self) -> AgentConfiguration:
+        if self._configuration is None:
+            raise RuntimeError("AgentConfiguration is None")
+        return self._configuration
+
+    @property
+    def maybe_configuration(self) -> Optional[AgentConfiguration]:
+        return self._configuration
 
     @property
     def has_configuration(self) -> bool:
         return self.configuration is not None
-
-    @property
-    def ensure_configuration(self) -> AgentConfiguration:
-        if self.configuration is None:
-            raise RuntimeError("Called ensure_configuration() but configuration is None")
-        return self.configuration
 
     @classmethod
     def from_dict(cls, values: Mapping[str, Any]) -> AgentSpec:

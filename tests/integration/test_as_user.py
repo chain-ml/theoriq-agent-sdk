@@ -42,7 +42,7 @@ def flask_apps() -> Generator[None, None, None]:
 def test_registration() -> None:
     for agent_data_obj in TEST_AGENT_DATA_LIST:
         agent = user_manager.create_agent(
-            metadata=agent_data_obj.spec.metadata, configuration=agent_data_obj.spec.ensure_configuration
+            metadata=agent_data_obj.spec.metadata, configuration=agent_data_obj.spec.configuration
         )
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         global_agent_map[agent.system.id] = agent
