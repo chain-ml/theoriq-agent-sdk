@@ -62,7 +62,7 @@ def run_agent_flask_app(execute: ExecuteRequestFn, agent_config: AgentDeployment
 
 def run_echo_agent(agent_data_obj: AgentDataObject) -> threading.Thread:
     """Run an agent in a separate daemon thread with the assumption that env_prefix is contained in labels."""
-    agent_name = agent_data_obj.metadata.name
+    agent_name = agent_data_obj.spec.metadata.name
     execute = get_echo_execute(agent_name)
     agent_config = AgentDeploymentConfiguration.from_env(env_prefix=agent_data_obj.metadata.labels["env_prefix"])
     configuration = agent_data_obj.spec.configuration
