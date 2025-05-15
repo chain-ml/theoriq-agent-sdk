@@ -94,7 +94,7 @@ def test_messenger() -> None:
 @pytest.mark.order(6)
 def test_updating() -> None:
     agent_data_obj = deepcopy(TEST_PARENT_AGENT_DATA)
-    agent_data_obj.metadata.name = "Updated Parent Agent"
+    agent_data_obj.spec.metadata.name = "Updated Parent Agent"
 
     config = AgentDeploymentConfiguration.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
     response = user_manager.update_agent(agent_id=str(config.address), metadata=agent_data_obj.spec.metadata)
