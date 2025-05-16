@@ -25,7 +25,7 @@ def test_get_agents_with_client() -> None:
 
     for agent in agents:
         assert isinstance(agent, AgentResponse)
-        assert agent.configuration.deployment is None and agent.configuration.virtual is None
+        assert agent.configuration.is_empty
 
 
 def test_get_agents_with_manager() -> None:
@@ -38,4 +38,4 @@ def test_get_agents_with_manager() -> None:
     for agent in agents:
         if agent.system.owner_address == user_address:
             agent_private = manager.get_agent(agent.system.id)
-            assert agent_private.configuration.deployment or agent_private.configuration.virtual
+            assert agent_private.configuration.is_valid
