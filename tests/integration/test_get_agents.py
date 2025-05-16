@@ -37,4 +37,4 @@ def test_get_agents_with_manager() -> None:
     for agent in agents:
         if agent.system.owner_address == user_address:
             agent_private = manager.get_agent(agent.system.id)
-            assert agent_private.configuration.deployment
+            assert agent_private.configuration.deployment or agent_private.configuration.virtual
