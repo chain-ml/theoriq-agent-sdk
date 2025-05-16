@@ -7,15 +7,9 @@ import dotenv
 import httpx
 import pytest
 from pydantic import BaseModel, Field
-from tests.integration.utils import (
-    TEST_PARENT_AGENT_DATA,
-    get_configurable_execute_output,
-    join_threads,
-    run_configurable_agent,
-)
+from tests.integration.utils import TEST_PARENT_AGENT_DATA, get_configurable_execute_output, join_threads, run_agent
 
 from theoriq.api.v1alpha2 import AgentResponse
-from theoriq.api.v1alpha2.configure import AgentConfigurator
 from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.biscuit import TheoriqBudget
@@ -38,11 +32,7 @@ class TestConfig(BaseModel):
 @pytest.fixture(scope="session", autouse=True)
 def flask_apps() -> Generator[None, None, None]:
     logging.basicConfig(level=logging.INFO)
-    thread = run_configurable_agent(
-        agent_data_obj=TEST_PARENT_AGENT_DATA,
-        schema=TestConfig.model_json_schema(),
-        agent_configurator=AgentConfigurator.default(),
-    )
+    thread = run_agent(agent_data_obj=TEST_PARENT_AGENT_DATA, schema=TestConfig.model_json_schema())
     yield
     join_threads([thread])
 
@@ -85,8 +75,9 @@ def test_messenger() -> None:
             response = messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=agent_id)
             if agent.configuration.virtual is None:
                 raise RuntimeError
+            deployed_agent_name = global_agent_map[agent.configuration.virtual.agent_id].metadata.name
             assert response.body.extract_last_text() == get_configurable_execute_output(
-                agent.configuration.virtual.configuration
+                agent.configuration.virtual.configuration, message=message, agent_name=deployed_agent_name
             )
             continue
 

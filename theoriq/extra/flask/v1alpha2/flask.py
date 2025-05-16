@@ -6,7 +6,7 @@ import threading
 from typing import Any, Dict, Optional
 
 import pydantic
-from flask import Blueprint, Response, jsonify, request
+from flask import Blueprint, Flask, Response, jsonify, request
 
 import theoriq
 from theoriq import ExecuteRuntimeError
@@ -55,6 +55,14 @@ def theoriq_blueprint(
     v1alpha2_blueprint = _build_v1alpha2_blueprint(execute_fn, agent_configurator)
     main_blueprint.register_blueprint(v1alpha2_blueprint)
     return main_blueprint
+
+
+def run_agent_flask_app(
+    theoriq_bluprint: Blueprint, port: int, host: str = "0.0.0.0", name: Optional[str] = None
+) -> None:
+    app = Flask(name or f"Agent on port {port}")
+    app.register_blueprint(theoriq_bluprint)
+    app.run(host=host, port=port)
 
 
 def configure_error_handlers(main_blueprint: Blueprint) -> None:
