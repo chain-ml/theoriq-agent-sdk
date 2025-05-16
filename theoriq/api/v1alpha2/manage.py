@@ -64,6 +64,7 @@ class AgentManager:
         return self._client.post_configure(biscuit=theoriq_biscuit, to_addr=agent.system.id)
 
     def mint_agent(self, agent_id: str) -> AgentResponse:
+        # TODO: need to post configure here?
         return self._client.post_mint(biscuit=self._biscuit_provider.get_biscuit(), agent_id=agent_id)
 
     def unmint_agent(self, agent_id: str) -> AgentResponse:
