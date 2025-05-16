@@ -1,4 +1,3 @@
-import datetime
 import logging
 import os
 from typing import Dict, Final, Generator
@@ -25,7 +24,7 @@ global_agent_map: Dict[str, AgentResponse] = {}
 
 
 class TestConfig(BaseModel):
-    field: str = Field(description="Text field")
+    text: str = Field(description="Text field")
     number: int = Field(description="An integer number")
 
 
@@ -50,18 +49,19 @@ def test_registration() -> None:
 def test_configuration() -> None:
     parent_agent_id = list(global_agent_map.keys())[0]
 
-    metadata = AgentMetadata(
-        name=f"Configurable {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-        short_description="short",
-        long_description="long",
-    )
+    configs = [TestConfig(text="test value", number=42), TestConfig(text="another value", number=-5)]
 
-    config = {"field": "test", "number": 5}
+    for i, config in enumerate(configs, start=1):
+        metadata = AgentMetadata(
+            name=f"Configurable Agent #{i}",
+            short_description=f"Short description #{i}",
+            long_description=f"Long description #{i}",
+        )
 
-    agent = user_manager.configure_agent(agent_id=parent_agent_id, metadata=metadata, config=config)
-    assert agent.system.state == "configured"
-    print(f"Successfully configured new `{agent.system.id}` with {config=}\n")
-    global_agent_map[agent.system.id] = agent
+        agent = user_manager.configure_agent(agent_id=parent_agent_id, metadata=metadata, config=config.model_dump())
+        assert agent.system.state == "configured"
+        print(f"Successfully configured new `{agent.system.id}` with {config=}\n")
+        global_agent_map[agent.system.id] = agent
 
 
 @pytest.mark.order(5)
