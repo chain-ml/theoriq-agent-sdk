@@ -52,6 +52,15 @@ class Configuration(BaseModel):
             return Virtual(**value)
         return value
 
+    # noinspection PyNestedDecorators
+    @field_validator("deployment", mode="before")
+    @classmethod
+    def validate_deployment(cls, value: Any) -> Optional[Any]:
+        # Handle cases where `deployment` is an empty dict or None
+        if value is None or value == {}:
+            return None
+        return value
+
 
 class AgentResponse(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
