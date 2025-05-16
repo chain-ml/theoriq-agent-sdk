@@ -49,8 +49,8 @@ class AgentMetadata(BaseModel):
     name: str
     short_description: str
     long_description: str
-    tags: List[str]
-    example_prompts: List[str]
+    tags: List[str] = Field(default_factory=list)
+    example_prompts: List[str] = Field(default_factory=list)
     cost_card: Optional[str] = None
     image_url: Optional[str] = None
 

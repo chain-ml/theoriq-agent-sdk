@@ -9,18 +9,18 @@ import pytest
 from pydantic import BaseModel, Field
 from tests.integration.utils import (
     TEST_PARENT_AGENT_DATA,
-    agent_data_obj_to_metadata,
-    agent_data_obj_to_deployment_configuration,
+    get_configurable_execute_output,
     join_threads,
-    run_configurable_agent, get_configurable_execute_output,
+    run_configurable_agent,
 )
 
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.configure import AgentConfigurator
-from theoriq.api.v1alpha2.manage import AgentManager, Configuration, VirtualConfiguration, Metadata
+from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
+from theoriq.types import AgentMetadata
 
 dotenv.load_dotenv()
 
@@ -49,9 +49,9 @@ def flask_apps() -> Generator[None, None, None]:
 
 @pytest.mark.order(1)
 def test_registration() -> None:
-    metadata = agent_data_obj_to_metadata(TEST_PARENT_AGENT_DATA)
-    configuration = agent_data_obj_to_deployment_configuration(TEST_PARENT_AGENT_DATA)
-    agent = user_manager.create_agent(metadata=metadata, configuration=configuration)
+    agent = user_manager.create_agent(
+        metadata=TEST_PARENT_AGENT_DATA.spec.metadata, configuration=TEST_PARENT_AGENT_DATA.spec.configuration
+    )
     print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
     global_agent_map[agent.system.id] = agent
 
@@ -60,12 +60,10 @@ def test_registration() -> None:
 def test_configuration() -> None:
     parent_agent_id = list(global_agent_map.keys())[0]
 
-    metadata = Metadata(
+    metadata = AgentMetadata(
         name=f"Configurable {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-        shortDescription="short",
-        longDescription="long",
-        tags=[],
-        examplePrompts=[],
+        short_description="short",
+        long_description="long",
     )
 
     config = {"field": "test", "number": 5}
@@ -85,7 +83,11 @@ def test_messenger() -> None:
     for agent_id, agent in global_agent_map.items():
         if agent.system.state == "configured" and "requireConfiguration" not in agent.system.tags:
             response = messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=agent_id)
-            assert response.body.extract_last_text() == get_configurable_execute_output(agent.configuration.virtual.configuration)
+            if agent.configuration.virtual is None:
+                raise RuntimeError
+            assert response.body.extract_last_text() == get_configurable_execute_output(
+                agent.configuration.virtual.configuration
+            )
             continue
 
         with pytest.raises(httpx.HTTPStatusError) as e:

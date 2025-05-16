@@ -4,10 +4,8 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional
 
-from ...types import AgentConfiguration, AgentMetadata
-from biscuit_auth import KeyPair
-from pydantic import BaseModel
-
+from ...biscuit import TheoriqRequest
+from ...types import AgentConfiguration, AgentMetadata, VirtualConfiguration
 from . import AgentResponse, ProtocolClient
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 
@@ -33,9 +31,12 @@ class AgentManager:
         biscuit = self._biscuit_provider.get_biscuit()
         return self._client.post_agent(biscuit=biscuit, content=payload)
 
-    def configure_agent(self, agent_id: str, metadata: Metadata, config: Dict[str, Any]) -> AgentResponse:
-        configuration = Configuration(virtual=VirtualConfiguration(agentId=agent_id, configuration=config))
+    def configure_agent(self, agent_id: str, metadata: AgentMetadata, config: Dict[str, Any]) -> AgentResponse:
+        configuration = AgentConfiguration(virtual=VirtualConfiguration(agent_id=agent_id, configuration=config))
         agent = self.create_agent(metadata=metadata, configuration=configuration)
+
+        if agent.configuration.virtual is None:
+            raise RuntimeError
 
         theoriq_request = TheoriqRequest.from_body(
             body=agent.configuration.virtual.configuration_hash.encode("utf-8"),
