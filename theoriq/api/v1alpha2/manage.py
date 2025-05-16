@@ -5,7 +5,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from ...biscuit import TheoriqRequest
-from ...types import AgentConfiguration, AgentMetadata, VirtualConfiguration
+from ...types import AgentConfiguration, AgentMetadata
 from . import AgentResponse, ProtocolClient
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 
@@ -29,24 +29,8 @@ class AgentManager:
         payload_dict = {"metadata": metadata.to_dict(), "configuration": configuration.to_dict()}
         payload = json.dumps(payload_dict).encode("utf-8")
         biscuit = self._biscuit_provider.get_biscuit()
-        return self._client.post_agent(biscuit=biscuit, content=payload)
-
-    def configure_agent(self, agent_id: str, metadata: AgentMetadata, config: Dict[str, Any]) -> AgentResponse:
-        configuration = AgentConfiguration(virtual=VirtualConfiguration(agent_id=agent_id, configuration=config))
-        agent = self.create_agent(metadata=metadata, configuration=configuration)
-
-        if agent.configuration.virtual is None:
-            raise RuntimeError
-
-        theoriq_request = TheoriqRequest.from_body(
-            body=agent.configuration.virtual.configuration_hash.encode("utf-8"),
-            from_addr="USER_ADDRESS",  # user address
-            to_addr=agent.system.id,
-        )
-        theoriq_biscuit = self._biscuit_provider.get_biscuit()
-        theoriq_biscuit = theoriq_biscuit.attenuate(theoriq_request.to_theoriq_fact(uuid.uuid4()))
-
-        return self._client.post_configure(biscuit=theoriq_biscuit, to_addr=agent.system.id)
+        agent = self._client.post_agent(biscuit=biscuit, content=payload)
+        return self._post_configure_if_needed(agent)
 
     def update_agent(
         self,
@@ -62,7 +46,22 @@ class AgentManager:
 
         payload = json.dumps(payload_dict).encode("utf-8")
         biscuit = self._biscuit_provider.get_biscuit()
-        return self._client.patch_agent(biscuit=biscuit, content=payload, agent_id=agent_id)
+        agent = self._client.patch_agent(biscuit=biscuit, content=payload, agent_id=agent_id)
+        return self._post_configure_if_needed(agent)
+
+    def _post_configure_if_needed(self, agent: AgentResponse) -> AgentResponse:
+        if agent.configuration.virtual is None:
+            return agent  # not a configurable agent
+
+        theoriq_request = TheoriqRequest.from_body(
+            body=agent.configuration.virtual.configuration_hash.encode("utf-8"),
+            from_addr="USER_ADDRESS",  # user address
+            to_addr=agent.system.id,
+        )
+        theoriq_biscuit = self._biscuit_provider.get_biscuit()
+        theoriq_biscuit = theoriq_biscuit.attenuate(theoriq_request.to_theoriq_fact(uuid.uuid4()))
+
+        return self._client.post_configure(biscuit=theoriq_biscuit, to_addr=agent.system.id)
 
     def mint_agent(self, agent_id: str) -> AgentResponse:
         return self._client.post_mint(biscuit=self._biscuit_provider.get_biscuit(), agent_id=agent_id)
