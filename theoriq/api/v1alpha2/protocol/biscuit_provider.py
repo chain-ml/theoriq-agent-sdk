@@ -10,6 +10,7 @@ from theoriq.api.v1alpha2 import ProtocolClient
 from theoriq.biscuit import AgentAddress, TheoriqBiscuit
 from theoriq.biscuit.authentication_biscuit import AuthenticationBiscuit, AuthenticationFacts
 from theoriq.biscuit.facts import ExpiresAtFact
+from theoriq.biscuit.utils import get_user_address_from_biscuit
 
 
 class BiscuitProvider(abc.ABC):
@@ -47,6 +48,7 @@ class BiscuitProviderFromAPIKey(BiscuitProvider):
     def __init__(self, api_key: str, client: ProtocolClient) -> None:
         super().__init__()
         self._api_key_biscuit = TheoriqBiscuit.from_token(token=api_key, public_key=client.public_key)
+        self._address = get_user_address_from_biscuit(self._api_key_biscuit.biscuit)
         self._client = client
 
     def _get_new_biscuit(self) -> Tuple[TheoriqBiscuit, int]:
