@@ -22,10 +22,12 @@ class BiscuitProvider(abc.ABC):
     @property
     @abc.abstractmethod
     def address(self) -> str:
+        """Get the address of the entity that issued the biscuit."""
         pass
 
     @abc.abstractmethod
     def _get_new_biscuit(self) -> Tuple[TheoriqBiscuit, int]:
+        """Get new biscuit and its expiration time."""
         pass
 
     @abc.abstractmethod
