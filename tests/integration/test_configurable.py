@@ -58,6 +58,22 @@ def test_registration() -> None:
 
 
 @pytest.mark.order(2)
+def test_incorrect_configuration() -> None:
+    parent_agent_id = list(global_agent_map.keys())[0]
+
+    metadata = AgentMetadata(
+        name="Incorrect Configurable Agent",
+        short_description="Short description",
+        long_description="Long description",
+    )
+    configuration = AgentConfiguration.for_virtual(agent_id=parent_agent_id, configuration={"incorrect": "config"})
+
+    with pytest.raises(httpx.HTTPStatusError) as e:
+        user_manager.create_agent(metadata=metadata, configuration=configuration)
+    assert e.value.response.status_code == 502
+
+
+@pytest.mark.order(3)
 def test_configuration() -> None:
     parent_agent_id = list(global_agent_map.keys())[0]
 
@@ -89,7 +105,7 @@ def test_messenger() -> None:
         assert e.value.response.status_code == 400
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(5)
 def test_update_configuration() -> None:
     agent = next(agent for agent_id, agent in global_agent_map.items() if agent.configuration.is_virtual)
     deployed_agent_id = agent.configuration.ensure_virtual.agent_id
