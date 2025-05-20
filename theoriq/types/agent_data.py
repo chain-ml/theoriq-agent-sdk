@@ -30,6 +30,28 @@ class AgentConfiguration(BaseModel):
     deployment: Optional[DeploymentConfiguration] = None
     virtual: Optional[VirtualConfiguration] = None
 
+    @classmethod
+    def for_deployed(cls, url: str, headers: Optional[List[Header]] = None) -> AgentConfiguration:
+        """Build a new configuration for a deployed agent."""
+        return cls(deployment=DeploymentConfiguration(url=url, headers=headers or []), virtual=None)
+
+    @classmethod
+    def for_virtual(cls, agent_id: str, configuration: Dict[str, Any]) -> AgentConfiguration:
+        """Build a new configuration for a virtual agent."""
+        return cls(deployment=None, virtual=VirtualConfiguration(agent_id=agent_id, configuration=configuration))
+
+    @property
+    def ensure_deployment(self) -> DeploymentConfiguration:
+        if self.deployment is None:
+            raise RuntimeError("DeploymentConfiguration is None")
+        return self.deployment
+
+    @property
+    def ensure_virtual(self) -> VirtualConfiguration:
+        if self.virtual is None:
+            raise RuntimeError("VirtualConfiguration is None")
+        return self.virtual
+
     @model_validator(mode="after")
     def validate_configuration(self) -> AgentConfiguration:
         both_are_none = self.deployment is None and self.virtual is None

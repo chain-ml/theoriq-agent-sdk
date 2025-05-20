@@ -13,7 +13,7 @@ from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
-from theoriq.types import AgentConfiguration, AgentMetadata, VirtualConfiguration
+from theoriq.types import AgentConfiguration, AgentMetadata
 
 dotenv.load_dotenv()
 
@@ -21,11 +21,6 @@ THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
 user_manager = AgentManager.from_api_key(api_key=THEORIQ_API_KEY)
 
 global_agent_map: Dict[str, AgentResponse] = {}
-
-
-def is_configured(agent: AgentResponse) -> bool:
-    # TODO: investigate
-    return agent.system.state == "configured" and "requireConfiguration" not in agent.system.tags
 
 
 class TestConfig(BaseModel):
@@ -38,11 +33,10 @@ def assert_send_message_to_configurable_agent(agent: AgentResponse, message: str
     blocks = [TextItemBlock(message)]
     response = messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=agent.system.id)
 
-    if agent.configuration.virtual is None:
-        raise RuntimeError
-    deployed_agent_name = global_agent_map[agent.configuration.virtual.agent_id].metadata.name
+    virtual = agent.configuration.ensure_virtual
+    deployed_agent_name = global_agent_map[virtual.agent_id].metadata.name
     assert response.body.extract_last_text() == get_configurable_execute_output(
-        agent.configuration.virtual.configuration, message=message, agent_name=deployed_agent_name
+        virtual.configuration, message=message, agent_name=deployed_agent_name
     )
 
 
@@ -75,20 +69,18 @@ def test_configuration() -> None:
             short_description=f"Short description #{i}",
             long_description=f"Long description #{i}",
         )
-        configuration = AgentConfiguration(
-            virtual=VirtualConfiguration(agent_id=parent_agent_id, configuration=config.model_dump())
-        )
+        configuration = AgentConfiguration.for_virtual(agent_id=parent_agent_id, configuration=config.model_dump())
 
         agent = user_manager.create_agent(metadata=metadata, configuration=configuration)
-        assert is_configured(agent)
+        assert agent.configuration.is_virtual
         print(f"Successfully configured new `{agent.system.id}` with {config=}\n")
         global_agent_map[agent.system.id] = agent
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(4)
 def test_messenger() -> None:
     for agent in global_agent_map.values():
-        if is_configured(agent):
+        if agent.configuration.is_virtual:
             assert_send_message_to_configurable_agent(agent)
             continue
 
@@ -99,16 +91,12 @@ def test_messenger() -> None:
 
 @pytest.mark.order(4)
 def test_update_configuration() -> None:
-    agent = next(agent for agent_id, agent in global_agent_map.items() if is_configured(agent))
-    if agent.configuration.virtual is None:
-        raise RuntimeError
-    deployed_agent_id = agent.configuration.virtual.agent_id
+    agent = next(agent for agent_id, agent in global_agent_map.items() if agent.configuration.is_virtual)
+    deployed_agent_id = agent.configuration.ensure_virtual.agent_id
 
     new_config = TestConfig(text="new test value", number=43)
 
-    configuration = AgentConfiguration(
-        virtual=VirtualConfiguration(agent_id=deployed_agent_id, configuration=new_config.model_dump())
-    )
+    configuration = AgentConfiguration.for_virtual(agent_id=deployed_agent_id, configuration=new_config.model_dump())
 
     updated_agent = user_manager.update_agent(agent_id=agent.system.id, configuration=configuration)
     assert updated_agent.system.id == agent.system.id

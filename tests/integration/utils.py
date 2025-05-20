@@ -80,10 +80,8 @@ def run_agent(agent_data_obj: AgentDataObject, schema: Optional[Dict[str, Any]])
     If schema is provided, use echo_execute_configurable(), otherwise echo_execute().
     """
     agent_config = AgentDeploymentConfiguration.from_env(env_prefix=agent_data_obj.metadata.labels["env_prefix"])
-    configuration = agent_data_obj.spec.configuration
-    if configuration is None or configuration.deployment is None:
-        raise RuntimeError("No deployment information")
-    port = int(configuration.deployment.url.split(":")[-1])
+    deployment = agent_data_obj.spec.configuration.ensure_deployment
+    port = int(deployment.url.split(":")[-1])
 
     agent_name = agent_data_obj.spec.metadata.name
     execute = get_echo_execute(agent_name) if schema is None else get_echo_execute_configurable(agent_name)
