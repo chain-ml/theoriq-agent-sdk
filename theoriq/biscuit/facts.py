@@ -7,7 +7,7 @@ from __future__ import annotations
 import abc
 import itertools
 import time
-from typing import Generic, TypeVar
+from typing import Generic, List, TypeVar
 from uuid import UUID
 
 from biscuit_auth import BlockBuilder, Fact, Rule
@@ -34,7 +34,7 @@ class TheoriqFactBase(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def to_facts(self) -> list[Fact]:
+    def to_facts(self) -> List[Fact]:
         pass
 
     def to_block_builder(self) -> BlockBuilder:
@@ -61,7 +61,7 @@ class ExpiresAtFact(TheoriqFactBase):
         [expires_at] = fact.terms
         return cls(expires_at=expires_at)
 
-    def to_facts(self) -> list[Fact]:
+    def to_facts(self) -> List[Fact]:
         fact = Fact("theoriq:expires_at({expires_at})", {"expires_at": self.expires_at})
         return [fact]
 
@@ -87,7 +87,7 @@ class SubjectFact(TheoriqFactBase):
         [address] = fact.terms
         return cls(agent_id=address)
 
-    def to_facts(self) -> list[Fact]:
+    def to_facts(self) -> List[Fact]:
         fact = Fact(
             """theoriq:subject("agent", {agent_id})""",
             {"agent_id": self.agent_id},
@@ -123,7 +123,7 @@ class RequestFact(TheoriqFactBase):
         [req_id, body_hash, from_addr, to_addr] = fact.terms
         return cls(request_id=req_id, body_hash=body_hash, from_addr=from_addr, to_addr=to_addr)
 
-    def to_facts(self) -> list[Fact]:
+    def to_facts(self) -> List[Fact]:
         fact = Fact(
             "theoriq:request({req_id}, {body_hash}, {from_addr}, {to_addr})",
             {
@@ -161,7 +161,7 @@ class BudgetFact(TheoriqFactBase):
         [req_id, amount, currency, voucher] = fact.terms
         return cls(request_id=req_id, amount=amount, currency=currency, voucher=voucher)
 
-    def to_facts(self) -> list[Fact]:
+    def to_facts(self) -> List[Fact]:
         """Convert to a biscuit fact"""
         fact = Fact(
             "theoriq:budget({req_id}, {amount}, {currency}, {voucher})",
@@ -193,7 +193,7 @@ class ResponseFact(TheoriqFactBase):
         [req_id, body_hash, to_addr] = fact.terms
         return cls(request_id=req_id, body_hash=body_hash, to_addr=to_addr)
 
-    def to_facts(self) -> list[Fact]:
+    def to_facts(self) -> List[Fact]:
         fact = Fact(
             "theoriq:response({req_id}, {body_hash}, {to_addr})",
             {"req_id": str(self.request_id), "body_hash": str(self.body_hash), "to_addr": self.to_addr},
@@ -219,7 +219,7 @@ class CostFact(TheoriqFactBase):
         [req_id, amount, currency] = fact.terms
         return cls(request_id=req_id, amount=amount, currency=currency)
 
-    def to_facts(self) -> list[Fact]:
+    def to_facts(self) -> List[Fact]:
         fact = Fact(
             "theoriq:cost({req_id}, {amount}, {currency})",
             {"req_id": str(self.request_id), "amount": self.amount, "currency": self.currency},
@@ -250,7 +250,7 @@ class ExecuteRequestFacts(TheoriqFactBase):
         budget = BudgetFact(request_id=req_id, amount=amount, currency=currency, voucher=voucher)
         return cls(request=request, budget=budget)
 
-    def to_facts(self) -> list[Fact]:
+    def to_facts(self) -> List[Fact]:
         facts = [self.request.to_facts(), self.budget.to_facts()]
         return list(itertools.chain.from_iterable(facts))
 
@@ -277,7 +277,7 @@ class ExecuteResponseFacts(TheoriqFactBase):
         cost = CostFact(request_id=req_id, amount=amount, currency=currency)
         return cls(response=response, cost=cost)
 
-    def to_facts(self) -> list[Fact]:
+    def to_facts(self) -> List[Fact]:
         facts = [self.response.to_facts(), self.cost.to_facts()]
         return list(itertools.chain.from_iterable(facts))
 
