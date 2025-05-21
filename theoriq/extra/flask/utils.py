@@ -1,4 +1,3 @@
-import logging
 from typing import Optional, Union
 
 from flask import Blueprint, Flask

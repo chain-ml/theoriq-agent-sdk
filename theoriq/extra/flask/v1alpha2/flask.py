@@ -6,7 +6,7 @@ import threading
 from typing import Any, Dict, Optional
 
 import pydantic
-from flask import Blueprint, Flask, Response, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 
 import theoriq
 from theoriq import ExecuteRuntimeError
