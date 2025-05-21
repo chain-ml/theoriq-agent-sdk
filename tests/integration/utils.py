@@ -14,7 +14,8 @@ from tests import DATA_DIR
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2 import AgentResponse, ExecuteRequestFn
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
-from theoriq.extra.flask.v1alpha2.flask import run_agent_flask_app, theoriq_blueprint
+from theoriq.extra.flask import run_agent_flask_app
+from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
 from theoriq.types import AgentDataObject
 
 logger = logging.getLogger(__name__)

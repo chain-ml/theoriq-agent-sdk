@@ -57,14 +57,6 @@ def theoriq_blueprint(
     return main_blueprint
 
 
-def run_agent_flask_app(
-    theoriq_bluprint: Blueprint, port: int, host: str = "0.0.0.0", name: Optional[str] = None
-) -> None:
-    app = Flask(name or f"Agent on port {port}")
-    app.register_blueprint(theoriq_bluprint)
-    app.run(host=host, port=port)
-
-
 def configure_error_handlers(main_blueprint: Blueprint) -> None:
     @main_blueprint.errorhandler(Exception)
     def handle_exception(e: Exception) -> Response:
