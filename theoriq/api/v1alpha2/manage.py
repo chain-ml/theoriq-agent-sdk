@@ -55,11 +55,10 @@ class AgentManager:
 
         theoriq_request = TheoriqRequest.from_body(
             body=agent.configuration.virtual.configuration_hash.encode("utf-8"),
-            from_addr="USER_ADDRESS",  # user address
+            from_addr=self._biscuit_provider.address,
             to_addr=agent.system.id,
         )
-        theoriq_biscuit = self._biscuit_provider.get_biscuit()
-        theoriq_biscuit = theoriq_biscuit.attenuate(theoriq_request.to_theoriq_fact(uuid.uuid4()))
+        theoriq_biscuit = self._biscuit_provider.get_request_biscuit(request_id=uuid.uuid4(), facts=[theoriq_request])
 
         return self._client.post_configure(biscuit=theoriq_biscuit, to_addr=agent.system.id)
 
