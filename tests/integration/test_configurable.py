@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from tests.integration.utils import TEST_PARENT_AGENT_DATA, get_configurable_execute_output, join_threads, run_agent
 
 from theoriq.api.v1alpha2 import AgentResponse
-from theoriq.api.v1alpha2.manage import AgentManager
+from theoriq.api.v1alpha2.manage import AgentConfigurationError, AgentManager, ConfigurableAgentManager
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
@@ -19,6 +19,7 @@ dotenv.load_dotenv()
 
 THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
 user_manager = AgentManager.from_api_key(api_key=THEORIQ_API_KEY)
+user_manager_configurable = ConfigurableAgentManager.from_api_key(api_key=THEORIQ_API_KEY)
 
 global_agent_map: Dict[str, AgentResponse] = {}
 
@@ -59,7 +60,7 @@ def test_registration() -> None:
 
 @pytest.mark.order(2)
 def test_incorrect_configuration() -> None:
-    parent_agent_id = list(global_agent_map.keys())[0]
+    deployed_agent = next(agent for agent_id, agent in global_agent_map.items() if agent.configuration.is_deployed)
 
     metadata = AgentMetadata(
         name="Incorrect Configurable Agent",
@@ -67,11 +68,17 @@ def test_incorrect_configuration() -> None:
         long_description="Long description",
         tags=["test_to_delete"],
     )
-    configuration = AgentConfiguration.for_virtual(agent_id=parent_agent_id, configuration={"incorrect": "config"})
+    configuration = AgentConfiguration.for_virtual(
+        agent_id=deployed_agent.system.id, configuration={"incorrect": "config"}
+    )
 
-    with pytest.raises(httpx.HTTPStatusError) as e:
-        user_manager.create_agent(metadata=metadata, configuration=configuration)
-    assert e.value.response.status_code == 502
+    with pytest.raises(AgentConfigurationError) as e:
+        user_manager_configurable.create_agent(metadata=metadata, configuration=configuration)
+    assert e.value.message.endswith("created but failed to configure")
+    assert isinstance(e.value.original_exception, httpx.HTTPStatusError)
+    assert e.value.original_exception.response.status_code == 502
+
+    user_manager_configurable.delete_agent(e.value.agent.system.id)
 
 
 @pytest.mark.order(3)
@@ -88,13 +95,28 @@ def test_configuration() -> None:
         )
         configuration = AgentConfiguration.for_virtual(agent_id=parent_agent_id, configuration=config.model_dump())
 
-        agent = user_manager.create_agent(metadata=metadata, configuration=configuration)
+        agent = user_manager_configurable.create_agent(metadata=metadata, configuration=configuration)
         assert agent.configuration.is_virtual
         print(f"Successfully configured new `{agent.system.id}` with {config=}\n")
         global_agent_map[agent.system.id] = agent
 
 
-@pytest.mark.order(4)
+# @pytest.mark.order(4)
+# def test_mint_agent() -> None:
+#     for agent_id in global_agent_map.keys():
+#         agent = user_manager_configurable.mint_agent(agent_id)
+#         assert agent.system.state == "online"
+#         print(f"Successfully minted `{agent_id}`\n")
+#
+# @pytest.mark.order(5)
+# def test_unmint_agent() -> None:
+#     for agent_id in global_agent_map.keys():
+#         agent = user_manager_configurable.unmint_agent(agent_id)
+#         assert agent.system.state == "configured"
+#         print(f"Successfully unminted `{agent_id}`\n")
+
+
+@pytest.mark.order(6)
 def test_messenger() -> None:
     for agent in global_agent_map.values():
         if agent.configuration.is_virtual:
@@ -106,7 +128,27 @@ def test_messenger() -> None:
         assert e.value.response.status_code == 400
 
 
-@pytest.mark.order(5)
+@pytest.mark.order(7)
+def test_incorrect_update_configuration() -> None:
+    agent = next(agent for agent_id, agent in global_agent_map.items() if agent.configuration.is_virtual)
+    deployed_agent_id = agent.configuration.ensure_virtual.agent_id
+
+    metadata = AgentMetadata(
+        name="Incorrectly Updated Configurable Agent",
+        short_description="Short description",
+        long_description="Long description",
+        tags=["test_to_delete"],
+    )
+    configuration = AgentConfiguration.for_virtual(agent_id=deployed_agent_id, configuration={"incorrect": "config"})
+
+    with pytest.raises(AgentConfigurationError) as e:
+        user_manager_configurable.update_agent(agent_id=agent.system.id, metadata=metadata, configuration=configuration)
+    assert e.value.message.endswith("updated but failed to configure")
+    assert isinstance(e.value.original_exception, httpx.HTTPStatusError)
+    assert e.value.original_exception.response.status_code == 502
+
+
+@pytest.mark.order(8)
 def test_update_configuration() -> None:
     agent = next(agent for agent_id, agent in global_agent_map.items() if agent.configuration.is_virtual)
     deployed_agent_id = agent.configuration.ensure_virtual.agent_id
@@ -115,7 +157,7 @@ def test_update_configuration() -> None:
 
     configuration = AgentConfiguration.for_virtual(agent_id=deployed_agent_id, configuration=new_config.model_dump())
 
-    updated_agent = user_manager.update_agent(agent_id=agent.system.id, configuration=configuration)
+    updated_agent = user_manager_configurable.update_agent(agent_id=agent.system.id, configuration=configuration)
     assert updated_agent.system.id == agent.system.id
     assert updated_agent.system.state == "configured"
     print(f"Successfully re-configured `{updated_agent.system.id}` with {new_config=}\n")
@@ -127,5 +169,5 @@ def test_update_configuration() -> None:
 @pytest.mark.order(-1)
 def test_deletion() -> None:
     for agent in global_agent_map.values():
-        user_manager.delete_agent(agent.system.id)
+        user_manager_configurable.delete_agent(agent.system.id)
         print(f"Successfully deleted `{agent.system.id}`\n")
