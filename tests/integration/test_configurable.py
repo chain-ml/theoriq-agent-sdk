@@ -65,6 +65,7 @@ def test_incorrect_configuration() -> None:
         name="Incorrect Configurable Agent",
         short_description="Short description",
         long_description="Long description",
+        tags=["test_to_delete"],
     )
     configuration = AgentConfiguration.for_virtual(agent_id=parent_agent_id, configuration={"incorrect": "config"})
 
