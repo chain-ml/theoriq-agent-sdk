@@ -1,18 +1,13 @@
-import logging
 import os
-from typing import Dict, Final, Generator
+from typing import Dict, Generator
 
-import dotenv
 import pytest
 from tests.integration.utils import (
     PARENT_AGENT_ENV_PREFIX,
     PARENT_AGENT_NAME,
-    TEST_AGENT_DATA_LIST,
     TEST_CHILD_AGENT_DATA_LIST,
     TEST_PARENT_AGENT_DATA,
     get_echo_execute_output,
-    join_threads,
-    run_echo_agents,
 )
 
 from theoriq.api.v1alpha2 import AgentResponse
@@ -25,7 +20,7 @@ from theoriq.dialog import TextItemBlock
 @pytest.fixture(scope="session")
 def parent_agent_map() -> Generator[Dict[str, AgentResponse], None, None]:
     """File-level fixture that returns a mutable dictionary for storing parent agents."""
-    agent_map = {}
+    agent_map: Dict[str, AgentResponse] = {}
     yield agent_map
     agent_map.clear()
 
@@ -33,7 +28,7 @@ def parent_agent_map() -> Generator[Dict[str, AgentResponse], None, None]:
 @pytest.fixture(scope="session")
 def children_agent_map() -> Generator[Dict[str, AgentResponse], None, None]:
     """File-level fixture that returns a mutable dictionary for storing child agents."""
-    agent_map = {}
+    agent_map: Dict[str, AgentResponse] = {}
     yield agent_map
     agent_map.clear()
 
@@ -68,7 +63,9 @@ def test_registration_parent(parent_agent_map: Dict[str, AgentResponse], user_ma
 
 @pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(2)
-def test_registration_children(children_agent_map: Dict[str, AgentResponse], parent_manager: DeployedAgentManager) -> None:
+def test_registration_children(
+    children_agent_map: Dict[str, AgentResponse], parent_manager: DeployedAgentManager
+) -> None:
     for child_agent_data_obj in TEST_CHILD_AGENT_DATA_LIST:
         agent = parent_manager.create_agent(
             metadata=child_agent_data_obj.spec.metadata, configuration=child_agent_data_obj.spec.configuration
@@ -83,9 +80,9 @@ def test_registration_children(children_agent_map: Dict[str, AgentResponse], par
 @pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(3)
 def test_messenger(
-    parent_agent_map: Dict[str, AgentResponse], 
-    children_agent_map: Dict[str, AgentResponse], 
-    parent_messenger: Messenger
+    parent_agent_map: Dict[str, AgentResponse],
+    children_agent_map: Dict[str, AgentResponse],
+    parent_messenger: Messenger,
 ) -> None:
     all_agents: Dict[str, AgentResponse] = {**parent_agent_map, **children_agent_map}
 

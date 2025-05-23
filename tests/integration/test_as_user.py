@@ -1,9 +1,7 @@
-import logging
 import os
 from copy import deepcopy
-from typing import Dict, Final, Generator
+from typing import Dict, Generator
 
-import dotenv
 import pytest
 from tests.integration.utils import (
     PARENT_AGENT_ENV_PREFIX,
@@ -11,8 +9,6 @@ from tests.integration.utils import (
     TEST_PARENT_AGENT_DATA,
     agents_are_equal,
     get_echo_execute_output,
-    join_threads,
-    run_echo_agents,
 )
 
 from theoriq import AgentDeploymentConfiguration
@@ -26,13 +22,15 @@ from theoriq.dialog import TextItemBlock
 @pytest.fixture(scope="session")
 def agent_map() -> Generator[Dict[str, AgentResponse], None, None]:
     """File-level fixture that returns a mutable dictionary for storing registered agents."""
-    agent_map = {}
+    agent_map: Dict[str, AgentResponse] = {}
     yield agent_map
     agent_map.clear()
+
 
 @pytest.fixture()
 def manager() -> DeployedAgentManager:
     return DeployedAgentManager.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
+
 
 @pytest.fixture()
 def messenger() -> Messenger:

@@ -1,17 +1,13 @@
-import logging
 import os
 import time
-from typing import Dict, Final, Generator, List
+from typing import Dict, Generator, List
 
-import dotenv
 import pytest
 from tests.integration.utils import (
     PARENT_AGENT_ENV_PREFIX,
     PARENT_AGENT_NAME,
     TEST_AGENT_DATA_LIST,
     TEST_CHILD_AGENT_DATA_LIST,
-    join_threads,
-    run_echo_agents,
 )
 
 from theoriq.api.v1alpha2 import AgentResponse
@@ -27,7 +23,7 @@ global_notification_queue_pub: List[str] = []
 @pytest.fixture(scope="session")
 def agent_map() -> Generator[Dict[str, AgentResponse], None, None]:
     """File-level fixture that returns a mutable dictionary for storing registered agents."""
-    agent_map = {}
+    agent_map: Dict[str, AgentResponse] = {}
     yield agent_map
     agent_map.clear()
 
@@ -72,9 +68,7 @@ def assert_notification_queues(notification_queue_sub: List[str]) -> None:
 
 
 def get_parent_agent_address(agent_map: Dict[str, AgentResponse]) -> AgentAddress:
-    maybe_parent_agent = next(
-        (agent for agent in agent_map.values() if agent.metadata.name == PARENT_AGENT_NAME), None
-    )
+    maybe_parent_agent = next((agent for agent in agent_map.values() if agent.metadata.name == PARENT_AGENT_NAME), None)
     if maybe_parent_agent is None:
         raise RuntimeError("Parent agent data object not found")
     return AgentAddress(maybe_parent_agent.system.id)
@@ -110,7 +104,9 @@ def test_subscribing_as_agent(agent_map: Dict[str, AgentResponse]) -> None:
 
     child_agent_data = TEST_CHILD_AGENT_DATA_LIST[0]
     subscriber = Subscriber.from_env(env_prefix=child_agent_data.metadata.labels["env_prefix"])
-    subscriber.new_job(agent_address=get_parent_agent_address(agent_map), handler=subscribing_handler, background=True).start()
+    subscriber.new_job(
+        agent_address=get_parent_agent_address(agent_map), handler=subscribing_handler, background=True
+    ).start()
 
     time.sleep(1.0)
     assert_notification_queues(agent_notification_queue_sub)
@@ -126,7 +122,9 @@ def test_subscribing_as_user(agent_map: Dict[str, AgentResponse], user_subscribe
     def subscribing_handler(notification: str) -> None:
         user_notification_queue_sub.append(notification)
 
-    user_subscriber.new_job(agent_address=get_parent_agent_address(agent_map), handler=subscribing_handler, background=True).start()
+    user_subscriber.new_job(
+        agent_address=get_parent_agent_address(agent_map), handler=subscribing_handler, background=True
+    ).start()
 
     time.sleep(1.0)
     assert_notification_queues(user_notification_queue_sub)
