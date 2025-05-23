@@ -1,10 +1,9 @@
 import os
-from typing import Dict, Generator
+from typing import Dict
 
 import httpx
 import pytest
-from pydantic import BaseModel, Field
-from tests.integration.utils import TEST_PARENT_AGENT_DATA, get_configurable_execute_output
+from tests.integration.utils import TEST_PARENT_AGENT_DATA, TestConfig, get_configurable_execute_output
 
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import AgentConfigurationError, DeployedAgentManager, VirtualAgentManager
@@ -14,35 +13,10 @@ from theoriq.dialog import TextItemBlock
 from theoriq.types import AgentConfiguration, AgentMetadata
 
 
-class TestConfig(BaseModel):
-    text: str = Field(description="Text field")
-    number: int = Field(description="An integer number")
-
-
-@pytest.fixture(scope="session")
-def agent_map() -> Generator[Dict[str, AgentResponse], None, None]:
-    """File-level fixture that returns a mutable dictionary for storing registered agents."""
-    agent_map: Dict[str, AgentResponse] = {}
-    yield agent_map
-    agent_map.clear()
-
-
-@pytest.fixture()
-def manager() -> DeployedAgentManager:
-    """Manager for deployed agent operations."""
-    return DeployedAgentManager.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
-
-
 @pytest.fixture()
 def configurable_manager() -> VirtualAgentManager:
     """Manager for virtual/configurable agent operations."""
     return VirtualAgentManager.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
-
-
-@pytest.fixture()
-def messenger() -> Messenger:
-    """Messenger for sending requests to agents."""
-    return Messenger.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
 
 
 def assert_send_message_to_configurable_agent(
@@ -59,9 +33,9 @@ def assert_send_message_to_configurable_agent(
 
 
 @pytest.mark.order(1)
-@pytest.mark.usefixtures("shared_flask_apps")
-def test_registration(agent_map: Dict[str, AgentResponse], manager: DeployedAgentManager) -> None:
-    agent = manager.create_agent(
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_registration(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
+    agent = user_manager.create_agent(
         metadata=TEST_PARENT_AGENT_DATA.spec.metadata, configuration=TEST_PARENT_AGENT_DATA.spec.configuration
     )
     print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
@@ -69,7 +43,7 @@ def test_registration(agent_map: Dict[str, AgentResponse], manager: DeployedAgen
 
 
 @pytest.mark.order(2)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_incorrect_configuration(
     agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager
 ) -> None:
@@ -95,7 +69,7 @@ def test_incorrect_configuration(
 
 
 @pytest.mark.order(3)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_configuration(agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager) -> None:
     parent_agent_id = list(agent_map.keys())[0]
 
@@ -135,20 +109,20 @@ def test_configuration(agent_map: Dict[str, AgentResponse], configurable_manager
 
 
 @pytest.mark.order(6)
-@pytest.mark.usefixtures("shared_flask_apps")
-def test_messenger(agent_map: Dict[str, AgentResponse], messenger: Messenger) -> None:
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_messenger(agent_map: Dict[str, AgentResponse], user_messenger: Messenger) -> None:
     for agent in agent_map.values():
         if agent.configuration.is_virtual:
-            assert_send_message_to_configurable_agent(agent, agent_map, messenger)
+            assert_send_message_to_configurable_agent(agent, agent_map, user_messenger)
             continue
 
         with pytest.raises(httpx.HTTPStatusError) as e:
-            assert_send_message_to_configurable_agent(agent, agent_map, messenger)
+            assert_send_message_to_configurable_agent(agent, agent_map, user_messenger)
         assert e.value.response.status_code == 400
 
 
 @pytest.mark.order(7)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_incorrect_update_configuration(
     agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager
 ) -> None:
@@ -171,9 +145,9 @@ def test_incorrect_update_configuration(
 
 
 @pytest.mark.order(8)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_update_configuration(
-    agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager, messenger: Messenger
+    agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager, user_messenger: Messenger
 ) -> None:
     agent = next(agent for agent_id, agent in agent_map.items() if agent.configuration.is_virtual)
     deployed_agent_id = agent.configuration.ensure_virtual.agent_id
@@ -188,11 +162,11 @@ def test_update_configuration(
     print(f"Successfully re-configured `{updated_agent.system.id}` with {new_config=}\n")
     agent_map[updated_agent.system.id] = updated_agent
 
-    assert_send_message_to_configurable_agent(updated_agent, agent_map, messenger)
+    assert_send_message_to_configurable_agent(updated_agent, agent_map, user_messenger)
 
 
 @pytest.mark.order(-1)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_deletion(agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager) -> None:
     for agent in agent_map.values():
         configurable_manager.delete_agent(agent.system.id)

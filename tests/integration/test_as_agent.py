@@ -52,7 +52,7 @@ def parent_messenger() -> Messenger:
 
 
 @pytest.mark.order(1)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_registration_parent(parent_agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     agent = user_manager.create_agent(
         metadata=TEST_PARENT_AGENT_DATA.spec.metadata, configuration=TEST_PARENT_AGENT_DATA.spec.configuration
@@ -62,7 +62,7 @@ def test_registration_parent(parent_agent_map: Dict[str, AgentResponse], user_ma
 
 
 @pytest.mark.order(2)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_registration_children(
     children_agent_map: Dict[str, AgentResponse], parent_manager: DeployedAgentManager
 ) -> None:
@@ -78,7 +78,7 @@ def test_registration_children(
 
 
 @pytest.mark.order(3)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_messenger(
     parent_agent_map: Dict[str, AgentResponse],
     children_agent_map: Dict[str, AgentResponse],
@@ -99,7 +99,7 @@ def test_messenger(
 
 
 @pytest.mark.order(-2)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_deletion_children(children_agent_map: Dict[str, AgentResponse], parent_manager: DeployedAgentManager) -> None:
     for child_agent in children_agent_map.values():
         parent_manager.delete_agent(child_agent.system.id)
@@ -107,7 +107,7 @@ def test_deletion_children(children_agent_map: Dict[str, AgentResponse], parent_
 
 
 @pytest.mark.order(-1)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_deletion_parent(parent_agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     for agent in parent_agent_map.values():
         user_manager.delete_agent(agent.system.id)

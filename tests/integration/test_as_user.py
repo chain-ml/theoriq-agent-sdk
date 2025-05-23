@@ -19,7 +19,7 @@ from theoriq.dialog import TextItemBlock
 
 
 @pytest.mark.order(1)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_registration(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     for agent_data_obj in TEST_AGENT_DATA_LIST:
         agent = user_manager.create_agent(
@@ -30,7 +30,7 @@ def test_registration(agent_map: Dict[str, AgentResponse], user_manager: Deploye
 
 
 @pytest.mark.order(2)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_minting(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     for agent_id in agent_map.keys():
         agent = user_manager.mint_agent(agent_id)
@@ -39,7 +39,7 @@ def test_minting(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgen
 
 
 @pytest.mark.order(3)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_get_agents(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     agents = user_manager.get_agents()
     assert len(agents) >= len(agent_map.keys())
@@ -54,7 +54,7 @@ def test_get_agents(agent_map: Dict[str, AgentResponse], user_manager: DeployedA
 
 
 @pytest.mark.order(4)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_unminting(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     for agent_id in agent_map.keys():
         agent = user_manager.unmint_agent(agent_id)
@@ -63,7 +63,7 @@ def test_unminting(agent_map: Dict[str, AgentResponse], user_manager: DeployedAg
 
 
 @pytest.mark.order(5)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_messenger(agent_map: Dict[str, AgentResponse], user_messenger: Messenger) -> None:
     message = "Hello from user"
     blocks = [TextItemBlock(message)]
@@ -76,7 +76,7 @@ def test_messenger(agent_map: Dict[str, AgentResponse], user_messenger: Messenge
 
 
 @pytest.mark.order(6)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_updating(user_manager: DeployedAgentManager) -> None:
     agent_data_obj = deepcopy(TEST_PARENT_AGENT_DATA)
     agent_data_obj.spec.metadata.name = "Updated Parent Agent"
@@ -88,7 +88,7 @@ def test_updating(user_manager: DeployedAgentManager) -> None:
 
 
 @pytest.mark.order(-1)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_deletion(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     for agent in agent_map.values():
         user_manager.delete_agent(agent.system.id)

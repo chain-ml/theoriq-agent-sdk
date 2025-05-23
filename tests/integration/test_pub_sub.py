@@ -48,7 +48,7 @@ def get_parent_agent_address(agent_map: Dict[str, AgentResponse]) -> AgentAddres
 
 
 @pytest.mark.order(1)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_registration(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     for agent_data_obj in TEST_AGENT_DATA_LIST:
         agent = user_manager.create_agent(
@@ -59,7 +59,7 @@ def test_registration(agent_map: Dict[str, AgentResponse], user_manager: Deploye
 
 
 @pytest.mark.order(2)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_publishing() -> None:
     """Parent agent is a publisher."""
     publisher = Publisher.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
@@ -67,7 +67,7 @@ def test_publishing() -> None:
 
 
 @pytest.mark.order(3)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_subscribing_as_agent(agent_map: Dict[str, AgentResponse]) -> None:
     """Child agent is a subscriber."""
 
@@ -87,7 +87,7 @@ def test_subscribing_as_agent(agent_map: Dict[str, AgentResponse]) -> None:
 
 
 @pytest.mark.order(4)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_subscribing_as_user(agent_map: Dict[str, AgentResponse]) -> None:
     """User is a subscriber."""
 
@@ -106,7 +106,7 @@ def test_subscribing_as_user(agent_map: Dict[str, AgentResponse]) -> None:
 
 
 @pytest.mark.order(-1)
-@pytest.mark.usefixtures("shared_flask_apps")
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_deletion(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     for agent in agent_map.values():
         user_manager.delete_agent(agent.system.id)

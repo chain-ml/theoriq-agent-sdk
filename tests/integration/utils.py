@@ -9,6 +9,7 @@ import threading
 import time
 from typing import Any, Dict, Final, List, Optional, Sequence
 
+from pydantic import BaseModel, Field
 from tests import DATA_DIR
 
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
@@ -38,6 +39,13 @@ TEST_PARENT_AGENT_DATA: Final[AgentDataObject] = maybe_parent_agent_data
 TEST_CHILD_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
     agent for agent in TEST_AGENT_DATA_LIST if agent.spec.metadata.name != PARENT_AGENT_NAME
 ]
+
+
+class TestConfig(BaseModel):
+    """Test configuration schema used by configurable tests."""
+
+    text: str = Field(description="Text field")
+    number: int = Field(description="An integer number")
 
 
 def get_echo_execute_output(*, message: str, agent_name: str) -> str:
