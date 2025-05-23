@@ -1,6 +1,6 @@
 import os
 import time
-from typing import Dict, Generator, List
+from typing import Dict, List
 
 import pytest
 from tests.integration.utils import (
@@ -16,34 +16,7 @@ from theoriq.api.v1alpha2.publish import Publisher, PublisherContext
 from theoriq.api.v1alpha2.subscribe import Subscriber
 from theoriq.biscuit import AgentAddress
 
-# Global notification queue for pub/sub testing
 global_notification_queue_pub: List[str] = []
-
-
-@pytest.fixture(scope="session")
-def agent_map() -> Generator[Dict[str, AgentResponse], None, None]:
-    """File-level fixture that returns a mutable dictionary for storing registered agents."""
-    agent_map: Dict[str, AgentResponse] = {}
-    yield agent_map
-    agent_map.clear()
-
-
-@pytest.fixture()
-def manager() -> DeployedAgentManager:
-    """Manager for user operations."""
-    return DeployedAgentManager.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
-
-
-@pytest.fixture()
-def publisher() -> Publisher:
-    """Publisher for parent agent operations."""
-    return Publisher.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
-
-
-@pytest.fixture()
-def user_subscriber() -> Subscriber:
-    """Subscriber for user operations."""
-    return Subscriber.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
 
 
 def publishing_job(context: PublisherContext) -> None:
@@ -76,9 +49,9 @@ def get_parent_agent_address(agent_map: Dict[str, AgentResponse]) -> AgentAddres
 
 @pytest.mark.order(1)
 @pytest.mark.usefixtures("shared_flask_apps")
-def test_registration(agent_map: Dict[str, AgentResponse], manager: DeployedAgentManager) -> None:
+def test_registration(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     for agent_data_obj in TEST_AGENT_DATA_LIST:
-        agent = manager.create_agent(
+        agent = user_manager.create_agent(
             metadata=agent_data_obj.spec.metadata, configuration=agent_data_obj.spec.configuration
         )
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
@@ -87,8 +60,9 @@ def test_registration(agent_map: Dict[str, AgentResponse], manager: DeployedAgen
 
 @pytest.mark.order(2)
 @pytest.mark.usefixtures("shared_flask_apps")
-def test_publishing(publisher: Publisher) -> None:
+def test_publishing() -> None:
     """Parent agent is a publisher."""
+    publisher = Publisher.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
     publisher.new_job(job=publishing_job, background=True).start()
 
 
@@ -114,7 +88,7 @@ def test_subscribing_as_agent(agent_map: Dict[str, AgentResponse]) -> None:
 
 @pytest.mark.order(4)
 @pytest.mark.usefixtures("shared_flask_apps")
-def test_subscribing_as_user(agent_map: Dict[str, AgentResponse], user_subscriber: Subscriber) -> None:
+def test_subscribing_as_user(agent_map: Dict[str, AgentResponse]) -> None:
     """User is a subscriber."""
 
     user_notification_queue_sub: List[str] = []
@@ -122,7 +96,8 @@ def test_subscribing_as_user(agent_map: Dict[str, AgentResponse], user_subscribe
     def subscribing_handler(notification: str) -> None:
         user_notification_queue_sub.append(notification)
 
-    user_subscriber.new_job(
+    subscriber = Subscriber.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
+    subscriber.new_job(
         agent_address=get_parent_agent_address(agent_map), handler=subscribing_handler, background=True
     ).start()
 
@@ -132,7 +107,7 @@ def test_subscribing_as_user(agent_map: Dict[str, AgentResponse], user_subscribe
 
 @pytest.mark.order(-1)
 @pytest.mark.usefixtures("shared_flask_apps")
-def test_deletion(agent_map: Dict[str, AgentResponse], manager: DeployedAgentManager) -> None:
+def test_deletion(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     for agent in agent_map.values():
-        manager.delete_agent(agent.system.id)
+        user_manager.delete_agent(agent.system.id)
         print(f"Successfully deleted `{agent.system.id}`\n")

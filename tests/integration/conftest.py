@@ -5,7 +5,7 @@ Shared pytest fixtures for integration tests to manage Flask applications and ag
 import logging
 import os
 import threading
-from typing import Generator, List
+from typing import Dict, Generator, List
 
 import dotenv
 import pytest
@@ -18,7 +18,9 @@ from tests.integration.utils import (
     run_echo_agents,
 )
 
+from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import DeployedAgentManager
+from theoriq.api.v1alpha2.message import Messenger
 
 dotenv.load_dotenv()
 
@@ -52,6 +54,19 @@ def shared_flask_apps() -> Generator[List[threading.Thread], None, None]:
     join_threads(all_threads)
 
 
+@pytest.fixture(scope="session")
+def agent_map() -> Generator[Dict[str, AgentResponse], None, None]:
+    """File-level fixture that returns a mutable dictionary for storing registered agents."""
+    agent_map: Dict[str, AgentResponse] = {}
+    yield agent_map
+    agent_map.clear()
+
+
 @pytest.fixture()
 def user_manager() -> DeployedAgentManager:
     return DeployedAgentManager.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
+
+
+@pytest.fixture()
+def user_messenger() -> Messenger:
+    return Messenger.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
