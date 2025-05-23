@@ -81,8 +81,8 @@ class AgentManagerBase(abc.ABC):
         return cls(biscuit_provider=BiscuitProviderFactory.from_env(env_prefix=env_prefix))
 
 
-class AgentManager(AgentManagerBase):
-    """Provides capabilities to manage non-configurable agents."""
+class DeployedAgentManager(AgentManagerBase):
+    """Provides capabilities to manage deployed agents."""
 
     def create_agent(self, metadata: AgentMetadata, configuration: AgentConfiguration) -> AgentResponse:
         return self._create_agent(metadata=metadata, configuration=configuration)
@@ -106,8 +106,8 @@ class AgentConfigurationError(Exception):
         return self.message
 
 
-class ConfigurableAgentManager(AgentManagerBase):
-    """Provides capabilities to manage configurable agents."""
+class VirtualAgentManager(AgentManagerBase):
+    """Provides capabilities to manage virtual agents."""
 
     def create_agent(self, metadata: AgentMetadata, configuration: AgentConfiguration) -> AgentResponse:
         agent = self._create_agent(metadata=metadata, configuration=configuration)

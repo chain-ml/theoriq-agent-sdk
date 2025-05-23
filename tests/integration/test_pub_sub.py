@@ -15,7 +15,7 @@ from tests.integration.utils import (
 )
 
 from theoriq.api.v1alpha2 import AgentResponse
-from theoriq.api.v1alpha2.manage import AgentManager
+from theoriq.api.v1alpha2.manage import DeployedAgentManager
 from theoriq.api.v1alpha2.publish import Publisher, PublisherContext
 from theoriq.api.v1alpha2.subscribe import Subscriber
 from theoriq.biscuit import AgentAddress
@@ -23,7 +23,7 @@ from theoriq.biscuit import AgentAddress
 dotenv.load_dotenv()
 
 THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
-user_manager = AgentManager.from_api_key(api_key=THEORIQ_API_KEY)
+user_manager = DeployedAgentManager.from_api_key(api_key=THEORIQ_API_KEY)
 
 global_agent_map: Dict[str, AgentResponse] = {}
 global_notification_queue_pub: List[str] = []

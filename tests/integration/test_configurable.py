@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from tests.integration.utils import TEST_PARENT_AGENT_DATA, get_configurable_execute_output, join_threads, run_agent
 
 from theoriq.api.v1alpha2 import AgentResponse
-from theoriq.api.v1alpha2.manage import AgentConfigurationError, AgentManager, ConfigurableAgentManager
+from theoriq.api.v1alpha2.manage import AgentConfigurationError, DeployedAgentManager, VirtualAgentManager
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
@@ -18,8 +18,8 @@ from theoriq.types import AgentConfiguration, AgentMetadata
 dotenv.load_dotenv()
 
 THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
-user_manager = AgentManager.from_api_key(api_key=THEORIQ_API_KEY)
-user_manager_configurable = ConfigurableAgentManager.from_api_key(api_key=THEORIQ_API_KEY)
+user_manager = DeployedAgentManager.from_api_key(api_key=THEORIQ_API_KEY)
+user_manager_configurable = VirtualAgentManager.from_api_key(api_key=THEORIQ_API_KEY)
 
 global_agent_map: Dict[str, AgentResponse] = {}
 
@@ -101,19 +101,22 @@ def test_configuration() -> None:
         global_agent_map[agent.system.id] = agent
 
 
-# @pytest.mark.order(4)
-# def test_mint_agent() -> None:
-#     for agent_id in global_agent_map.keys():
-#         agent = user_manager_configurable.mint_agent(agent_id)
-#         assert agent.system.state == "online"
-#         print(f"Successfully minted `{agent_id}`\n")
-#
-# @pytest.mark.order(5)
-# def test_unmint_agent() -> None:
-#     for agent_id in global_agent_map.keys():
-#         agent = user_manager_configurable.unmint_agent(agent_id)
-#         assert agent.system.state == "configured"
-#         print(f"Successfully unminted `{agent_id}`\n")
+@pytest.mark.order(4)
+def test_mint_agent() -> None:
+    for agent_id in global_agent_map.keys():
+        agent = user_manager_configurable.mint_agent(agent_id)
+        assert agent.system.state == "online"
+        print(f"Successfully minted `{agent_id}`\n")
+
+
+@pytest.mark.order(5)
+def test_unmint_agent() -> None:
+    # TODO: investigate agents break after unmint - abc is not executable by xyz
+
+    for agent_id in global_agent_map.keys():
+        agent = user_manager_configurable.unmint_agent(agent_id)
+        assert agent.system.state == "configured"
+        print(f"Successfully unminted `{agent_id}`\n")
 
 
 @pytest.mark.order(6)
