@@ -13,6 +13,7 @@ from tests.integration.utils import (
     join_threads,
     run_echo_agents,
 )
+from tests.integration.conftest import get_agent_map
 
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import DeployedAgentManager
@@ -25,7 +26,6 @@ dotenv.load_dotenv()
 THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
 user_manager = DeployedAgentManager.from_api_key(api_key=THEORIQ_API_KEY)
 
-global_agent_map: Dict[str, AgentResponse] = {}
 global_notification_queue_pub: List[str] = []
 
 
@@ -51,6 +51,7 @@ def assert_notification_queues(notification_queue_sub: List[str]) -> None:
 
 
 def get_parent_agent_address() -> AgentAddress:
+    global_agent_map = get_agent_map("test_pub_sub")
     maybe_parent_agent = next(
         (agent for agent in global_agent_map.values() if agent.metadata.name == PARENT_AGENT_NAME), None
     )
@@ -59,16 +60,11 @@ def get_parent_agent_address() -> AgentAddress:
     return AgentAddress(maybe_parent_agent.system.id)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def flask_apps() -> Generator[None, None, None]:
-    logging.basicConfig(level=logging.INFO)
-    threads = run_echo_agents(TEST_AGENT_DATA_LIST)
-    yield
-    join_threads(threads)
-
-
+# Use shared fixtures instead of local ones
+@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(1)
 def test_registration() -> None:
+    global_agent_map = get_agent_map("test_pub_sub")
     for agent_data_obj in TEST_AGENT_DATA_LIST:
         agent = user_manager.create_agent(
             metadata=agent_data_obj.spec.metadata, configuration=agent_data_obj.spec.configuration
@@ -77,6 +73,7 @@ def test_registration() -> None:
         global_agent_map[agent.system.id] = agent
 
 
+@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(2)
 def test_publishing() -> None:
     """Parent agent is a publisher."""
@@ -85,6 +82,7 @@ def test_publishing() -> None:
     publisher.new_job(job=publishing_job, background=True).start()
 
 
+@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(3)
 def test_subscribing_as_agent() -> None:
     """Child agent is a subscriber."""
@@ -102,6 +100,7 @@ def test_subscribing_as_agent() -> None:
     assert_notification_queues(agent_notification_queue_sub)
 
 
+@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(4)
 def test_subscribing_as_user() -> None:
     """User is a subscriber."""
@@ -118,8 +117,10 @@ def test_subscribing_as_user() -> None:
     assert_notification_queues(user_notification_queue_sub)
 
 
+@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(-1)
 def test_deletion() -> None:
+    global_agent_map = get_agent_map("test_pub_sub")
     for agent in global_agent_map.values():
         user_manager.delete_agent(agent.system.id)
         print(f"Successfully deleted `{agent.system.id}`\n")

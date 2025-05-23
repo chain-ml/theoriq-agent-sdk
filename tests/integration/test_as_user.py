@@ -14,6 +14,7 @@ from tests.integration.utils import (
     join_threads,
     run_echo_agents,
 )
+from tests.integration.conftest import get_agent_map
 
 from theoriq import AgentDeploymentConfiguration
 from theoriq.api.v1alpha2 import AgentResponse
@@ -27,19 +28,12 @@ dotenv.load_dotenv()
 THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
 user_manager = DeployedAgentManager.from_api_key(api_key=THEORIQ_API_KEY)
 
-global_agent_map: Dict[str, AgentResponse] = {}
 
-
-@pytest.fixture(scope="session", autouse=True)
-def flask_apps() -> Generator[None, None, None]:
-    logging.basicConfig(level=logging.INFO)
-    threads = run_echo_agents(TEST_AGENT_DATA_LIST)
-    yield
-    join_threads(threads)
-
-
+# Use shared fixtures instead of local ones
+@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(1)
 def test_registration() -> None:
+    global_agent_map = get_agent_map("test_as_user")
     for agent_data_obj in TEST_AGENT_DATA_LIST:
         agent = user_manager.create_agent(
             metadata=agent_data_obj.spec.metadata, configuration=agent_data_obj.spec.configuration
@@ -48,16 +42,20 @@ def test_registration() -> None:
         global_agent_map[agent.system.id] = agent
 
 
+@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(2)
 def test_minting() -> None:
+    global_agent_map = get_agent_map("test_as_user")
     for agent_id in global_agent_map.keys():
         agent = user_manager.mint_agent(agent_id)
         assert agent.system.state == "online"
         print(f"Successfully minted `{agent_id}`\n")
 
 
+@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(3)
 def test_get_agents() -> None:
+    global_agent_map = get_agent_map("test_as_user")
     agents = user_manager.get_agents()
     assert len(agents) >= len(global_agent_map.keys())
     fetched_agents: Dict[str, AgentResponse] = {agent.system.id: agent for agent in agents}
@@ -70,16 +68,20 @@ def test_get_agents() -> None:
         assert agents_are_equal(agent, same_agent)
 
 
+@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(4)
 def test_unminting() -> None:
+    global_agent_map = get_agent_map("test_as_user")
     for agent_id in global_agent_map.keys():
         agent = user_manager.unmint_agent(agent_id)
         assert agent.system.state == "configured"
         print(f"Successfully unminted `{agent_id}`\n")
 
 
+@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(5)
 def test_messenger() -> None:
+    global_agent_map = get_agent_map("test_as_user")
     message = "Hello from user"
     blocks = [TextItemBlock(message)]
     messenger = Messenger.from_api_key(api_key=THEORIQ_API_KEY)
@@ -91,6 +93,7 @@ def test_messenger() -> None:
         )
 
 
+@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(6)
 def test_updating() -> None:
     agent_data_obj = deepcopy(TEST_PARENT_AGENT_DATA)
@@ -102,8 +105,10 @@ def test_updating() -> None:
     assert response.metadata.name == "Updated Parent Agent"
 
 
+@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(-1)
 def test_deletion() -> None:
+    global_agent_map = get_agent_map("test_as_user")
     for agent in global_agent_map.values():
         user_manager.delete_agent(agent.system.id)
         print(f"Successfully deleted `{agent.system.id}`\n")
