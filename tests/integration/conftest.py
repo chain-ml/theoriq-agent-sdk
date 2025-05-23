@@ -3,6 +3,7 @@ Shared pytest fixtures for integration tests to manage Flask applications and ag
 """
 
 import logging
+import os
 import threading
 from typing import Generator, List
 
@@ -16,6 +17,10 @@ from tests.integration.utils import (
     run_agent,
     run_echo_agents,
 )
+
+from theoriq.api.v1alpha2.manage import DeployedAgentManager
+
+dotenv.load_dotenv()
 
 
 class TestConfig(BaseModel):
@@ -31,7 +36,6 @@ def shared_flask_apps() -> Generator[List[threading.Thread], None, None]:
     Shared fixture that runs all Flask applications needed for integration tests.
     This runs all echo agents plus the configurable agent.
     """
-    dotenv.load_dotenv()
     logging.basicConfig(level=logging.INFO)
 
     # Start all echo agents
@@ -46,3 +50,8 @@ def shared_flask_apps() -> Generator[List[threading.Thread], None, None]:
 
     # Cleanup: join all threads
     join_threads(all_threads)
+
+
+@pytest.fixture()
+def user_manager() -> DeployedAgentManager:
+    return DeployedAgentManager.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])

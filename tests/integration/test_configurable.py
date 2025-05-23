@@ -58,8 +58,8 @@ def assert_send_message_to_configurable_agent(
     )
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(1)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_registration(agent_map: Dict[str, AgentResponse], manager: DeployedAgentManager) -> None:
     agent = manager.create_agent(
         metadata=TEST_PARENT_AGENT_DATA.spec.metadata, configuration=TEST_PARENT_AGENT_DATA.spec.configuration
@@ -68,8 +68,8 @@ def test_registration(agent_map: Dict[str, AgentResponse], manager: DeployedAgen
     agent_map[agent.system.id] = agent
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(2)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_incorrect_configuration(
     agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager
 ) -> None:
@@ -94,8 +94,8 @@ def test_incorrect_configuration(
     configurable_manager.delete_agent(e.value.agent.system.id)
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(3)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_configuration(agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager) -> None:
     parent_agent_id = list(agent_map.keys())[0]
 
@@ -115,8 +115,8 @@ def test_configuration(agent_map: Dict[str, AgentResponse], configurable_manager
         agent_map[agent.system.id] = agent
 
 
-# @pytest.mark.usefixtures("shared_flask_apps")
 # @pytest.mark.order(4)
+# @pytest.mark.usefixtures("shared_flask_apps")
 # def test_mint_agent(agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager) -> None:
 #     for agent_id in agent_map.keys():
 #         agent = configurable_manager.mint_agent(agent_id)
@@ -124,8 +124,8 @@ def test_configuration(agent_map: Dict[str, AgentResponse], configurable_manager
 #         print(f"Successfully minted `{agent_id}`\n")
 #
 #
-# @pytest.mark.usefixtures("shared_flask_apps")
 # @pytest.mark.order(5)
+# @pytest.mark.usefixtures("shared_flask_apps")
 # def test_unmint_agent(agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager) -> None:
 #     # TODO: investigate agents break after unmint - abc is not executable by xyz
 #     for agent_id in agent_map.keys():
@@ -134,8 +134,8 @@ def test_configuration(agent_map: Dict[str, AgentResponse], configurable_manager
 #         print(f"Successfully unminted `{agent_id}`\n")
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(6)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_messenger(agent_map: Dict[str, AgentResponse], messenger: Messenger) -> None:
     for agent in agent_map.values():
         if agent.configuration.is_virtual:
@@ -147,8 +147,8 @@ def test_messenger(agent_map: Dict[str, AgentResponse], messenger: Messenger) ->
         assert e.value.response.status_code == 400
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(7)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_incorrect_update_configuration(
     agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager
 ) -> None:
@@ -170,8 +170,8 @@ def test_incorrect_update_configuration(
     assert e.value.original_exception.response.status_code == 502
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(8)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_update_configuration(
     agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager, messenger: Messenger
 ) -> None:
@@ -191,8 +191,8 @@ def test_update_configuration(
     assert_send_message_to_configurable_agent(updated_agent, agent_map, messenger)
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(-1)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_deletion(agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager) -> None:
     for agent in agent_map.values():
         configurable_manager.delete_agent(agent.system.id)

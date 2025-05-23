@@ -37,8 +37,8 @@ def messenger() -> Messenger:
     return Messenger.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(1)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_registration(agent_map: Dict[str, AgentResponse], manager: DeployedAgentManager) -> None:
     for agent_data_obj in TEST_AGENT_DATA_LIST:
         agent = manager.create_agent(
@@ -48,8 +48,8 @@ def test_registration(agent_map: Dict[str, AgentResponse], manager: DeployedAgen
         agent_map[agent.system.id] = agent
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(2)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_minting(agent_map: Dict[str, AgentResponse], manager: DeployedAgentManager) -> None:
     for agent_id in agent_map.keys():
         agent = manager.mint_agent(agent_id)
@@ -57,8 +57,8 @@ def test_minting(agent_map: Dict[str, AgentResponse], manager: DeployedAgentMana
         print(f"Successfully minted `{agent_id}`\n")
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(3)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_get_agents(agent_map: Dict[str, AgentResponse], manager: DeployedAgentManager) -> None:
     agents = manager.get_agents()
     assert len(agents) >= len(agent_map.keys())
@@ -72,8 +72,8 @@ def test_get_agents(agent_map: Dict[str, AgentResponse], manager: DeployedAgentM
         assert agents_are_equal(agent, same_agent)
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(4)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_unminting(agent_map: Dict[str, AgentResponse], manager: DeployedAgentManager) -> None:
     for agent_id in agent_map.keys():
         agent = manager.unmint_agent(agent_id)
@@ -81,8 +81,8 @@ def test_unminting(agent_map: Dict[str, AgentResponse], manager: DeployedAgentMa
         print(f"Successfully unminted `{agent_id}`\n")
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(5)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_messenger(agent_map: Dict[str, AgentResponse], messenger: Messenger) -> None:
     message = "Hello from user"
     blocks = [TextItemBlock(message)]
@@ -94,8 +94,8 @@ def test_messenger(agent_map: Dict[str, AgentResponse], messenger: Messenger) ->
         )
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(6)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_updating(manager: DeployedAgentManager) -> None:
     agent_data_obj = deepcopy(TEST_PARENT_AGENT_DATA)
     agent_data_obj.spec.metadata.name = "Updated Parent Agent"
@@ -106,8 +106,8 @@ def test_updating(manager: DeployedAgentManager) -> None:
     assert response.metadata.name == "Updated Parent Agent"
 
 
-@pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(-1)
+@pytest.mark.usefixtures("shared_flask_apps")
 def test_deletion(agent_map: Dict[str, AgentResponse], manager: DeployedAgentManager) -> None:
     for agent in agent_map.values():
         manager.delete_agent(agent.system.id)
