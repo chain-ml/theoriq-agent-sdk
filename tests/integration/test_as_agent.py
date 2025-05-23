@@ -14,7 +14,6 @@ from tests.integration.utils import (
     join_threads,
     run_echo_agents,
 )
-from tests.integration.conftest import get_agent_map
 
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import DeployedAgentManager
@@ -22,34 +21,60 @@ from theoriq.api.v1alpha2.message import Messenger
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
 
-dotenv.load_dotenv()
-THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
-user_manager = DeployedAgentManager.from_api_key(api_key=THEORIQ_API_KEY)
+
+@pytest.fixture(scope="session")
+def parent_agent_map() -> Generator[Dict[str, AgentResponse], None, None]:
+    """File-level fixture that returns a mutable dictionary for storing parent agents."""
+    agent_map = {}
+    yield agent_map
+    agent_map.clear()
 
 
-# Use shared fixtures instead of local ones
+@pytest.fixture(scope="session")
+def children_agent_map() -> Generator[Dict[str, AgentResponse], None, None]:
+    """File-level fixture that returns a mutable dictionary for storing child agents."""
+    agent_map = {}
+    yield agent_map
+    agent_map.clear()
+
+
+@pytest.fixture()
+def user_manager() -> DeployedAgentManager:
+    """Manager for user operations (parent agents)."""
+    return DeployedAgentManager.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
+
+
+@pytest.fixture()
+def parent_manager() -> DeployedAgentManager:
+    """Manager for parent agent operations (child agents)."""
+    return DeployedAgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+
+
+@pytest.fixture()
+def parent_messenger() -> Messenger:
+    """Messenger for parent agent operations."""
+    return Messenger.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+
+
 @pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(1)
-def test_registration_parent() -> None:
-    global_parent_agent_map = get_agent_map("test_as_agent", "parent")
+def test_registration_parent(parent_agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     agent = user_manager.create_agent(
         metadata=TEST_PARENT_AGENT_DATA.spec.metadata, configuration=TEST_PARENT_AGENT_DATA.spec.configuration
     )
     print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
-    global_parent_agent_map[agent.system.id] = agent
+    parent_agent_map[agent.system.id] = agent
 
 
 @pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(2)
-def test_registration_children() -> None:
-    global_children_agent_map = get_agent_map("test_as_agent", "children")
-    manager = DeployedAgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+def test_registration_children(children_agent_map: Dict[str, AgentResponse], parent_manager: DeployedAgentManager) -> None:
     for child_agent_data_obj in TEST_CHILD_AGENT_DATA_LIST:
-        agent = manager.create_agent(
+        agent = parent_manager.create_agent(
             metadata=child_agent_data_obj.spec.metadata, configuration=child_agent_data_obj.spec.configuration
         )
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
-        global_children_agent_map[agent.system.id] = agent
+        children_agent_map[agent.system.id] = agent
 
 
 # test mint, get, unmint here when minting functionality is implemented
@@ -57,19 +82,20 @@ def test_registration_children() -> None:
 
 @pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(3)
-def test_messenger() -> None:
-    global_parent_agent_map = get_agent_map("test_as_agent", "parent")
-    global_children_agent_map = get_agent_map("test_as_agent", "children")
-    all_agents: Dict[str, AgentResponse] = {**global_parent_agent_map, **global_children_agent_map}
+def test_messenger(
+    parent_agent_map: Dict[str, AgentResponse], 
+    children_agent_map: Dict[str, AgentResponse], 
+    parent_messenger: Messenger
+) -> None:
+    all_agents: Dict[str, AgentResponse] = {**parent_agent_map, **children_agent_map}
 
     # messaging from children to parent doesn't work because there's no minting
     # so testing parent-to-all instead of all-to-all
 
-    messenger = Messenger.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
     for receiver_id, receiver in all_agents.items():
         message = f"Hello from {PARENT_AGENT_NAME}"
         blocks = [TextItemBlock(message)]
-        response = messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=receiver_id)
+        response = parent_messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=receiver_id)
         assert response.body.extract_last_text() == get_echo_execute_output(
             message=message, agent_name=receiver.metadata.name
         )
@@ -77,19 +103,15 @@ def test_messenger() -> None:
 
 @pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(-2)
-def test_deletion_children() -> None:
-    global_children_agent_map = get_agent_map("test_as_agent", "children")
-    manager = DeployedAgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
-
-    for child_agent in global_children_agent_map.values():
-        manager.delete_agent(child_agent.system.id)
+def test_deletion_children(children_agent_map: Dict[str, AgentResponse], parent_manager: DeployedAgentManager) -> None:
+    for child_agent in children_agent_map.values():
+        parent_manager.delete_agent(child_agent.system.id)
         print(f"Successfully deleted `{child_agent.system.id}`\n")
 
 
 @pytest.mark.usefixtures("shared_flask_apps")
 @pytest.mark.order(-1)
-def test_deletion_parent() -> None:
-    global_parent_agent_map = get_agent_map("test_as_agent", "parent")
-    for agent in global_parent_agent_map.values():
+def test_deletion_parent(parent_agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
+    for agent in parent_agent_map.values():
         user_manager.delete_agent(agent.system.id)
         print(f"Successfully deleted `{agent.system.id}`\n")
