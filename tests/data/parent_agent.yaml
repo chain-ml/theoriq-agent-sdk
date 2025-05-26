@@ -13,7 +13,6 @@ spec:
     tags:
       - parent
       - master
-      - test_to_delete
     examplePrompts:
       - Greetings
   configuration:

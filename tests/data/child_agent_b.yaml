@@ -13,7 +13,6 @@ spec:
     tags:
       - tag3
       - tag4
-      - test_to_delete
     examplePrompts:
       - Hello
     costCard: Free
