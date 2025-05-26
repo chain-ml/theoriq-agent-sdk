@@ -6,7 +6,12 @@ import dotenv
 import httpx
 import pytest
 from pydantic import BaseModel, Field
-from tests.integration.utils import TEST_PARENT_AGENT_DATA, get_configurable_execute_output, join_threads, run_agent
+from tests.integration.utils import (
+    TEST_CONFIGURABLE_AGENT_DATA,
+    get_configurable_execute_output,
+    join_threads,
+    run_agent,
+)
 
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import AgentConfigurationError, DeployedAgentManager, VirtualAgentManager
@@ -44,7 +49,7 @@ def assert_send_message_to_configurable_agent(agent: AgentResponse, message: str
 @pytest.fixture(scope="session", autouse=True)
 def flask_apps() -> Generator[None, None, None]:
     logging.basicConfig(level=logging.INFO)
-    thread = run_agent(agent_data_obj=TEST_PARENT_AGENT_DATA, schema=TestConfig.model_json_schema())
+    thread = run_agent(agent_data_obj=TEST_CONFIGURABLE_AGENT_DATA, schema=TestConfig.model_json_schema())
     yield
     join_threads([thread])
 
@@ -52,7 +57,8 @@ def flask_apps() -> Generator[None, None, None]:
 @pytest.mark.order(1)
 def test_registration() -> None:
     agent = user_manager.create_agent(
-        metadata=TEST_PARENT_AGENT_DATA.spec.metadata, configuration=TEST_PARENT_AGENT_DATA.spec.configuration
+        metadata=TEST_CONFIGURABLE_AGENT_DATA.spec.metadata,
+        configuration=TEST_CONFIGURABLE_AGENT_DATA.spec.configuration,
     )
     print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
     global_agent_map[agent.system.id] = agent

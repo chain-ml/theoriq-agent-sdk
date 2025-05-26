@@ -27,6 +27,9 @@ TEST_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
 PARENT_AGENT_NAME: Final[str] = "Parent Agent"
 PARENT_AGENT_ENV_PREFIX: Final[str] = "PARENT_"
 
+CONFIGURABLE_AGENT_NAME: Final[str] = "Configurable Agent"
+CONFIGURABLE_AGENT_ENV_PREFIX: Final[str] = "CONFIGURABLE_"
+
 maybe_parent_agent_data = next(
     (agent for agent in TEST_AGENT_DATA_LIST if agent.spec.metadata.name == PARENT_AGENT_NAME),
     None,
@@ -35,8 +38,19 @@ if maybe_parent_agent_data is None:
     raise RuntimeError("Parent agent data object not found")
 TEST_PARENT_AGENT_DATA: Final[AgentDataObject] = maybe_parent_agent_data
 
+maybe_configurable_agent_data = next(
+    (agent for agent in TEST_AGENT_DATA_LIST if agent.spec.metadata.name == CONFIGURABLE_AGENT_NAME),
+    None,
+)
+if maybe_configurable_agent_data is None:
+    raise RuntimeError("Configurable agent data object not found")
+TEST_CONFIGURABLE_AGENT_DATA: Final[AgentDataObject] = maybe_configurable_agent_data
+
+
 TEST_CHILD_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
-    agent for agent in TEST_AGENT_DATA_LIST if agent.spec.metadata.name != PARENT_AGENT_NAME
+    agent
+    for agent in TEST_AGENT_DATA_LIST
+    if agent.spec.metadata.name not in [PARENT_AGENT_NAME, CONFIGURABLE_AGENT_NAME]
 ]
 
 
