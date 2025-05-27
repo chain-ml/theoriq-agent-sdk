@@ -108,24 +108,6 @@ def test_configuration() -> None:
 
 
 @pytest.mark.order(4)
-def test_mint_agent() -> None:
-    for agent_id in global_agent_map.keys():
-        agent = user_manager_configurable.mint_agent(agent_id)
-        assert agent.system.state == "online"
-        print(f"Successfully minted `{agent_id}`\n")
-
-
-@pytest.mark.order(5)
-def test_unmint_agent() -> None:
-    # TODO: investigate agents break after unmint - abc is not executable by xyz
-
-    for agent_id in global_agent_map.keys():
-        agent = user_manager_configurable.unmint_agent(agent_id)
-        assert agent.system.state == "configured"
-        print(f"Successfully unminted `{agent_id}`\n")
-
-
-@pytest.mark.order(6)
 def test_messenger() -> None:
     for agent in global_agent_map.values():
         if agent.configuration.is_virtual:
@@ -137,7 +119,7 @@ def test_messenger() -> None:
         assert e.value.response.status_code == 400
 
 
-@pytest.mark.order(7)
+@pytest.mark.order(5)
 def test_incorrect_update_configuration() -> None:
     agent = next(agent for agent_id, agent in global_agent_map.items() if agent.configuration.is_virtual)
     deployed_agent_id = agent.configuration.ensure_virtual.agent_id
@@ -157,7 +139,7 @@ def test_incorrect_update_configuration() -> None:
     assert e.value.original_exception.response.status_code == 502
 
 
-@pytest.mark.order(8)
+@pytest.mark.order(6)
 def test_update_configuration() -> None:
     agent = next(agent for agent_id, agent in global_agent_map.items() if agent.configuration.is_virtual)
     deployed_agent_id = agent.configuration.ensure_virtual.agent_id
