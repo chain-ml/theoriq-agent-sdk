@@ -86,7 +86,7 @@ def test_agent_configuration_validation() -> None:
 
 
 def test_agent_data_parent() -> None:
-    filename = os.path.join(DATA_DIR, "parent_agent.yaml")
+    filename = os.path.join(DATA_DIR, "parent", "parent_agent.yaml")
     ad = AgentDataObject.from_yaml(filename)
     assert ad.spec.metadata.name == "Parent Agent"
     assert ad.spec.maybe_configuration is not None
@@ -94,10 +94,12 @@ def test_agent_data_parent() -> None:
     assert ad.spec.configuration.deployment.url == "http://192.168.2.36:8089"
     assert ad.metadata.has_label("env_prefix")
     assert ad.metadata.labels["env_prefix"] == "PARENT_"
+    assert ad.metadata.labels["agent_type"] == "parent"
 
 
 def test_agent_data_child_a() -> None:
-    filename = os.path.join(DATA_DIR, "child_agent_a.yaml")
+    filename = os.path.join(DATA_DIR, "child", "child_agent_a.yaml")
+
     ad = AgentDataObject.from_yaml(filename)
     assert ad.spec.metadata.name == "Child Agent A"
     assert ad.spec.metadata.short_description == "Short description"
@@ -105,10 +107,11 @@ def test_agent_data_child_a() -> None:
     assert ad.spec.metadata.cost_card is None
     assert ad.metadata.has_label("env_prefix")
     assert ad.metadata.labels["env_prefix"] == "CHILD_A_"
+    assert ad.metadata.labels["agent_type"] == "child"
 
 
 def test_agent_data_child_b() -> None:
-    filename = os.path.join(DATA_DIR, "child_agent_b.yaml")
+    filename = os.path.join(DATA_DIR, "child", "child_agent_b.yaml")
     ad = AgentDataObject.from_yaml(filename)
     assert ad.spec.metadata.name == "Child Agent B"
     assert ad.spec.metadata.tags == ["tag3", "tag4"]
@@ -117,3 +120,13 @@ def test_agent_data_child_b() -> None:
     assert ad.spec.metadata.cost_card == "Free"
     assert ad.metadata.has_label("env_prefix")
     assert ad.metadata.labels["env_prefix"] == "CHILD_B_"
+    assert ad.metadata.labels["agent_type"] == "child"
+
+
+def test_agent_data_configurable() -> None:
+    filename = os.path.join(DATA_DIR, "configurable", "configurable_agent.yaml")
+    ad = AgentDataObject.from_yaml(filename)
+    assert ad.spec.metadata.name == "Configurable Agent"
+    assert ad.metadata.has_label("env_prefix")
+    assert ad.metadata.labels["env_prefix"] == "CONFIGURABLE_"
+    assert ad.metadata.labels["agent_type"] == "configurable"
