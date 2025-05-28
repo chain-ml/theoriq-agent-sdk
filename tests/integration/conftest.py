@@ -1,7 +1,3 @@
-"""
-Shared pytest fixtures for integration tests to manage Flask applications and agent state.
-"""
-
 import logging
 import os
 import threading
@@ -9,36 +5,35 @@ from typing import Dict, Generator, List
 
 import dotenv
 import pytest
-from tests.integration.utils import (
-    TEST_CONFIGURABLE_AGENT_DATA,
-    TEST_DEPLOYED_AGENT_DATA_LIST,
-    TestConfig,
-    join_threads,
-    run_agent,
-    run_echo_agents,
-)
 
+from tests import DATA_DIR
+from tests.integration.agent_registry import AgentRegistry
+from tests.integration.agent_runner import AgentRunner, TestConfig
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import DeployedAgentManager
 from theoriq.api.v1alpha2.message import Messenger
 
 dotenv.load_dotenv()
 
+@pytest.fixture(scope="session")
+def agent_registry() -> AgentRegistry:
+    return AgentRegistry.from_dir(DATA_DIR)
 
 @pytest.fixture(scope="session")
-def agent_flask_apps() -> Generator[List[threading.Thread], None, None]:
+def agent_flask_apps(agent_registry: AgentRegistry) -> Generator[List[threading.Thread], None, None]:
     """Shared fixture that runs all agent Flask applications needed for integration tests."""
-    logging.basicConfig(level=logging.INFO)
 
-    echo_threads = run_echo_agents(TEST_DEPLOYED_AGENT_DATA_LIST)
+    agent_runner = AgentRunner()
+    for agent in agent_registry.get_child_agents():
+        agent_runner.run_non_configurable_agent(agent)
+    for agent in agent_registry.get_parent_agents():
+        agent_runner.run_non_configurable_agent(agent)
+    for agent in agent_registry.get_configurable_agents():
+        agent_runner.run_configurable_agent(agent, TestConfig.model_json_schema())
 
-    configurable_thread = run_agent(agent_data_obj=TEST_CONFIGURABLE_AGENT_DATA, schema=TestConfig.model_json_schema())
+    yield
 
-    all_threads = echo_threads + [configurable_thread]
-
-    yield all_threads
-
-    join_threads(all_threads)
+    agent_runner.stop_all()
 
 
 @pytest.fixture(scope="module")

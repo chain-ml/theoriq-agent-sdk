@@ -5,6 +5,7 @@ metadata:
   labels:
     author: ChainML Labs
     env_prefix: PARENT_
+    agent_type: parent
 spec:
   metadata:
     name: Parent Agent
@@ -13,7 +14,6 @@ spec:
     tags:
       - parent
       - master
-      - test_to_delete
     examplePrompts:
       - Greetings
   configuration:

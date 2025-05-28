@@ -1,19 +1,19 @@
 kind: TheoriqAgent
 version: 0.1
 metadata:
-  name: Child Agent Data Object
+  name: Agent Data Object
   labels:
     author: ChainML Labs
     env_prefix: CHILD_B_
+    agent_type: child
 spec:
   metadata:
     name: Child Agent B
-    shortDescription: Shorter description
-    longDescription: An even longer description
+    shortDescription: Short description B
+    longDescription: A much longer description B
     tags:
       - tag3
       - tag4
-      - test_to_delete
     examplePrompts:
       - Hello
     costCard: Free

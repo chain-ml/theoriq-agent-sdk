@@ -2,14 +2,10 @@ from copy import deepcopy
 from typing import Dict
 
 import pytest
-from tests.integration.utils import (
-    PARENT_AGENT_ENV_PREFIX,
-    TEST_DEPLOYED_AGENT_DATA_LIST,
-    TEST_PARENT_AGENT_DATA,
-    agents_are_equal,
-    get_echo_execute_output,
-)
 
+from tests.integration.agent_registry import AgentRegistry
+from tests.integration.agent_runner import AgentRunner
+from tests.integration.utils import agents_are_equal
 from theoriq import AgentDeploymentConfiguration
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import DeployedAgentManager
@@ -20,10 +16,10 @@ from theoriq.dialog import TextItemBlock
 
 @pytest.mark.order(1)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_registration(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
-    for agent_data_obj in TEST_DEPLOYED_AGENT_DATA_LIST:
+def test_registration(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
+    for agent_data in agent_registry.get_deployed_agents():
         agent = user_manager.create_agent(
-            metadata=agent_data_obj.spec.metadata, configuration=agent_data_obj.spec.configuration
+            metadata=agent_data.spec.metadata, configuration=agent_data.spec.configuration
         )
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         agent_map[agent.system.id] = agent
@@ -70,19 +66,20 @@ def test_messenger(agent_map: Dict[str, AgentResponse], user_messenger: Messenge
 
     for agent_id, agent in agent_map.items():
         response = user_messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=agent_id)
-        assert response.body.extract_last_text() == get_echo_execute_output(
+        assert response.body.extract_last_text() == AgentRunner.get_echo_execute_output(
             message=message, agent_name=agent.metadata.name
         )
 
 
 @pytest.mark.order(6)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_updating(user_manager: DeployedAgentManager) -> None:
-    agent_data_obj = deepcopy(TEST_PARENT_AGENT_DATA)
-    agent_data_obj.spec.metadata.name = "Updated Parent Agent"
+def test_updating(agent_registry: AgentRegistry, user_manager: DeployedAgentManager) -> None:
+    parent_agent_data = agent_registry.get_parent_agents()[0]
+    updated_agent_data = deepcopy(parent_agent_data)
+    updated_agent_data.spec.metadata.name = "Updated Parent Agent"
 
-    config = AgentDeploymentConfiguration.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
-    response = user_manager.update_agent(agent_id=str(config.address), metadata=agent_data_obj.spec.metadata)
+    config = AgentDeploymentConfiguration.from_env(env_prefix=agent_registry.get_env_prefix(parent_agent_data.spec.metadata.name))
+    response = user_manager.update_agent(agent_id=str(config.address), metadata=updated_agent_data.spec.metadata)
 
     assert response.metadata.name == "Updated Parent Agent"
 

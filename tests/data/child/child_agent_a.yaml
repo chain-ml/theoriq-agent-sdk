@@ -5,6 +5,7 @@ metadata:
   labels:
     author: ChainML Labs
     env_prefix: CHILD_A_
+    agent_type: child
 spec:
   metadata:
     name: Child Agent A
@@ -13,7 +14,6 @@ spec:
     tags:
       - tag1
       - tag2
-      - test_to_delete
     examplePrompts:
       - Hi
   configuration:
