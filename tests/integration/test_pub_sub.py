@@ -31,12 +31,9 @@ def assert_notification_queues(*, publisher_queue: List[str], subscriber_queue: 
 
 def get_parent_agent_address(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> AgentAddress:
     parent_agent_data = agent_registry.get_first_agent_of_type(AgentType.PARENT)
-    maybe_parent_agent = next(
-        (agent for agent in agent_map.values() if agent.metadata.name == parent_agent_data.spec.metadata.name), None
-    )
-    if maybe_parent_agent is None:
-        raise RuntimeError("Parent agent data object not found")
-    return AgentAddress(maybe_parent_agent.system.id)
+    parent_name = parent_agent_data.spec.metadata.name
+    parent_agent = next(agent for agent in agent_map.values() if agent.metadata.name == parent_name)
+    return AgentAddress(parent_agent.system.id)
 
 
 @pytest.mark.order(1)
@@ -80,9 +77,8 @@ def test_subscribing_as_agent(
 
     child_agent_data = agent_registry.get_first_agent_of_type(AgentType.CHILD)
     subscriber = Subscriber.from_env(env_prefix=child_agent_data.metadata.labels["env_prefix"])
-    subscriber.new_job(
-        agent_address=get_parent_agent_address(agent_registry, agent_map), handler=subscribing_handler, background=True
-    ).start()
+    parent_address = get_parent_agent_address(agent_registry, agent_map)
+    subscriber.new_job(parent_address, subscribing_handler, background=True).start()
 
     time.sleep(1.0)
     assert_notification_queues(publisher_queue=notification_queue, subscriber_queue=local_notification_queue)
@@ -99,9 +95,8 @@ def test_subscribing_as_user(
         local_notification_queue.append(notification)
 
     subscriber = Subscriber.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
-    subscriber.new_job(
-        agent_address=get_parent_agent_address(agent_registry, agent_map), handler=subscribing_handler, background=True
-    ).start()
+    parent_address = get_parent_agent_address(agent_registry, agent_map)
+    subscriber.new_job(parent_address, subscribing_handler, background=True).start()
 
     time.sleep(1.0)
     assert_notification_queues(publisher_queue=notification_queue, subscriber_queue=local_notification_queue)
