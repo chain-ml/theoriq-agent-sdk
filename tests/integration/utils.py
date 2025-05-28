@@ -3,17 +3,18 @@ Utility functions to run agents Flask apps and manage test data objects.
 """
 
 import glob
+import json
 import logging
 import threading
 import time
-from typing import Final, List, Sequence
+from typing import Any, Dict, Final, List, Optional, Sequence
 
-from flask import Flask
 from tests import DATA_DIR
 
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2 import AgentResponse, ExecuteRequestFn
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
+from theoriq.extra.flask import run_agent_flask_app
 from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
 from theoriq.types import AgentDataObject
 
@@ -26,6 +27,9 @@ TEST_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
 PARENT_AGENT_NAME: Final[str] = "Parent Agent"
 PARENT_AGENT_ENV_PREFIX: Final[str] = "PARENT_"
 
+CONFIGURABLE_AGENT_NAME: Final[str] = "Configurable Agent"
+CONFIGURABLE_AGENT_ENV_PREFIX: Final[str] = "CONFIGURABLE_"
+
 maybe_parent_agent_data = next(
     (agent for agent in TEST_AGENT_DATA_LIST if agent.spec.metadata.name == PARENT_AGENT_NAME),
     None,
@@ -34,8 +38,19 @@ if maybe_parent_agent_data is None:
     raise RuntimeError("Parent agent data object not found")
 TEST_PARENT_AGENT_DATA: Final[AgentDataObject] = maybe_parent_agent_data
 
+maybe_configurable_agent_data = next(
+    (agent for agent in TEST_AGENT_DATA_LIST if agent.spec.metadata.name == CONFIGURABLE_AGENT_NAME),
+    None,
+)
+if maybe_configurable_agent_data is None:
+    raise RuntimeError("Configurable agent data object not found")
+TEST_CONFIGURABLE_AGENT_DATA: Final[AgentDataObject] = maybe_configurable_agent_data
+
+
 TEST_CHILD_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
-    agent for agent in TEST_AGENT_DATA_LIST if agent.spec.metadata.name != PARENT_AGENT_NAME
+    agent
+    for agent in TEST_AGENT_DATA_LIST
+    if agent.spec.metadata.name not in [PARENT_AGENT_NAME, CONFIGURABLE_AGENT_NAME]
 ]
 
 
@@ -43,34 +58,52 @@ def get_echo_execute_output(*, message: str, agent_name: str) -> str:
     return f"Got `{message}` as {agent_name}!"
 
 
+def get_configurable_execute_output(config: Dict[str, Any], *, message: str, agent_name: str) -> str:
+    config_str = json.dumps(dict(sorted(config.items())))
+    return f"Got `{message}` as {agent_name}! Configured with `{config_str}`"
+
+
 def get_echo_execute(agent_name: str) -> ExecuteRequestFn:
     def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse:
         message = req.last_text
-        logger.info(f"Got request for {agent_name}: {message}")
-        return context.new_free_text_response(text=get_echo_execute_output(message=message, agent_name=agent_name))
+        response = get_echo_execute_output(message=message, agent_name=agent_name)
+        logger.info(response)
+        return context.new_free_text_response(text=response)
 
     return execute
 
 
-def run_agent_flask_app(execute: ExecuteRequestFn, agent_config: AgentDeploymentConfiguration, port: int) -> None:
-    app = Flask(f"{agent_config.prefix} on port {port}")
+def get_echo_execute_configurable(agent_name: str) -> ExecuteRequestFn:
+    def execute_configurable(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse:
+        config: Optional[Dict[str, Any]] = context.agent_configuration
+        if config is None:
+            raise ValueError("Empty configuration")
 
-    blueprint = theoriq_blueprint(agent_config, execute)
-    app.register_blueprint(blueprint)
-    app.run(host="0.0.0.0", port=port)
+        message = req.last_text
+        response = get_configurable_execute_output(config=config, message=message, agent_name=agent_name)
+        logger.info(response)
+        return context.new_free_text_response(text=response)
+
+    return execute_configurable
 
 
-def run_echo_agent(agent_data_obj: AgentDataObject) -> threading.Thread:
-    """Run an agent in a separate daemon thread with the assumption that env_prefix is contained in labels."""
-    agent_name = agent_data_obj.spec.metadata.name
-    execute = get_echo_execute(agent_name)
+def run_agent(agent_data_obj: AgentDataObject, schema: Optional[Dict[str, Any]]) -> threading.Thread:
+    """
+    Start agent Flask app in a separate daemon thread with the assumption
+    that `env_prefix` is contained in labels of AgentDataObject.
+
+    If schema is provided, use echo_execute_configurable(), otherwise echo_execute().
+    """
     agent_config = AgentDeploymentConfiguration.from_env(env_prefix=agent_data_obj.metadata.labels["env_prefix"])
-    configuration = agent_data_obj.spec.configuration
-    if configuration is None or configuration.deployment is None:
-        raise RuntimeError("No deployment information")
-    port = int(configuration.deployment.url.split(":")[-1])
+    deployment = agent_data_obj.spec.configuration.ensure_deployment
+    port = int(deployment.url.split(":")[-1])
 
-    thread = threading.Thread(target=run_agent_flask_app, args=(execute, agent_config, port))
+    agent_name = agent_data_obj.spec.metadata.name
+    execute = get_echo_execute(agent_name) if schema is None else get_echo_execute_configurable(agent_name)
+
+    blueprint = theoriq_blueprint(agent_config=agent_config, execute_fn=execute, schema=schema)
+
+    thread = threading.Thread(target=run_agent_flask_app, args=(blueprint, port))
     thread.daemon = True
     thread.start()
     return thread
@@ -81,7 +114,7 @@ def run_echo_agents(agent_data_objs: Sequence[AgentDataObject], sleep_time: floa
 
     threads: List[threading.Thread] = []
     for agent_data_obj in agent_data_objs:
-        threads.append(run_echo_agent(agent_data_obj))
+        threads.append(run_agent(agent_data_obj, schema=None))
         time.sleep(sleep_time)
 
     return threads

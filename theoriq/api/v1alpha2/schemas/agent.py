@@ -42,14 +42,32 @@ class Configuration(BaseModel):
     virtual: Optional[Virtual] = Field(default=None)
 
     @property
+    def is_deployed(self) -> bool:
+        return self.deployment is not None
+
+    @property
+    def is_virtual(self) -> bool:
+        return self.virtual is not None
+
+    @property
     def is_valid(self) -> bool:
-        is_virtual = self.virtual is not None and self.deployment is None
-        is_deployed = self.virtual is None and self.deployment is not None
-        return is_virtual or is_deployed
+        return self.is_deployed or self.is_virtual
 
     @property
     def is_empty(self) -> bool:
-        return self.virtual is None and self.deployment is None
+        return not self.is_deployed and not self.is_virtual
+
+    @property
+    def ensure_deployment(self) -> Dict[str, Any]:
+        if self.deployment is None:
+            raise RuntimeError("Deployment configuration is None")
+        return self.deployment
+
+    @property
+    def ensure_virtual(self) -> Virtual:
+        if self.virtual is None:
+            raise RuntimeError("Virtual configuration is None")
+        return self.virtual
 
     # noinspection PyNestedDecorators
     @field_validator("virtual", mode="before")

@@ -17,7 +17,7 @@ from tests.integration.utils import (
 
 from theoriq import AgentDeploymentConfiguration
 from theoriq.api.v1alpha2 import AgentResponse
-from theoriq.api.v1alpha2.manage import AgentManager
+from theoriq.api.v1alpha2.manage import DeployedAgentManager
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
@@ -25,7 +25,7 @@ from theoriq.dialog import TextItemBlock
 dotenv.load_dotenv()
 
 THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
-user_manager = AgentManager.from_api_key(api_key=THEORIQ_API_KEY)
+user_manager = DeployedAgentManager.from_api_key(api_key=THEORIQ_API_KEY)
 
 global_agent_map: Dict[str, AgentResponse] = {}
 

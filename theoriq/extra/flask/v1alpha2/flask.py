@@ -3,7 +3,7 @@
 import json
 import logging
 import threading
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import pydantic
 from flask import Blueprint, Response, jsonify, request
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 def theoriq_blueprint(
     agent_config: AgentDeploymentConfiguration,
     execute_fn: ExecuteRequestFnV1alpha2,
-    schema: Optional[Dict] = None,
+    schema: Optional[Dict[str, Any]] = None,
     agent_configurator: AgentConfigurator = AgentConfigurator.default(),
 ) -> Blueprint:
     """

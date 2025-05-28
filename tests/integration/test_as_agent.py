@@ -16,14 +16,14 @@ from tests.integration.utils import (
 )
 
 from theoriq.api.v1alpha2 import AgentResponse
-from theoriq.api.v1alpha2.manage import AgentManager
+from theoriq.api.v1alpha2.manage import DeployedAgentManager
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
 
 dotenv.load_dotenv()
 THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
-user_manager = AgentManager.from_api_key(api_key=THEORIQ_API_KEY)
+user_manager = DeployedAgentManager.from_api_key(api_key=THEORIQ_API_KEY)
 
 global_parent_agent_map: Dict[str, AgentResponse] = {}
 global_children_agent_map: Dict[str, AgentResponse] = {}
@@ -48,7 +48,7 @@ def test_registration_parent() -> None:
 
 @pytest.mark.order(2)
 def test_registration_children() -> None:
-    manager = AgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+    manager = DeployedAgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
     for child_agent_data_obj in TEST_CHILD_AGENT_DATA_LIST:
         agent = manager.create_agent(
             metadata=child_agent_data_obj.spec.metadata, configuration=child_agent_data_obj.spec.configuration
@@ -79,7 +79,7 @@ def test_messenger() -> None:
 
 @pytest.mark.order(-2)
 def test_deletion_children() -> None:
-    manager = AgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+    manager = DeployedAgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
 
     for child_agent in global_children_agent_map.values():
         manager.delete_agent(child_agent.system.id)
