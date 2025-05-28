@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import logging
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Sequence
+from typing import List, Sequence
 
 from theoriq.types import AgentDataObject
-
 
 
 class AgentType(str, Enum):
@@ -34,3 +32,6 @@ class AgentRegistry:
 
     def get_agents_of_type(self, agent_type: AgentType) -> List[AgentDataObject]:
         return [agent for agent in self.agents if agent.metadata.labels["agent_type"] == agent_type.value]
+
+    def get_agents_of_types(self, agent_types: Sequence[AgentType]) -> List[AgentDataObject]:
+        return [agent for agent_type in agent_types for agent in self.get_agents_of_type(agent_type)]

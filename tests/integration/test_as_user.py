@@ -19,12 +19,9 @@ from theoriq.dialog import TextItemBlock
 def test_registration(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
 ) -> None:
-    agents = agent_registry.get_agents_of_type(AgentType.PARENT) + agent_registry.get_agents_of_type(AgentType.CHILD)
-    for agent_data in agents:
-        agent = user_manager.create_agent(
-            metadata=agent_data.spec.metadata, configuration=agent_data.spec.configuration
-        )
-        print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
+    agent_data_objs = agent_registry.get_agents_of_types([AgentType.PARENT, AgentType.CHILD])
+    for agent_data in agent_data_objs:
+        agent = user_manager.create_agent(agent_data.spec.metadata, agent_data.spec.configuration)
         agent_map[agent.system.id] = agent
 
 
@@ -34,7 +31,6 @@ def test_minting(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgen
     for agent_id in agent_map.keys():
         agent = user_manager.mint_agent(agent_id)
         assert agent.system.state == "online"
-        print(f"Successfully minted `{agent_id}`\n")
 
 
 @pytest.mark.order(3)
@@ -58,7 +54,6 @@ def test_unminting(agent_map: Dict[str, AgentResponse], user_manager: DeployedAg
     for agent_id in agent_map.keys():
         agent = user_manager.unmint_agent(agent_id)
         assert agent.system.state == "configured"
-        print(f"Successfully unminted `{agent_id}`\n")
 
 
 @pytest.mark.order(5)
@@ -69,9 +64,9 @@ def test_messenger(agent_map: Dict[str, AgentResponse], user_messenger: Messenge
 
     for agent_id, agent in agent_map.items():
         response = user_messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=agent_id)
-        assert response.body.extract_last_text() == AgentRunner.get_echo_execute_output(
-            message=message, agent_name=agent.metadata.name
-        )
+        actual = response.body.extract_last_text()
+        expected = AgentRunner.get_echo_execute_output(message=message, agent_name=agent.metadata.name)
+        assert actual == expected
 
 
 @pytest.mark.order(6)
@@ -93,4 +88,3 @@ def test_updating(agent_registry: AgentRegistry, user_manager: DeployedAgentMana
 def test_deletion(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     for agent in agent_map.values():
         user_manager.delete_agent(agent.system.id)
-        print(f"Successfully deleted `{agent.system.id}`\n")

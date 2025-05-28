@@ -50,17 +50,15 @@ def get_parent_agent_address(agent_registry: AgentRegistry, agent_map: Dict[str,
 def test_registration(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
 ) -> None:
-    agents = agent_registry.get_agents_of_type(AgentType.PARENT) + agent_registry.get_agents_of_type(AgentType.CHILD)
-    for agent_data in agents:
-        agent = user_manager.create_agent(metadata=agent_data.spec.metadata, configuration=agent_data.spec.configuration)
-        print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
+    agent_data_objs = agent_registry.get_agents_of_types([AgentType.PARENT, AgentType.CHILD])
+    for agent_data in agent_data_objs:
+        agent = user_manager.create_agent(agent_data.spec.metadata, agent_data.spec.configuration)
         agent_map[agent.system.id] = agent
 
 
 @pytest.mark.order(2)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_publishing(agent_registry: AgentRegistry) -> None:
-    """Parent agent is a publisher."""
     parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
     publisher = Publisher.from_env(env_prefix=parent_agent_data.metadata.labels["env_prefix"])
     publisher.new_job(job=publishing_job, background=True).start()
@@ -69,8 +67,6 @@ def test_publishing(agent_registry: AgentRegistry) -> None:
 @pytest.mark.order(3)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_subscribing_as_agent(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> None:
-    """Child agent is a subscriber."""
-
     agent_notification_queue_sub: List[str] = []
 
     def subscribing_handler(notification: str) -> None:
@@ -89,8 +85,6 @@ def test_subscribing_as_agent(agent_registry: AgentRegistry, agent_map: Dict[str
 @pytest.mark.order(4)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_subscribing_as_user(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> None:
-    """User is a subscriber."""
-
     user_notification_queue_sub: List[str] = []
 
     def subscribing_handler(notification: str) -> None:
@@ -110,4 +104,3 @@ def test_subscribing_as_user(agent_registry: AgentRegistry, agent_map: Dict[str,
 def test_deletion(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
     for agent in agent_map.values():
         user_manager.delete_agent(agent.system.id)
-        print(f"Successfully deleted `{agent.system.id}`\n")

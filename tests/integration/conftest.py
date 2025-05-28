@@ -25,11 +25,13 @@ def agent_flask_apps(agent_registry: AgentRegistry) -> Generator[List[threading.
     """Shared fixture that runs all agent Flask applications needed for integration tests."""
 
     agent_runner = AgentRunner()
-    for agent in agent_registry.get_agents_of_type(AgentType.CHILD):
+
+    non_configurable_agents = agent_registry.get_agents_of_types([AgentType.PARENT, AgentType.CHILD])
+    for agent in non_configurable_agents:
         agent_runner.run_non_configurable_agent(agent)
-    for agent in agent_registry.get_agents_of_type(AgentType.PARENT):
-        agent_runner.run_non_configurable_agent(agent)
-    for agent in agent_registry.get_agents_of_type(AgentType.CONFIGURABLE):
+
+    configurable_agents = agent_registry.get_agents_of_type(AgentType.CONFIGURABLE)
+    for agent in configurable_agents:
         agent_runner.run_configurable_agent(agent, TestConfig.model_json_schema())
 
     yield agent_runner.running_threads

@@ -59,18 +59,18 @@ class AgentRunner:
 
         return execute_configurable
 
-    def run_agent(self, agent_data_obj: AgentDataObject, schema: Optional[Dict[str, Any]]) -> threading.Thread:
+    def run_agent(self, agent_data: AgentDataObject, schema: Optional[Dict[str, Any]]) -> threading.Thread:
         """
         Start agent Flask app in a separate daemon thread with the assumption
         that `env_prefix` is contained in labels of AgentDataObject.
 
         If schema is provided, use echo_execute_configurable(), otherwise echo_execute().
         """
-        agent_config = AgentDeploymentConfiguration.from_env(env_prefix=agent_data_obj.metadata.labels["env_prefix"])
-        deployment = agent_data_obj.spec.configuration.ensure_deployment
+        agent_config = AgentDeploymentConfiguration.from_env(env_prefix=agent_data.metadata.labels["env_prefix"])
+        deployment = agent_data.spec.configuration.ensure_deployment
         port = int(deployment.url.split(":")[-1])
 
-        agent_name = agent_data_obj.spec.metadata.name
+        agent_name = agent_data.spec.metadata.name
         execute = (
             self.create_echo_execute_fn(agent_name)
             if schema is None
