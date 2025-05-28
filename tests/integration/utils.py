@@ -54,6 +54,10 @@ TEST_CHILD_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
     if agent.spec.metadata.name not in [PARENT_AGENT_NAME, CONFIGURABLE_AGENT_NAME]
 ]
 
+TEST_DEPLOYED_AGENT_DATA_LIST: Final[List[AgentDataObject]] = [
+    agent for agent in TEST_AGENT_DATA_LIST if agent.spec.metadata.name != CONFIGURABLE_AGENT_NAME
+]
+
 
 class TestConfig(BaseModel):
     """Test configuration schema used by configurable tests."""

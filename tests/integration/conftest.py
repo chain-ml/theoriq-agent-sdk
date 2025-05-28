@@ -10,8 +10,8 @@ from typing import Dict, Generator, List
 import dotenv
 import pytest
 from tests.integration.utils import (
-    TEST_AGENT_DATA_LIST,
-    TEST_PARENT_AGENT_DATA,
+    TEST_CONFIGURABLE_AGENT_DATA,
+    TEST_DEPLOYED_AGENT_DATA_LIST,
     TestConfig,
     join_threads,
     run_agent,
@@ -30,9 +30,9 @@ def agent_flask_apps() -> Generator[List[threading.Thread], None, None]:
     """Shared fixture that runs all agent Flask applications needed for integration tests."""
     logging.basicConfig(level=logging.INFO)
 
-    echo_threads = run_echo_agents(TEST_AGENT_DATA_LIST)
+    echo_threads = run_echo_agents(TEST_DEPLOYED_AGENT_DATA_LIST)
 
-    configurable_thread = run_agent(agent_data_obj=TEST_PARENT_AGENT_DATA, schema=TestConfig.model_json_schema())
+    configurable_thread = run_agent(agent_data_obj=TEST_CONFIGURABLE_AGENT_DATA, schema=TestConfig.model_json_schema())
 
     all_threads = echo_threads + [configurable_thread]
 

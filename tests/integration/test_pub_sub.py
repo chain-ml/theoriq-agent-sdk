@@ -6,8 +6,8 @@ import pytest
 from tests.integration.utils import (
     PARENT_AGENT_ENV_PREFIX,
     PARENT_AGENT_NAME,
-    TEST_AGENT_DATA_LIST,
     TEST_CHILD_AGENT_DATA_LIST,
+    TEST_DEPLOYED_AGENT_DATA_LIST,
 )
 
 from theoriq.api.v1alpha2 import AgentResponse
@@ -50,7 +50,7 @@ def get_parent_agent_address(agent_map: Dict[str, AgentResponse]) -> AgentAddres
 @pytest.mark.order(1)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_registration(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
-    for agent_data_obj in TEST_AGENT_DATA_LIST:
+    for agent_data_obj in TEST_DEPLOYED_AGENT_DATA_LIST:
         agent = user_manager.create_agent(
             metadata=agent_data_obj.spec.metadata, configuration=agent_data_obj.spec.configuration
         )

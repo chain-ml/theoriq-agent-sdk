@@ -4,7 +4,7 @@ from typing import Dict
 import pytest
 from tests.integration.utils import (
     PARENT_AGENT_ENV_PREFIX,
-    TEST_AGENT_DATA_LIST,
+    TEST_DEPLOYED_AGENT_DATA_LIST,
     TEST_PARENT_AGENT_DATA,
     agents_are_equal,
     get_echo_execute_output,
@@ -21,7 +21,7 @@ from theoriq.dialog import TextItemBlock
 @pytest.mark.order(1)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_registration(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
-    for agent_data_obj in TEST_AGENT_DATA_LIST:
+    for agent_data_obj in TEST_DEPLOYED_AGENT_DATA_LIST:
         agent = user_manager.create_agent(
             metadata=agent_data_obj.spec.metadata, configuration=agent_data_obj.spec.configuration
         )
