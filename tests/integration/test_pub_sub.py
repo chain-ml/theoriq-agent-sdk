@@ -23,7 +23,7 @@ def assert_notification_queues(*, publisher_queue: List[str], subscriber_queue: 
     # every element in subscriber queue must be in publisher queue
     # not the other way around because publisher starts publishing before subscriber subscribes
 
-    assert len(subscriber_queue) <= len(publisher_queue)
+    assert 0 < len(subscriber_queue) <= len(publisher_queue)
 
     for notification in subscriber_queue:
         assert notification in publisher_queue
