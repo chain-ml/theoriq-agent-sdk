@@ -3,7 +3,8 @@ from typing import Dict
 
 import httpx
 import pytest
-from tests.integration.utils import TEST_CONFIGURABLE_AGENT_DATA, TestConfig, get_configurable_execute_output
+from tests.integration.agent_registry import AgentRegistry
+from tests.integration.agent_runner import AgentRunner, TestConfig
 
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import AgentConfigurationError, DeployedAgentManager, VirtualAgentManager
@@ -27,17 +28,20 @@ def assert_send_message_to_configurable_agent(
 
     virtual = agent.configuration.ensure_virtual
     deployed_agent_name = agent_map[virtual.agent_id].metadata.name
-    assert response.body.extract_last_text() == get_configurable_execute_output(
+    assert response.body.extract_last_text() == AgentRunner.get_configurable_execute_output(
         virtual.configuration, message=message, agent_name=deployed_agent_name
     )
 
 
 @pytest.mark.order(1)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_registration(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
+def test_registration(
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
+) -> None:
+    configurable_agent_data = agent_registry.get_configurable_agents()[0]
     agent = user_manager.create_agent(
-        metadata=TEST_CONFIGURABLE_AGENT_DATA.spec.metadata,
-        configuration=TEST_CONFIGURABLE_AGENT_DATA.spec.configuration,
+        metadata=configurable_agent_data.spec.metadata,
+        configuration=configurable_agent_data.spec.configuration,
     )
     print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
     agent_map[agent.system.id] = agent
@@ -48,7 +52,7 @@ def test_registration(agent_map: Dict[str, AgentResponse], user_manager: Deploye
 def test_incorrect_configuration(
     agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager
 ) -> None:
-    deployed_agent = next(agent for agent_id, agent in agent_map.items() if agent.configuration.is_deployed)
+    deployed_agent = next(agent for agent in agent_map.values() if agent.configuration.is_deployed)
 
     metadata = AgentMetadata(
         name="Incorrect Configurable Agent",
@@ -72,7 +76,7 @@ def test_incorrect_configuration(
 @pytest.mark.order(3)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_configuration(agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager) -> None:
-    deployed_agent = next(agent for agent_id, agent in agent_map.items() if agent.configuration.is_deployed)
+    deployed_agent = next(agent for agent in agent_map.values() if agent.configuration.is_deployed)
 
     configs = [TestConfig(text="test value", number=42), TestConfig(text="another value", number=-5)]
 
@@ -110,19 +114,20 @@ def test_messenger(agent_map: Dict[str, AgentResponse], user_messenger: Messenge
 def test_incorrect_update_configuration(
     agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager
 ) -> None:
-    agent = next(agent for agent_id, agent in agent_map.items() if agent.configuration.is_virtual)
-    deployed_agent_id = agent.configuration.ensure_virtual.agent_id
+    virtual_agent = next(agent for agent in agent_map.values() if agent.configuration.is_virtual)
+    deployed_agent_id = virtual_agent.configuration.ensure_virtual.agent_id
 
     metadata = AgentMetadata(
         name="Incorrectly Updated Configurable Agent",
         short_description="Short description",
         long_description="Long description",
-        tags=["test_to_delete"],
     )
     configuration = AgentConfiguration.for_virtual(agent_id=deployed_agent_id, configuration={"incorrect": "config"})
 
     with pytest.raises(AgentConfigurationError) as e:
-        configurable_manager.update_agent(agent_id=agent.system.id, metadata=metadata, configuration=configuration)
+        configurable_manager.update_agent(
+            agent_id=virtual_agent.system.id, metadata=metadata, configuration=configuration
+        )
     assert e.value.message.endswith("updated but failed to configure")
     assert isinstance(e.value.original_exception, httpx.HTTPStatusError)
     assert e.value.original_exception.response.status_code == 502
@@ -133,15 +138,15 @@ def test_incorrect_update_configuration(
 def test_update_configuration(
     agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager, user_messenger: Messenger
 ) -> None:
-    agent = next(agent for agent_id, agent in agent_map.items() if agent.configuration.is_virtual)
-    deployed_agent_id = agent.configuration.ensure_virtual.agent_id
+    virtual_agent = next(agent for agent in agent_map.values() if agent.configuration.is_virtual)
+    deployed_agent_id = virtual_agent.configuration.ensure_virtual.agent_id
 
     new_config = TestConfig(text="new test value", number=43)
 
     configuration = AgentConfiguration.for_virtual(agent_id=deployed_agent_id, configuration=new_config.model_dump())
 
-    updated_agent = configurable_manager.update_agent(agent_id=agent.system.id, configuration=configuration)
-    assert updated_agent.system.id == agent.system.id
+    updated_agent = configurable_manager.update_agent(agent_id=virtual_agent.system.id, configuration=configuration)
+    assert updated_agent.system.id == virtual_agent.system.id
     assert updated_agent.system.state == "configured"
     print(f"Successfully re-configured `{updated_agent.system.id}` with {new_config=}\n")
     agent_map[updated_agent.system.id] = updated_agent

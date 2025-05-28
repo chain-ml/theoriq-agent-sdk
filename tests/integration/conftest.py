@@ -1,23 +1,24 @@
-import logging
 import os
 import threading
 from typing import Dict, Generator, List
 
 import dotenv
 import pytest
-
 from tests import DATA_DIR
 from tests.integration.agent_registry import AgentRegistry
 from tests.integration.agent_runner import AgentRunner, TestConfig
+
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import DeployedAgentManager
 from theoriq.api.v1alpha2.message import Messenger
 
 dotenv.load_dotenv()
 
+
 @pytest.fixture(scope="session")
 def agent_registry() -> AgentRegistry:
     return AgentRegistry.from_dir(DATA_DIR)
+
 
 @pytest.fixture(scope="session")
 def agent_flask_apps(agent_registry: AgentRegistry) -> Generator[List[threading.Thread], None, None]:
@@ -31,7 +32,7 @@ def agent_flask_apps(agent_registry: AgentRegistry) -> Generator[List[threading.
     for agent in agent_registry.get_configurable_agents():
         agent_runner.run_configurable_agent(agent, TestConfig.model_json_schema())
 
-    yield
+    yield agent_runner.running_threads
 
     agent_runner.stop_all()
 

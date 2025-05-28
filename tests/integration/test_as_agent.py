@@ -1,13 +1,8 @@
 from typing import Dict
 
 import pytest
-from tests.integration.utils import (
-    PARENT_AGENT_ENV_PREFIX,
-    PARENT_AGENT_NAME,
-    TEST_CHILD_AGENT_DATA_LIST,
-    TEST_PARENT_AGENT_DATA,
-    get_echo_execute_output,
-)
+from tests.integration.agent_registry import AgentRegistry
+from tests.integration.agent_runner import AgentRunner
 
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import DeployedAgentManager
@@ -23,22 +18,27 @@ def is_owned_by_agent(agent: AgentResponse) -> bool:
 
 
 @pytest.fixture()
-def parent_manager() -> DeployedAgentManager:
+def parent_manager(agent_registry: AgentRegistry) -> DeployedAgentManager:
     """Manager for parent agent operations (child agents)."""
-    return DeployedAgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+    parent_agent_data = agent_registry.get_parent_agents()[0]
+    return DeployedAgentManager.from_env(env_prefix=agent_registry.get_env_prefix(parent_agent_data.spec.metadata.name))
 
 
 @pytest.fixture()
-def parent_messenger() -> Messenger:
+def parent_messenger(agent_registry: AgentRegistry) -> Messenger:
     """Messenger for parent agent operations."""
-    return Messenger.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+    parent_agent_data = agent_registry.get_parent_agents()[0]
+    return Messenger.from_env(env_prefix=agent_registry.get_env_prefix(parent_agent_data.spec.metadata.name))
 
 
 @pytest.mark.order(1)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_registration_parent(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
+def test_registration_parent(
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
+) -> None:
+    parent_agent_data = agent_registry.get_parent_agents()[0]
     agent = user_manager.create_agent(
-        metadata=TEST_PARENT_AGENT_DATA.spec.metadata, configuration=TEST_PARENT_AGENT_DATA.spec.configuration
+        metadata=parent_agent_data.spec.metadata, configuration=parent_agent_data.spec.configuration
     )
     print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
     agent_map[agent.system.id] = agent
@@ -46,10 +46,12 @@ def test_registration_parent(agent_map: Dict[str, AgentResponse], user_manager: 
 
 @pytest.mark.order(2)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_registration_children(agent_map: Dict[str, AgentResponse], parent_manager: DeployedAgentManager) -> None:
-    for child_agent_data_obj in TEST_CHILD_AGENT_DATA_LIST:
+def test_registration_children(
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], parent_manager: DeployedAgentManager
+) -> None:
+    for child_agent_data in agent_registry.get_child_agents():
         agent = parent_manager.create_agent(
-            metadata=child_agent_data_obj.spec.metadata, configuration=child_agent_data_obj.spec.configuration
+            metadata=child_agent_data.spec.metadata, configuration=child_agent_data.spec.configuration
         )
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         agent_map[agent.system.id] = agent
@@ -65,10 +67,10 @@ def test_messenger(agent_map: Dict[str, AgentResponse], parent_messenger: Messen
     # so testing parent-to-all instead of all-to-all
 
     for receiver_id, receiver in agent_map.items():
-        message = f"Hello from {PARENT_AGENT_NAME}"
+        message = "Hello from Parent Agent"
         blocks = [TextItemBlock(message)]
         response = parent_messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=receiver_id)
-        assert response.body.extract_last_text() == get_echo_execute_output(
+        assert response.body.extract_last_text() == AgentRunner.get_echo_execute_output(
             message=message, agent_name=receiver.metadata.name
         )
 
