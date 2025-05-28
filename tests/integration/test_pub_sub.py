@@ -1,6 +1,6 @@
 import os
 import time
-from typing import Dict, List
+from typing import Dict, Generator, List
 
 import pytest
 from tests.integration.agent_registry import AgentRegistry, AgentType
@@ -11,28 +11,22 @@ from theoriq.api.v1alpha2.publish import Publisher, PublisherContext
 from theoriq.api.v1alpha2.subscribe import Subscriber
 from theoriq.biscuit import AgentAddress
 
-global_notification_queue_pub: List[str] = []
+
+@pytest.fixture(scope="module")
+def notification_queue() -> Generator[List[str], None, None]:
+    notification_queue: List[str] = []
+    yield notification_queue
+    notification_queue.clear()
 
 
-def publishing_job(context: PublisherContext) -> None:
-    i = 0
-    while True:
-        notification = f"Sample notification #{i}"
-        global_notification_queue_pub.append(notification)
-        context.publish(notification)
-
-        i += 1
-        time.sleep(0.3)
-
-
-def assert_notification_queues(notification_queue_sub: List[str]) -> None:
-    # every element in subscriber queue must be in global_notification_queue_pub
+def assert_notification_queues(*, publisher_queue: List[str], subscriber_queue: List[str]) -> None:
+    # every element in subscriber queue must be in publisher queue
     # not the other way around because publisher starts publishing before subscriber subscribes
 
-    assert len(notification_queue_sub) <= len(global_notification_queue_pub)
+    assert len(subscriber_queue) <= len(publisher_queue)
 
-    for notification in notification_queue_sub:
-        assert notification in global_notification_queue_pub
+    for notification in subscriber_queue:
+        assert notification in publisher_queue
 
 
 def get_parent_agent_address(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> AgentAddress:
@@ -58,7 +52,17 @@ def test_registration(
 
 @pytest.mark.order(2)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_publishing(agent_registry: AgentRegistry) -> None:
+def test_publishing(agent_registry: AgentRegistry, notification_queue: List[str]) -> None:
+    def publishing_job(context: PublisherContext) -> None:
+        i = 0
+        while True:
+            notification = f"Sample notification #{i}"
+            notification_queue.append(notification)
+            context.publish(notification)
+
+            i += 1
+            time.sleep(0.3)
+
     parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
     publisher = Publisher.from_env(env_prefix=parent_agent_data.metadata.labels["env_prefix"])
     publisher.new_job(job=publishing_job, background=True).start()
@@ -66,11 +70,13 @@ def test_publishing(agent_registry: AgentRegistry) -> None:
 
 @pytest.mark.order(3)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_subscribing_as_agent(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> None:
-    agent_notification_queue_sub: List[str] = []
+def test_subscribing_as_agent(
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], notification_queue: List[str]
+) -> None:
+    local_notification_queue: List[str] = []
 
     def subscribing_handler(notification: str) -> None:
-        agent_notification_queue_sub.append(notification)
+        local_notification_queue.append(notification)
 
     child_agent_data = agent_registry.get_agents_of_type(AgentType.CHILD)[0]
     subscriber = Subscriber.from_env(env_prefix=child_agent_data.metadata.labels["env_prefix"])
@@ -79,16 +85,18 @@ def test_subscribing_as_agent(agent_registry: AgentRegistry, agent_map: Dict[str
     ).start()
 
     time.sleep(1.0)
-    assert_notification_queues(agent_notification_queue_sub)
+    assert_notification_queues(publisher_queue=notification_queue, subscriber_queue=local_notification_queue)
 
 
 @pytest.mark.order(4)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_subscribing_as_user(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> None:
-    user_notification_queue_sub: List[str] = []
+def test_subscribing_as_user(
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], notification_queue: List[str]
+) -> None:
+    local_notification_queue: List[str] = []
 
     def subscribing_handler(notification: str) -> None:
-        user_notification_queue_sub.append(notification)
+        local_notification_queue.append(notification)
 
     subscriber = Subscriber.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
     subscriber.new_job(
@@ -96,7 +104,7 @@ def test_subscribing_as_user(agent_registry: AgentRegistry, agent_map: Dict[str,
     ).start()
 
     time.sleep(1.0)
-    assert_notification_queues(user_notification_queue_sub)
+    assert_notification_queues(publisher_queue=notification_queue, subscriber_queue=local_notification_queue)
 
 
 @pytest.mark.order(-1)
