@@ -3,7 +3,7 @@ import time
 from typing import Dict, List
 
 import pytest
-from tests.integration.agent_registry import AgentRegistry
+from tests.integration.agent_registry import AgentRegistry, AgentType
 
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import DeployedAgentManager
@@ -36,7 +36,7 @@ def assert_notification_queues(notification_queue_sub: List[str]) -> None:
 
 
 def get_parent_agent_address(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> AgentAddress:
-    parent_agent_data = agent_registry.get_parent_agents()[0]
+    parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
     maybe_parent_agent = next(
         (agent for agent in agent_map.values() if agent.metadata.name == parent_agent_data.spec.metadata.name), None
     )
@@ -50,10 +50,9 @@ def get_parent_agent_address(agent_registry: AgentRegistry, agent_map: Dict[str,
 def test_registration(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
 ) -> None:
-    for agent_data in agent_registry.get_deployed_agents():
-        agent = user_manager.create_agent(
-            metadata=agent_data.spec.metadata, configuration=agent_data.spec.configuration
-        )
+    agents = agent_registry.get_agents_of_type(AgentType.PARENT) + agent_registry.get_agents_of_type(AgentType.CHILD)
+    for agent_data in agents:
+        agent = user_manager.create_agent(metadata=agent_data.spec.metadata, configuration=agent_data.spec.configuration)
         print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
         agent_map[agent.system.id] = agent
 
@@ -62,8 +61,8 @@ def test_registration(
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_publishing(agent_registry: AgentRegistry) -> None:
     """Parent agent is a publisher."""
-    parent_agent_data = agent_registry.get_parent_agents()[0]
-    publisher = Publisher.from_env(env_prefix=agent_registry.get_env_prefix(parent_agent_data.spec.metadata.name))
+    parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
+    publisher = Publisher.from_env(env_prefix=parent_agent_data.metadata.labels["env_prefix"])
     publisher.new_job(job=publishing_job, background=True).start()
 
 
@@ -77,8 +76,8 @@ def test_subscribing_as_agent(agent_registry: AgentRegistry, agent_map: Dict[str
     def subscribing_handler(notification: str) -> None:
         agent_notification_queue_sub.append(notification)
 
-    child_agent_data = agent_registry.get_child_agents()[0]
-    subscriber = Subscriber.from_env(env_prefix=agent_registry.get_env_prefix(child_agent_data.spec.metadata.name))
+    child_agent_data = agent_registry.get_agents_of_type(AgentType.CHILD)[0]
+    subscriber = Subscriber.from_env(env_prefix=child_agent_data.metadata.labels["env_prefix"])
     subscriber.new_job(
         agent_address=get_parent_agent_address(agent_registry, agent_map), handler=subscribing_handler, background=True
     ).start()

@@ -2,7 +2,7 @@ from copy import deepcopy
 from typing import Dict
 
 import pytest
-from tests.integration.agent_registry import AgentRegistry
+from tests.integration.agent_registry import AgentRegistry, AgentType
 from tests.integration.agent_runner import AgentRunner
 from tests.integration.utils import agents_are_equal
 
@@ -19,7 +19,8 @@ from theoriq.dialog import TextItemBlock
 def test_registration(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
 ) -> None:
-    for agent_data in agent_registry.get_deployed_agents():
+    agents = agent_registry.get_agents_of_type(AgentType.PARENT) + agent_registry.get_agents_of_type(AgentType.CHILD)
+    for agent_data in agents:
         agent = user_manager.create_agent(
             metadata=agent_data.spec.metadata, configuration=agent_data.spec.configuration
         )
@@ -76,13 +77,12 @@ def test_messenger(agent_map: Dict[str, AgentResponse], user_messenger: Messenge
 @pytest.mark.order(6)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_updating(agent_registry: AgentRegistry, user_manager: DeployedAgentManager) -> None:
-    parent_agent_data = agent_registry.get_parent_agents()[0]
+    parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
     updated_agent_data = deepcopy(parent_agent_data)
     updated_agent_data.spec.metadata.name = "Updated Parent Agent"
 
-    config = AgentDeploymentConfiguration.from_env(
-        env_prefix=agent_registry.get_env_prefix(parent_agent_data.spec.metadata.name)
-    )
+    config = AgentDeploymentConfiguration.from_env(env_prefix=parent_agent_data.metadata.labels["env_prefix"])
+
     response = user_manager.update_agent(agent_id=str(config.address), metadata=updated_agent_data.spec.metadata)
 
     assert response.metadata.name == "Updated Parent Agent"

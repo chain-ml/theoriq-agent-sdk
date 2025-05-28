@@ -3,7 +3,7 @@ from typing import Dict
 
 import httpx
 import pytest
-from tests.integration.agent_registry import AgentRegistry
+from tests.integration.agent_registry import AgentRegistry, AgentType
 from tests.integration.agent_runner import AgentRunner, TestConfig
 
 from theoriq.api.v1alpha2 import AgentResponse
@@ -38,7 +38,7 @@ def assert_send_message_to_configurable_agent(
 def test_registration(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
 ) -> None:
-    configurable_agent_data = agent_registry.get_configurable_agents()[0]
+    configurable_agent_data = agent_registry.get_agents_of_type(AgentType.CONFIGURABLE)[0]
     agent = user_manager.create_agent(
         metadata=configurable_agent_data.spec.metadata,
         configuration=configurable_agent_data.spec.configuration,

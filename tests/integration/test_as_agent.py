@@ -1,7 +1,7 @@
 from typing import Dict
 
 import pytest
-from tests.integration.agent_registry import AgentRegistry
+from tests.integration.agent_registry import AgentRegistry, AgentType
 from tests.integration.agent_runner import AgentRunner
 
 from theoriq.api.v1alpha2 import AgentResponse
@@ -20,15 +20,15 @@ def is_owned_by_agent(agent: AgentResponse) -> bool:
 @pytest.fixture()
 def parent_manager(agent_registry: AgentRegistry) -> DeployedAgentManager:
     """Manager for parent agent operations (child agents)."""
-    parent_agent_data = agent_registry.get_parent_agents()[0]
-    return DeployedAgentManager.from_env(env_prefix=agent_registry.get_env_prefix(parent_agent_data.spec.metadata.name))
+    parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
+    return DeployedAgentManager.from_env(env_prefix=parent_agent_data.metadata.labels["env_prefix"])
 
 
 @pytest.fixture()
 def parent_messenger(agent_registry: AgentRegistry) -> Messenger:
     """Messenger for parent agent operations."""
-    parent_agent_data = agent_registry.get_parent_agents()[0]
-    return Messenger.from_env(env_prefix=agent_registry.get_env_prefix(parent_agent_data.spec.metadata.name))
+    parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
+    return Messenger.from_env(env_prefix=parent_agent_data.metadata.labels["env_prefix"])
 
 
 @pytest.mark.order(1)
@@ -36,7 +36,7 @@ def parent_messenger(agent_registry: AgentRegistry) -> Messenger:
 def test_registration_parent(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
 ) -> None:
-    parent_agent_data = agent_registry.get_parent_agents()[0]
+    parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
     agent = user_manager.create_agent(
         metadata=parent_agent_data.spec.metadata, configuration=parent_agent_data.spec.configuration
     )
@@ -49,7 +49,7 @@ def test_registration_parent(
 def test_registration_children(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], parent_manager: DeployedAgentManager
 ) -> None:
-    for child_agent_data in agent_registry.get_child_agents():
+    for child_agent_data in agent_registry.get_agents_of_type(AgentType.CHILD):
         agent = parent_manager.create_agent(
             metadata=child_agent_data.spec.metadata, configuration=child_agent_data.spec.configuration
         )

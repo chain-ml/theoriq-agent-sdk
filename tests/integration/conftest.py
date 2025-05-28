@@ -5,7 +5,7 @@ from typing import Dict, Generator, List
 import dotenv
 import pytest
 from tests import DATA_DIR
-from tests.integration.agent_registry import AgentRegistry
+from tests.integration.agent_registry import AgentRegistry, AgentType
 from tests.integration.agent_runner import AgentRunner, TestConfig
 
 from theoriq.api.v1alpha2 import AgentResponse
@@ -25,11 +25,11 @@ def agent_flask_apps(agent_registry: AgentRegistry) -> Generator[List[threading.
     """Shared fixture that runs all agent Flask applications needed for integration tests."""
 
     agent_runner = AgentRunner()
-    for agent in agent_registry.get_child_agents():
+    for agent in agent_registry.get_agents_of_type(AgentType.CHILD):
         agent_runner.run_non_configurable_agent(agent)
-    for agent in agent_registry.get_parent_agents():
+    for agent in agent_registry.get_agents_of_type(AgentType.PARENT):
         agent_runner.run_non_configurable_agent(agent)
-    for agent in agent_registry.get_configurable_agents():
+    for agent in agent_registry.get_agents_of_type(AgentType.CONFIGURABLE):
         agent_runner.run_configurable_agent(agent, TestConfig.model_json_schema())
 
     yield agent_runner.running_threads
