@@ -72,7 +72,7 @@ def test_messenger(agent_map: Dict[str, AgentResponse], user_messenger: Messenge
 @pytest.mark.order(6)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_updating(agent_registry: AgentRegistry, user_manager: DeployedAgentManager) -> None:
-    parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
+    parent_agent_data = agent_registry.get_first_agent_of_type(AgentType.PARENT)
     updated_agent_data = deepcopy(parent_agent_data)
     updated_agent_data.spec.metadata.name = "Updated Parent Agent"
 

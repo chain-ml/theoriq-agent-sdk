@@ -30,7 +30,7 @@ def assert_notification_queues(*, publisher_queue: List[str], subscriber_queue: 
 
 
 def get_parent_agent_address(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> AgentAddress:
-    parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
+    parent_agent_data = agent_registry.get_first_agent_of_type(AgentType.PARENT)
     maybe_parent_agent = next(
         (agent for agent in agent_map.values() if agent.metadata.name == parent_agent_data.spec.metadata.name), None
     )
@@ -63,7 +63,7 @@ def test_publishing(agent_registry: AgentRegistry, notification_queue: List[str]
             i += 1
             time.sleep(0.3)
 
-    parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
+    parent_agent_data = agent_registry.get_first_agent_of_type(AgentType.PARENT)
     publisher = Publisher.from_env(env_prefix=parent_agent_data.metadata.labels["env_prefix"])
     publisher.new_job(job=publishing_job, background=True).start()
 
@@ -78,7 +78,7 @@ def test_subscribing_as_agent(
     def subscribing_handler(notification: str) -> None:
         local_notification_queue.append(notification)
 
-    child_agent_data = agent_registry.get_agents_of_type(AgentType.CHILD)[0]
+    child_agent_data = agent_registry.get_first_agent_of_type(AgentType.CHILD)
     subscriber = Subscriber.from_env(env_prefix=child_agent_data.metadata.labels["env_prefix"])
     subscriber.new_job(
         agent_address=get_parent_agent_address(agent_registry, agent_map), handler=subscribing_handler, background=True

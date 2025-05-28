@@ -19,13 +19,13 @@ def is_owned_by_agent(agent: AgentResponse) -> bool:
 
 @pytest.fixture()
 def parent_manager(agent_registry: AgentRegistry) -> DeployedAgentManager:
-    parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
+    parent_agent_data = agent_registry.get_first_agent_of_type(AgentType.PARENT)
     return DeployedAgentManager.from_env(env_prefix=parent_agent_data.metadata.labels["env_prefix"])
 
 
 @pytest.fixture()
 def parent_messenger(agent_registry: AgentRegistry) -> Messenger:
-    parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
+    parent_agent_data = agent_registry.get_first_agent_of_type(AgentType.PARENT)
     return Messenger.from_env(env_prefix=parent_agent_data.metadata.labels["env_prefix"])
 
 
@@ -34,7 +34,7 @@ def parent_messenger(agent_registry: AgentRegistry) -> Messenger:
 def test_registration_parent(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
 ) -> None:
-    parent_agent_data = agent_registry.get_agents_of_type(AgentType.PARENT)[0]
+    parent_agent_data = agent_registry.get_first_agent_of_type(AgentType.PARENT)
     agent = user_manager.create_agent(parent_agent_data.spec.metadata, parent_agent_data.spec.configuration)
     agent_map[agent.system.id] = agent
 

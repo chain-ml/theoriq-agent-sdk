@@ -39,7 +39,7 @@ def assert_send_message_to_configurable_agent(
 def test_registration(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
 ) -> None:
-    configurable_agent_data = agent_registry.get_agents_of_type(AgentType.CONFIGURABLE)[0]
+    configurable_agent_data = agent_registry.get_first_agent_of_type(AgentType.CONFIGURABLE)
     agent = user_manager.create_agent(configurable_agent_data.spec.metadata, configurable_agent_data.spec.configuration)
     agent_map[agent.system.id] = agent
 
