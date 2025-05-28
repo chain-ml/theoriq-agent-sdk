@@ -83,50 +83,27 @@ def test_configuration(agent_map: Dict[str, AgentResponse], configurable_manager
         )
         configuration = AgentConfiguration.for_virtual(agent_id=parent_agent_id, configuration=config.model_dump())
 
-        agent = configurable_manager.create_agent(metadata=metadata, configuration=configuration)
+        agent = user_manager_configurable.create_agent(metadata=metadata, configuration=configuration)
         assert agent.configuration.is_virtual
         print(f"Successfully configured new `{agent.system.id}` with {config=}\n")
-        agent_map[agent.system.id] = agent
+        global_agent_map[agent.system.id] = agent
 
 
-# @pytest.mark.order(4)
-# @pytest.mark.usefixtures("shared_flask_apps")
-# def test_mint_agent(agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager) -> None:
-#     for agent_id in agent_map.keys():
-#         agent = configurable_manager.mint_agent(agent_id)
-#         assert agent.system.state == "online"
-#         print(f"Successfully minted `{agent_id}`\n")
-#
-#
-# @pytest.mark.order(5)
-# @pytest.mark.usefixtures("shared_flask_apps")
-# def test_unmint_agent(agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager) -> None:
-#     # TODO: investigate agents break after unmint - abc is not executable by xyz
-#     for agent_id in agent_map.keys():
-#         agent = configurable_manager.unmint_agent(agent_id)
-#         assert agent.system.state == "configured"
-#         print(f"Successfully unminted `{agent_id}`\n")
-
-
-@pytest.mark.order(6)
-@pytest.mark.usefixtures("agent_flask_apps")
-def test_messenger(agent_map: Dict[str, AgentResponse], user_messenger: Messenger) -> None:
-    for agent in agent_map.values():
+@pytest.mark.order(4)
+def test_messenger() -> None:
+    for agent in global_agent_map.values():
         if agent.configuration.is_virtual:
-            assert_send_message_to_configurable_agent(agent, agent_map, user_messenger)
+            assert_send_message_to_configurable_agent(agent)
             continue
 
         with pytest.raises(httpx.HTTPStatusError) as e:
-            assert_send_message_to_configurable_agent(agent, agent_map, user_messenger)
+            assert_send_message_to_configurable_agent(agent)
         assert e.value.response.status_code == 400
 
 
-@pytest.mark.order(7)
-@pytest.mark.usefixtures("agent_flask_apps")
-def test_incorrect_update_configuration(
-    agent_map: Dict[str, AgentResponse], configurable_manager: VirtualAgentManager
-) -> None:
-    agent = next(agent for agent_id, agent in agent_map.items() if agent.configuration.is_virtual)
+@pytest.mark.order(5)
+def test_incorrect_update_configuration() -> None:
+    agent = next(agent for agent_id, agent in global_agent_map.items() if agent.configuration.is_virtual)
     deployed_agent_id = agent.configuration.ensure_virtual.agent_id
 
     metadata = AgentMetadata(
@@ -138,7 +115,7 @@ def test_incorrect_update_configuration(
     configuration = AgentConfiguration.for_virtual(agent_id=deployed_agent_id, configuration={"incorrect": "config"})
 
     with pytest.raises(AgentConfigurationError) as e:
-        configurable_manager.update_agent(agent_id=agent.system.id, metadata=metadata, configuration=configuration)
+        user_manager_configurable.update_agent(agent_id=agent.system.id, metadata=metadata, configuration=configuration)
     assert e.value.message.endswith("updated but failed to configure")
     assert isinstance(e.value.original_exception, httpx.HTTPStatusError)
     assert e.value.original_exception.response.status_code == 502
