@@ -24,7 +24,7 @@ class AgentRunner:
     """Manages Flask applications for test agents."""
 
     def __init__(self):
-        self.running_threads: List[threading.Thread] = []
+        self._running_threads: List[threading.Thread] = []
 
     @staticmethod
     def get_echo_execute_output(*, message: str, agent_name: str) -> str:
@@ -83,7 +83,7 @@ class AgentRunner:
         thread.daemon = True
         thread.start()
 
-        self.running_threads.append(thread)
+        self._running_threads.append(thread)
         return thread
 
     def run_non_configurable_agent(self, agent_data: AgentDataObject) -> threading.Thread:
@@ -93,6 +93,6 @@ class AgentRunner:
         return self.run_agent(agent_data, schema=schema)
 
     def stop_all(self, timeout: float = 0.5) -> None:
-        for thread in self.running_threads:
+        for thread in self._running_threads:
             thread.join(timeout=timeout)
-        self.running_threads.clear()
+        self._running_threads.clear()

@@ -1,6 +1,5 @@
 import os
-import threading
-from typing import Dict, Generator, List
+from typing import Dict, Generator
 
 import dotenv
 import pytest
@@ -21,7 +20,7 @@ def agent_registry() -> AgentRegistry:
 
 
 @pytest.fixture(scope="session")
-def agent_flask_apps(agent_registry: AgentRegistry) -> Generator[List[threading.Thread], None, None]:
+def agent_flask_apps(agent_registry: AgentRegistry) -> Generator[None, None, None]:
     """Shared fixture that runs all agent Flask applications needed for integration tests."""
 
     agent_runner = AgentRunner()
@@ -34,7 +33,7 @@ def agent_flask_apps(agent_registry: AgentRegistry) -> Generator[List[threading.
     for agent in configurable_agents:
         agent_runner.run_configurable_agent(agent, TestConfig.model_json_schema())
 
-    yield agent_runner.running_threads
+    yield
 
     agent_runner.stop_all()
 
