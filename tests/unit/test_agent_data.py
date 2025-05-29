@@ -99,7 +99,6 @@ def test_agent_data_owner() -> None:
 
 def test_agent_data_basic_a() -> None:
     filename = os.path.join(DATA_DIR, "basic", "basic_agent_a.yaml")
-
     ad = AgentDataObject.from_yaml(filename)
     assert ad.spec.metadata.name == "Basic Agent A"
     assert ad.spec.metadata.short_description == "Short description"
