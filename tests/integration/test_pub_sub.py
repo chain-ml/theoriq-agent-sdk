@@ -52,7 +52,7 @@ def test_registration(
 def test_publishing(agent_registry: AgentRegistry, notification_queue: List[str]) -> None:
     def publishing_job(context: PublisherContext) -> None:
         i = 0
-        while True:
+        while i < 1_000:
             notification = f"Sample notification #{i}"
             notification_queue.append(notification)
             context.publish(notification)
