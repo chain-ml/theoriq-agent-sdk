@@ -50,7 +50,7 @@ class AgentRunner:
         def execute_configurable(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse:
             config: Optional[Dict[str, Any]] = context.agent_configuration
             if config is None:
-                raise ValueError("Empty configuration")
+                raise ValueError(f"{agent_name} - Empty configuration")
 
             message = req.last_text
             response = cls.get_configurable_execute_output(config=config, message=message, agent_name=agent_name)
