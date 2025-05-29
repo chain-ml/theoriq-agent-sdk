@@ -10,11 +10,11 @@ from theoriq.types import AgentDataObject
 class AgentType(str, Enum):
     """Agent types for test agents."""
 
-    CHILD = "child"
+    BASIC = "basic"
     """Non-configurable agent. Also used as subscriber."""
 
-    PARENT = "parent"
-    """Non-configurable agent that can register other agents. Also used as publisher."""
+    OWNER = "owner"
+    """Non-configurable agent that registers other (basic) agents. Also used as publisher."""
 
     CONFIGURABLE = "configurable"
     """Configurable agent."""

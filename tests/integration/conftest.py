@@ -26,7 +26,7 @@ def agent_flask_apps(agent_registry: AgentRegistry) -> Generator[List[threading.
 
     agent_runner = AgentRunner()
 
-    non_configurable_agents = agent_registry.get_agents_of_types([AgentType.PARENT, AgentType.CHILD])
+    non_configurable_agents = agent_registry.get_agents_of_types([AgentType.OWNER, AgentType.BASIC])
     for agent in non_configurable_agents:
         agent_runner.run_non_configurable_agent(agent)
 

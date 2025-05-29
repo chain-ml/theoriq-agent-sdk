@@ -29,11 +29,11 @@ def assert_notification_queues(*, publisher_queue: List[str], subscriber_queue: 
         assert notification in publisher_queue
 
 
-def get_parent_agent_address(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> AgentAddress:
-    parent_agent_data = agent_registry.get_first_agent_of_type(AgentType.PARENT)
-    parent_name = parent_agent_data.spec.metadata.name
-    parent_agent = next(agent for agent in agent_map.values() if agent.metadata.name == parent_name)
-    return AgentAddress(parent_agent.system.id)
+def get_owner_agent_address(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> AgentAddress:
+    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
+    owner_name = owner_agent_data.spec.metadata.name
+    owner_agent = next(agent for agent in agent_map.values() if agent.metadata.name == owner_name)
+    return AgentAddress(owner_agent.system.id)
 
 
 @pytest.mark.order(1)
@@ -41,7 +41,7 @@ def get_parent_agent_address(agent_registry: AgentRegistry, agent_map: Dict[str,
 def test_registration(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
 ) -> None:
-    agent_data_objs = agent_registry.get_agents_of_types([AgentType.PARENT, AgentType.CHILD])
+    agent_data_objs = agent_registry.get_agents_of_types([AgentType.OWNER, AgentType.BASIC])
     for agent_data in agent_data_objs:
         agent = user_manager.create_agent(agent_data.spec.metadata, agent_data.spec.configuration)
         agent_map[agent.system.id] = agent
@@ -60,8 +60,8 @@ def test_publishing(agent_registry: AgentRegistry, notification_queue: List[str]
             i += 1
             time.sleep(0.3)
 
-    parent_agent_data = agent_registry.get_first_agent_of_type(AgentType.PARENT)
-    publisher = Publisher.from_env(env_prefix=parent_agent_data.metadata.labels["env_prefix"])
+    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
+    publisher = Publisher.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
     publisher.new_job(job=publishing_job, background=True).start()
 
 
@@ -75,10 +75,10 @@ def test_subscribing_as_agent(
     def subscribing_handler(notification: str) -> None:
         local_notification_queue.append(notification)
 
-    child_agent_data = agent_registry.get_first_agent_of_type(AgentType.CHILD)
-    subscriber = Subscriber.from_env(env_prefix=child_agent_data.metadata.labels["env_prefix"])
-    parent_address = get_parent_agent_address(agent_registry, agent_map)
-    subscriber.new_job(parent_address, subscribing_handler, background=True).start()
+    basic_agent_data = agent_registry.get_first_agent_of_type(AgentType.BASIC)
+    subscriber = Subscriber.from_env(env_prefix=basic_agent_data.metadata.labels["env_prefix"])
+    owner_address = get_owner_agent_address(agent_registry, agent_map)
+    subscriber.new_job(owner_address, subscribing_handler, background=True).start()
 
     time.sleep(1.0)
     assert_notification_queues(publisher_queue=notification_queue, subscriber_queue=local_notification_queue)
@@ -95,8 +95,8 @@ def test_subscribing_as_user(
         local_notification_queue.append(notification)
 
     subscriber = Subscriber.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
-    parent_address = get_parent_agent_address(agent_registry, agent_map)
-    subscriber.new_job(parent_address, subscribing_handler, background=True).start()
+    owner_address = get_owner_agent_address(agent_registry, agent_map)
+    subscriber.new_job(owner_address, subscribing_handler, background=True).start()
 
     time.sleep(1.0)
     assert_notification_queues(publisher_queue=notification_queue, subscriber_queue=local_notification_queue)

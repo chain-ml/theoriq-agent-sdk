@@ -85,42 +85,42 @@ def test_agent_configuration_validation() -> None:
     assert "Exactly one of deployment or virtual must be provided" in str(e.value)
 
 
-def test_agent_data_parent() -> None:
-    filename = os.path.join(DATA_DIR, "parent", "parent_agent.yaml")
+def test_agent_data_owner() -> None:
+    filename = os.path.join(DATA_DIR, "owner", "owner_agent.yaml")
     ad = AgentDataObject.from_yaml(filename)
-    assert ad.spec.metadata.name == "Parent Agent"
+    assert ad.spec.metadata.name == "Owner Agent"
     assert ad.spec.maybe_configuration is not None
     assert ad.spec.configuration.deployment is not None
     assert ad.spec.configuration.deployment.url == "http://192.168.2.36:8089"
     assert ad.metadata.has_label("env_prefix")
-    assert ad.metadata.labels["env_prefix"] == "PARENT_"
-    assert ad.metadata.labels["agent_type"] == "parent"
+    assert ad.metadata.labels["env_prefix"] == "OWNER_"
+    assert ad.metadata.labels["agent_type"] == "owner"
 
 
-def test_agent_data_child_a() -> None:
-    filename = os.path.join(DATA_DIR, "child", "child_agent_a.yaml")
+def test_agent_data_basic_a() -> None:
+    filename = os.path.join(DATA_DIR, "basic", "basic_agent_a.yaml")
 
     ad = AgentDataObject.from_yaml(filename)
-    assert ad.spec.metadata.name == "Child Agent A"
+    assert ad.spec.metadata.name == "Basic Agent A"
     assert ad.spec.metadata.short_description == "Short description"
     assert ad.spec.metadata.long_description == "A much longer description"
     assert ad.spec.metadata.cost_card is None
     assert ad.metadata.has_label("env_prefix")
-    assert ad.metadata.labels["env_prefix"] == "CHILD_A_"
-    assert ad.metadata.labels["agent_type"] == "child"
+    assert ad.metadata.labels["env_prefix"] == "BASIC_A_"
+    assert ad.metadata.labels["agent_type"] == "basic"
 
 
-def test_agent_data_child_b() -> None:
-    filename = os.path.join(DATA_DIR, "child", "child_agent_b.yaml")
+def test_agent_data_basic_b() -> None:
+    filename = os.path.join(DATA_DIR, "basic", "basic_agent_b.yaml")
     ad = AgentDataObject.from_yaml(filename)
-    assert ad.spec.metadata.name == "Child Agent B"
+    assert ad.spec.metadata.name == "Basic Agent B"
     assert ad.spec.metadata.tags == ["tag3", "tag4"]
     assert ad.spec.metadata.example_prompts == ["Hello"]
     assert ad.spec.metadata.cost_card is not None
     assert ad.spec.metadata.cost_card == "Free"
     assert ad.metadata.has_label("env_prefix")
-    assert ad.metadata.labels["env_prefix"] == "CHILD_B_"
-    assert ad.metadata.labels["agent_type"] == "child"
+    assert ad.metadata.labels["env_prefix"] == "BASIC_B_"
+    assert ad.metadata.labels["agent_type"] == "basic"
 
 
 def test_agent_data_configurable() -> None:

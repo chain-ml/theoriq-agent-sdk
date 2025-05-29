@@ -4,15 +4,15 @@ metadata:
   name: TheoriqAgentDataObject
   labels:
     author: ChainML Labs
-    env_prefix: PARENT_
-    agent_type: parent
+    env_prefix: OWNER_
+    agent_type: owner
 spec:
   metadata:
-    name: Parent Agent
-    shortDescription: Short parent description
-    longDescription: A much longer parent description
+    name: Owner Agent
+    shortDescription: Short owner description
+    longDescription: A much longer owner description
     tags:
-      - parent
+      - owner
       - master
     examplePrompts:
       - Greetings

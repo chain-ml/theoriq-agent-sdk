@@ -19,7 +19,7 @@ from theoriq.dialog import TextItemBlock
 def test_registration(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
 ) -> None:
-    agent_data_objs = agent_registry.get_agents_of_types([AgentType.PARENT, AgentType.CHILD])
+    agent_data_objs = agent_registry.get_agents_of_types([AgentType.OWNER, AgentType.BASIC])
     for agent_data in agent_data_objs:
         agent = user_manager.create_agent(agent_data.spec.metadata, agent_data.spec.configuration)
         agent_map[agent.system.id] = agent
@@ -72,15 +72,15 @@ def test_messenger(agent_map: Dict[str, AgentResponse], user_messenger: Messenge
 @pytest.mark.order(6)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_updating(agent_registry: AgentRegistry, user_manager: DeployedAgentManager) -> None:
-    parent_agent_data = agent_registry.get_first_agent_of_type(AgentType.PARENT)
-    updated_agent_data = deepcopy(parent_agent_data)
-    updated_agent_data.spec.metadata.name = "Updated Parent Agent"
+    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
+    updated_agent_data = deepcopy(owner_agent_data)
+    updated_agent_data.spec.metadata.name = "Updated Owner Agent"
 
-    config = AgentDeploymentConfiguration.from_env(env_prefix=parent_agent_data.metadata.labels["env_prefix"])
+    config = AgentDeploymentConfiguration.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
 
     response = user_manager.update_agent(agent_id=str(config.address), metadata=updated_agent_data.spec.metadata)
 
-    assert response.metadata.name == "Updated Parent Agent"
+    assert response.metadata.name == "Updated Owner Agent"
 
 
 @pytest.mark.order(-1)
