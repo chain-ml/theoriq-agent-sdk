@@ -68,11 +68,12 @@ class AgentRunner:
         """
         agent_config = AgentDeploymentConfiguration.from_env(env_prefix=agent_data.metadata.labels["env_prefix"])
         deployment = agent_data.spec.configuration.ensure_deployment
-try:
-    port = int(deployment.url.split(":")[-1])
-except (ValueError, AttributeError, IndexError) as e:
-    logger.error("Invalid deployment URL format: %s", deployment.url)
-    raise
+
+        try:
+            port = int(deployment.url.split(":")[-1])
+        except (ValueError, AttributeError, IndexError):
+            logger.error("Invalid deployment URL format: %s", deployment.url)
+            raise
 
         agent_name = agent_data.spec.metadata.name
         execute = (
