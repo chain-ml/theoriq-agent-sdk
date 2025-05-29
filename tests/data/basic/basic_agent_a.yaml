@@ -4,10 +4,11 @@ metadata:
   name: Agent Data Object
   labels:
     author: ChainML Labs
-    env_prefix: CHILD_A_
+    env_prefix: BASIC_A_
+    agent_type: basic
 spec:
   metadata:
-    name: Child Agent A
+    name: Basic Agent A
     shortDescription: Short description
     longDescription: A much longer description
     tags:

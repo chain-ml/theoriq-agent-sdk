@@ -1,93 +1,82 @@
-import logging
-import os
-from typing import Dict, Final, Generator
+from typing import Dict
 
-import dotenv
 import pytest
-from tests.integration.utils import (
-    PARENT_AGENT_ENV_PREFIX,
-    PARENT_AGENT_NAME,
-    TEST_AGENT_DATA_LIST,
-    TEST_CHILD_AGENT_DATA_LIST,
-    TEST_PARENT_AGENT_DATA,
-    get_echo_execute_output,
-    join_threads,
-    run_echo_agents,
-)
+from tests.integration.agent_registry import AgentRegistry, AgentType
+from tests.integration.agent_runner import AgentRunner
 
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import DeployedAgentManager
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
-
-dotenv.load_dotenv()
-THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
-user_manager = DeployedAgentManager.from_api_key(api_key=THEORIQ_API_KEY)
-
-global_parent_agent_map: Dict[str, AgentResponse] = {}
-global_children_agent_map: Dict[str, AgentResponse] = {}
+from theoriq.types import SourceType
 
 
-@pytest.fixture(scope="session", autouse=True)
-def flask_apps() -> Generator[None, None, None]:
-    logging.basicConfig(level=logging.INFO)
-    threads = run_echo_agents(TEST_AGENT_DATA_LIST)
-    yield
-    join_threads(threads)
+def is_owned_by_agent(agent: AgentResponse) -> bool:
+    source_type = SourceType.from_address(agent.system.owner_address)
+    return source_type.is_agent
+
+
+@pytest.fixture()
+def owner_manager(agent_registry: AgentRegistry) -> DeployedAgentManager:
+    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
+    return DeployedAgentManager.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
+
+
+@pytest.fixture()
+def owner_messenger(agent_registry: AgentRegistry) -> Messenger:
+    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
+    return Messenger.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
 
 
 @pytest.mark.order(1)
-def test_registration_parent() -> None:
-    agent = user_manager.create_agent(
-        metadata=TEST_PARENT_AGENT_DATA.spec.metadata, configuration=TEST_PARENT_AGENT_DATA.spec.configuration
-    )
-    print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
-    global_parent_agent_map[agent.system.id] = agent
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_registration_owner(
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
+) -> None:
+    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
+    agent = user_manager.create_agent(owner_agent_data.spec.metadata, owner_agent_data.spec.configuration)
+    agent_map[agent.system.id] = agent
 
 
 @pytest.mark.order(2)
-def test_registration_children() -> None:
-    manager = DeployedAgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
-    for child_agent_data_obj in TEST_CHILD_AGENT_DATA_LIST:
-        agent = manager.create_agent(
-            metadata=child_agent_data_obj.spec.metadata, configuration=child_agent_data_obj.spec.configuration
-        )
-        print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
-        global_children_agent_map[agent.system.id] = agent
-
-
-# test mint, get, unmint here when minting functionality is implemented
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_registration_basic(
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], owner_manager: DeployedAgentManager
+) -> None:
+    for basic_agent_data in agent_registry.get_agents_of_type(AgentType.BASIC):
+        agent = owner_manager.create_agent(basic_agent_data.spec.metadata, basic_agent_data.spec.configuration)
+        agent_map[agent.system.id] = agent
 
 
 @pytest.mark.order(3)
-def test_messenger() -> None:
-    all_agents: Dict[str, AgentResponse] = {**global_parent_agent_map, **global_children_agent_map}
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_messenger(agent_map: Dict[str, AgentResponse], owner_messenger: Messenger) -> None:
+    # messaging from basic to owner doesn't work because minting functionality is not implemented
+    # so testing owner-to-all instead of all-to-all
 
-    # messaging from children to parent doesn't work because there's no minting
-    # so testing parent-to-all instead of all-to-all
-
-    messenger = Messenger.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
-    for receiver_id, receiver in all_agents.items():
-        message = f"Hello from {PARENT_AGENT_NAME}"
+    for receiver_id, receiver in agent_map.items():
+        message = "Hello from Parent Agent"
         blocks = [TextItemBlock(message)]
-        response = messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=receiver_id)
-        assert response.body.extract_last_text() == get_echo_execute_output(
-            message=message, agent_name=receiver.metadata.name
-        )
+        response = owner_messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=receiver_id)
+        actual = response.body.extract_last_text()
+        expected = AgentRunner.get_echo_execute_output(message=message, agent_name=receiver.metadata.name)
+        assert actual == expected
 
 
 @pytest.mark.order(-2)
-def test_deletion_children() -> None:
-    manager = DeployedAgentManager.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_deletion_basic(agent_map: Dict[str, AgentResponse], owner_manager: DeployedAgentManager) -> None:
+    basic_agents = [agent for agent in agent_map.values() if is_owned_by_agent(agent)]
+    for basic_agent in basic_agents:
+        owner_manager.delete_agent(basic_agent.system.id)
 
-    for child_agent in global_children_agent_map.values():
-        manager.delete_agent(child_agent.system.id)
-        print(f"Successfully deleted `{child_agent.system.id}`\n")
+    for basic_agent in basic_agents:
+        del agent_map[basic_agent.system.id]
 
 
 @pytest.mark.order(-1)
-def test_deletion_parent() -> None:
-    for agent in global_parent_agent_map.values():
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_deletion_owner(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
+    for agent in agent_map.values():  # should be the only one in the map
         user_manager.delete_agent(agent.system.id)
-        print(f"Successfully deleted `{agent.system.id}`\n")

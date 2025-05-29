@@ -5,6 +5,7 @@ metadata:
   labels:
     author: ChainML Labs
     env_prefix: CONFIGURABLE_
+    agent_type: configurable
 spec:
   metadata:
     name: Configurable Agent
