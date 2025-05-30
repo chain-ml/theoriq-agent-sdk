@@ -101,7 +101,7 @@ class ErrorItemBlock(ItemBlock[ErrorItem]):
         values = data.get("error")
         if values is None:
             raise ValueError("Missing 'error' key")
-        return cls(err=ErrorItem.from_dict(values), key=block_key, reference=block_ref)
+        return cls(err=ErrorItem.from_dict(data), key=block_key, reference=block_ref)
 
     @staticmethod
     def block_type() -> str:
