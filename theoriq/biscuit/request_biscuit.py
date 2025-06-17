@@ -9,7 +9,7 @@ from biscuit_auth import Biscuit, BlockBuilder, KeyPair  # pylint: disable=E0611
 from biscuit_auth.biscuit_auth import PrivateKey, PublicKey  # type: ignore
 
 from . import AgentAddress, TheoriqBiscuit
-from .facts import ExecuteRequestFacts, TheoriqBudget, TheoriqCost, TheoriqRequest, TheoriqResponse
+from .facts import ExecuteRequestFacts, TheoriqBudget, TheoriqRequest, TheoriqResponse
 from .response_biscuit import ResponseBiscuit, ResponseFacts
 from .utils import from_base64_token
 
@@ -17,10 +17,9 @@ from .utils import from_base64_token
 class RequestFacts:
     """Required facts inside the request biscuit"""
 
-    def __init__(self, request_id: UUID | str, request: TheoriqRequest, budget: TheoriqBudget) -> None:
+    def __init__(self, request_id: UUID | str, request: TheoriqRequest) -> None:
         self.req_id = request_id if isinstance(request_id, UUID) else UUID(request_id)
         self.request = request
-        self.budget = budget
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, self.__class__):
@@ -34,8 +33,7 @@ class RequestFacts:
         biscuit_facts = theoriq_biscuit.read_fact(ExecuteRequestFacts)
         request_id = biscuit_facts.request.request_id
         theoriq_request = TheoriqRequest.from_theoriq_fact(biscuit_facts.request)
-        theoriq_budget = TheoriqBudget.from_theoriq_fact(biscuit_facts.budget)
-        return RequestFacts(request_id, theoriq_request, theoriq_budget)
+        return RequestFacts(request_id, theoriq_request)
 
     @staticmethod
     def generate_new_biscuit(body: bytes, *, from_addr: str, to_addr: str) -> Biscuit:
@@ -52,7 +50,7 @@ class RequestFacts:
     def to_block_builder(self) -> BlockBuilder:
         """Construct a biscuit block builder using the facts"""
         request_fact = self.request.to_theoriq_fact(self.req_id)
-        budget_fact = self.budget.to_theoriq_fact(self.req_id)
+        budget_fact = TheoriqBudget.empty().to_theoriq_fact(self.req_id)
 
         block_builder = BlockBuilder("")
         block_builder.merge(request_fact.to_block_builder())
@@ -60,12 +58,12 @@ class RequestFacts:
         return block_builder
 
     def __str__(self) -> str:
-        return f"RequestFacts(req_id={self.req_id}, request={self.request}, budget={self.budget})"
+        return f"RequestFacts(req_id={self.req_id}, request={self.request})"
 
     @classmethod
     def default(cls, body: bytes, from_addr: str, to_addr: str) -> RequestFacts:
         theoriq_request = TheoriqRequest.from_body(body=body, from_addr=from_addr, to_addr=to_addr)
-        return cls(uuid.uuid4(), theoriq_request, TheoriqBudget.empty())
+        return cls(uuid.uuid4(), theoriq_request)
 
 
 class RequestBiscuit:
@@ -75,19 +73,17 @@ class RequestBiscuit:
         self.biscuit: Biscuit = biscuit
         self.request_facts = RequestFacts.from_biscuit(biscuit)
 
-    def attenuate_for_response(self, body: bytes, cost: TheoriqCost, agent_private_key: PrivateKey) -> ResponseBiscuit:
+    def attenuate_for_response(self, body: bytes, agent_private_key: PrivateKey) -> ResponseBiscuit:
         theoriq_response = TheoriqResponse.from_body(body, to_addr=self.request_facts.request.from_addr)
-        response_facts = ResponseFacts(self.request_facts.req_id, theoriq_response, cost)
+        response_facts = ResponseFacts(self.request_facts.req_id, theoriq_response)
         agent_kp = KeyPair.from_private_key(agent_private_key)
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, response_facts.to_block_builder())  # type: ignore
 
         return ResponseBiscuit(attenuated_biscuit, response_facts)
 
-    def attenuate_for_request(
-        self, request: TheoriqRequest, budget: TheoriqBudget, agent_private_key: PrivateKey
-    ) -> RequestBiscuit:
+    def attenuate_for_request(self, request: TheoriqRequest, agent_private_key: PrivateKey) -> RequestBiscuit:
         agent_kp = KeyPair.from_private_key(agent_private_key)
-        request_facts = RequestFacts(uuid.uuid4(), request, budget)
+        request_facts = RequestFacts(uuid.uuid4(), request)
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, request_facts.to_block_builder())  # type: ignore
         return RequestBiscuit(attenuated_biscuit)
 

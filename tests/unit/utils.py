@@ -4,23 +4,20 @@ import uuid
 
 from biscuit_auth import PrivateKey
 
-from theoriq.biscuit import AgentAddress, RequestBiscuit, RequestFacts, ResponseFacts, TheoriqCost
-from theoriq.biscuit.facts import PayloadHash, TheoriqBudget, TheoriqRequest, TheoriqResponse
-from theoriq.types.currency import Currency
+from theoriq.biscuit import AgentAddress, RequestBiscuit, RequestFacts, ResponseFacts
+from theoriq.biscuit.facts import PayloadHash, TheoriqRequest, TheoriqResponse
 
 
-def new_request_facts(body: bytes, from_addr: AgentAddress, to_addr: AgentAddress, amount: int) -> RequestFacts:
+def new_request_facts(body: bytes, from_addr: AgentAddress, to_addr: AgentAddress) -> RequestFacts:
     """Creates a new request facts for testing purposes"""
     theoriq_request = TheoriqRequest(body_hash=PayloadHash(body), from_addr=str(from_addr), to_addr=str(to_addr))
-    theoriq_budget = TheoriqBudget.from_amount(amount=str(amount), currency=Currency.USDC)
-    return RequestFacts(uuid.uuid4(), theoriq_request, theoriq_budget)
+    return RequestFacts(uuid.uuid4(), theoriq_request)
 
 
-def new_response_facts(request_id: uuid.UUID, body: bytes, to_addr: AgentAddress, amount: int) -> ResponseFacts:
+def new_response_facts(request_id: uuid.UUID, body: bytes, to_addr: AgentAddress) -> ResponseFacts:
     """Creates a new response facts for testing purposes"""
     theoriq_response = TheoriqResponse.from_body(body=body, to_addr=str(to_addr))
-    theoriq_cost = TheoriqCost(amount=amount, currency=Currency.USDC)
-    return ResponseFacts(request_id, theoriq_response, theoriq_cost)
+    return ResponseFacts(request_id, theoriq_response)
 
 
 def new_biscuit_for_request(request_facts: RequestFacts, private_key: PrivateKey) -> RequestBiscuit:

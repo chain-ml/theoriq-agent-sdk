@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from theoriq.agent import Agent
-from theoriq.biscuit import AgentAddress, RequestBiscuit, ResponseBiscuit, TheoriqBiscuit, TheoriqBudget
+from theoriq.biscuit import AgentAddress, RequestBiscuit, ResponseBiscuit, TheoriqBiscuit
 from theoriq.biscuit.facts import TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
 from theoriq.types import AgentMetadata, Metric
@@ -71,13 +71,12 @@ class ExecuteContext(ExecuteContextBase):
         biscuit = self.agent_biscuit()
         self._protocol_client.post_notification(biscuit=biscuit, agent_id=self.agent_address, notification=notification)
 
-    def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
+    def send_request(self, blocks: Sequence[ItemBlock], to_addr: str) -> ExecuteResponse:
         """
         Sends a request to another address, attenuating the biscuit for the request and handling the response.
 
         Args:
             blocks (Sequence[ItemBlock]): The blocks of data to include in the request.
-            budget (TheoriqBudget): The budget for processing the request.
             to_addr (str): The address to which the request is sent.
 
         Returns:
@@ -89,7 +88,7 @@ class ExecuteContext(ExecuteContextBase):
         )
         body = execute_request_body.model_dump_json().encode("utf-8")
         theoriq_request = TheoriqRequest.from_body(body=body, from_addr=config.address, to_addr=to_addr)
-        request_biscuit = self._request_biscuit.attenuate_for_request(theoriq_request, budget, config.private_key)
+        request_biscuit = self._request_biscuit.attenuate_for_request(theoriq_request, config.private_key)
         response = self._protocol_client.post_request(request_biscuit=request_biscuit, content=body, to_addr=to_addr)
         return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
 

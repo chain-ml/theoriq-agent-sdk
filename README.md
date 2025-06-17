@@ -36,7 +36,6 @@ The `ExecuteResponse` class represents the result of an execution request. It en
 ***Attributes:***
 
 - `body`: The `DialogItem` representing the body of the response.
-- `theoriq_cost`: The cost associated with processing the request, represented by a `TheoriqCost` object.
 - `status_code`: The status code of the response (e.g., 200 for success).
 
 ## ExecuteContext
@@ -55,7 +54,6 @@ The `ExecuteContext` class is central to managing the execution process. It hold
 ***Properties:***
 - `agent_address`: Returns the agent's address.
 - `request_id`: Returns the request ID from the request biscuit.
-- `budget`: Returns the budget associated with the request.
 
 ## ExecuteRuntimeError
 
@@ -170,7 +168,6 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
         blocks=[
             TextItemBlock(text=agent_result),
         ],
-        cost=TheoriqCost(amount=1, currency=Currency.USDC),
     )
 ```
 

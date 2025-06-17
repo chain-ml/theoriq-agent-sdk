@@ -6,7 +6,6 @@ from flask import Flask
 
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
-from theoriq.biscuit import TheoriqCost
 from theoriq.dialog import (
     ErrorMessageItem,
     ErrorMessageItemBlock,
@@ -17,7 +16,6 @@ from theoriq.dialog import (
     Web3ItemBlock,
 )
 from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
-from theoriq.types import Currency
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +62,6 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
             Web3EthSignTypedDataBlock(data=eth_typed_data_message_type),
             ErrorMessageItemBlock(err=ErrorMessageItem(err="error", message="error message")),
         ],
-        cost=TheoriqCost(amount=1, currency=Currency.USDC),
     )
 
 
@@ -78,7 +75,7 @@ if __name__ == "__main__":
     dotenv.load_dotenv()
     agent_config = AgentDeploymentConfiguration.from_env()
 
-    # Create and register theoriq blueprint with v1alpha2 api version
+    # Create and register Theoriq blueprint with v1alpha2 api version
     blueprint = theoriq_blueprint(agent_config, execute)
     app.register_blueprint(blueprint)
     app.run(host="0.0.0.0", port=os.environ.get("FLASK_PORT", 8000))

@@ -23,7 +23,7 @@ class TestConfig(BaseModel):
 class AgentRunner:
     """Manages Flask applications for test agents."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._running_threads: List[threading.Thread] = []
 
     @staticmethod
@@ -41,7 +41,7 @@ class AgentRunner:
             message = req.last_text
             response = cls.get_echo_execute_output(message=message, agent_name=agent_name)
             logger.info(response)
-            return context.new_free_text_response(text=response)
+            return context.new_text_response(text=response)
 
         return execute
 
@@ -55,7 +55,7 @@ class AgentRunner:
             message = req.last_text
             response = cls.get_configurable_execute_output(config=config, message=message, agent_name=agent_name)
             logger.info(response)
-            return context.new_free_text_response(text=response)
+            return context.new_text_response(text=response)
 
         return execute_configurable
 

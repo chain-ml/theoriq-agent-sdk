@@ -15,10 +15,9 @@ from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
 from theoriq.api.v1alpha2 import ConfigureContext
 from theoriq.api.v1alpha2.configure import AgentConfigurator
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
-from theoriq.biscuit import TheoriqBiscuit, TheoriqBiscuitError, TheoriqCost
+from theoriq.biscuit import TheoriqBiscuit, TheoriqBiscuitError
 from theoriq.extra.flask.common import get_bearer_token
 from theoriq.extra.globals import agent_var
-from theoriq.types import Currency
 
 from ...logging.execute_context import ExecuteLogContext
 from ..common import (
@@ -126,7 +125,7 @@ def execute_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Resp
                 execute_response = execute_context.runtime_error_response(err)
 
             response = jsonify(execute_response.body.to_dict())
-            response_biscuit = execute_context.new_response_biscuit(response.get_data(), execute_response.theoriq_cost)
+            response_biscuit = execute_context.new_response_biscuit(response.get_data())
             response = add_biscuit_to_response(response, response_biscuit)
             return response
         except pydantic.ValidationError as err:
@@ -174,7 +173,7 @@ def _execute_async(
 
     response_payload = {"response": execute_response.body.to_dict()}
     response = Response(response=json.dumps(response_payload), content_type="application/json")
-    response_biscuit = execute_context.new_response_biscuit(response.get_data(), TheoriqCost.zero(Currency.USDT))
+    response_biscuit = execute_context.new_response_biscuit(response.get_data())
 
     execute_context.complete_request(response_biscuit, response.get_data())
 
