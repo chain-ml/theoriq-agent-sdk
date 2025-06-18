@@ -1,6 +1,5 @@
-import os
-
 import pytest
+from tests import OsEnviron
 
 from theoriq.utils import (
     EnvVariableValueException,
@@ -17,36 +16,36 @@ from theoriq.utils import (
 
 
 def test_must_read_env_str() -> None:
-    os.environ["STR"] = "VALUE"
-    value = must_read_env_str("STR")
-    assert isinstance(value, str)
-    assert value == "VALUE"
+    with OsEnviron(name="STR", value="VALUE"):
+        value = must_read_env_str("STR")
+        assert isinstance(value, str)
+        assert value == "VALUE"
 
 
 def test_must_read_env_int() -> None:
-    os.environ["INT"] = "2"
-    value = must_read_env_int("INT")
-    assert isinstance(value, int)
-    assert value == 2
+    with OsEnviron(name="INT", value="2"):
+        value = must_read_env_int("INT")
+        assert isinstance(value, int)
+        assert value == 2
 
 
 def test_must_read_env_float() -> None:
-    os.environ["FLOAT"] = "1.23456"
-    value = must_read_env_float("FLOAT")
-    assert isinstance(value, float)
-    assert value == 1.23456
+    with OsEnviron(name="FLOAT", value="1.23456"):
+        value = must_read_env_float("FLOAT")
+        assert isinstance(value, float)
+        assert value == 1.23456
 
 
 def test_must_read_env_bool() -> None:
-    os.environ["T_BOOL"] = "True"
-    value = must_read_env_bool("T_BOOL")
-    assert isinstance(value, bool)
-    assert value
+    with OsEnviron(name="T_BOOL", value="True"):
+        value = must_read_env_bool("T_BOOL")
+        assert isinstance(value, bool)
+        assert value
 
-    os.environ["F_BOOL"] = "False"
-    value = must_read_env_bool("F_BOOL")
-    assert isinstance(value, bool)
-    assert not value
+    with OsEnviron(name="F_BOOL", value="False"):
+        value = must_read_env_bool("F_BOOL")
+        assert isinstance(value, bool)
+        assert not value
 
 
 def test_read_env_str_with_default() -> None:
@@ -94,14 +93,14 @@ def test_missing_env() -> None:
 
 
 def test_invalid_env() -> None:
-    os.environ["INVALID_INT"] = "NOT_AN_INT"
-    with pytest.raises(EnvVariableValueException):
-        read_env_int("INVALID_INT")
+    with OsEnviron(name="INVALID_INT", value="NOT_AN_INT"):
+        with pytest.raises(EnvVariableValueException):
+            read_env_int("INVALID_INT")
 
-    os.environ["INVALID_FLOAT"] = "2Gb"
-    with pytest.raises(EnvVariableValueException):
-        read_env_float("INVALID_FLOAT")
+    with OsEnviron(name="INVALID_FLOAT", value="2Gb"):
+        with pytest.raises(EnvVariableValueException):
+            read_env_float("INVALID_FLOAT")
 
-    os.environ["INVALID_BOOL"] = "Tue"
-    with pytest.raises(EnvVariableValueException):
-        must_read_env_bool("INVALID_BOOL")
+    with OsEnviron(name="INVALID_BOOL", value="Tue"):
+        with pytest.raises(EnvVariableValueException):
+            must_read_env_bool("INVALID_BOOL")
