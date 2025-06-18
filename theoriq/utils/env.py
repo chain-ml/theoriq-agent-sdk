@@ -23,9 +23,9 @@ T = TypeVar("T")
 
 def _read_env_required(name: str, convert: Callable[[str], T]) -> T:
     value = os.getenv(name)
-    if value is None:
-        raise MissingEnvVariableException(name)
-    return convert(value)
+    if value is not None:
+        return convert(value)
+    raise MissingEnvVariableException(name)
 
 
 def _read_env_optional(name: str, default: Optional[T], convert: Callable[[str], T]) -> Optional[T]:
