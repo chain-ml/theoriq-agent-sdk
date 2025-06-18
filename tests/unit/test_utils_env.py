@@ -62,8 +62,8 @@ def test_missing_env() -> None:
 def test_invalid_env() -> None:
     os.environ["INVALID_FLOAT"] = "2Gb"
     with pytest.raises(EnvVariableValueException):
-        read_env_int("INVALID_FLOAT")
+        read_env_float("INVALID_FLOAT")
 
     os.environ["INVALID_BOOL"] = "Tue"
     with pytest.raises(EnvVariableValueException):
-        read_env_int("INVALID_BOOL")
+        read_env_bool("INVALID_BOOL")
