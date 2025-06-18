@@ -1,5 +1,5 @@
 import os
-from typing import Callable, Optional, Type, TypeVar, overload
+from typing import Callable, Literal, Optional, Type, TypeVar, overload
 
 
 class MissingEnvVariableException(Exception):
@@ -26,22 +26,24 @@ class EnvVariableValueException(Exception):
 T = TypeVar("T")
 
 
-def _read_env_required(name: str, convert: Callable[[str], T]) -> T:
-    result = os.getenv(name)
-    if result is None:
-        raise MissingEnvVariableException(name)
-    return convert(result)
+def _read_env(name: str, required: bool, default: Optional[T], convert: Callable[[str], T]) -> Optional[T]:
+    result: Optional[str] = os.getenv(name)
 
-
-def _read_env_optional(name: str, default: Optional[T], convert: Callable[[str], T]) -> Optional[T]:
-    result = os.getenv(name)
     if result is not None:
         return convert(result)
-    return default
+    if default is not None:
+        return default
+    if required:
+        raise MissingEnvVariableException(name)
+    return None
 
 
 @overload
-def read_env_str(name: str, *, required: bool = True) -> str: ...
+def read_env_str(name: str, *, required: Literal[True]) -> str: ...
+
+
+@overload
+def read_env_str(name: str, *, required: Literal[False]) -> Optional[str]: ...
 
 
 @overload
@@ -50,13 +52,15 @@ def read_env_str(name: str, *, default: Optional[str] = None) -> Optional[str]: 
 
 def read_env_str(name: str, *, required: bool = False, default: Optional[str] = None) -> Optional[str]:
     """Read an environment variable as string."""
-    if required:
-        return _read_env_required(name, lambda x: x)
-    return _read_env_optional(name, default, lambda x: x)
+    return _read_env(name, required, default, lambda x: x)
 
 
 @overload
-def read_env_int(name: str, *, required: bool = True) -> int: ...
+def read_env_int(name: str, *, required: Literal[True]) -> int: ...
+
+
+@overload
+def read_env_int(name: str, *, required: Literal[False]) -> Optional[int]: ...
 
 
 @overload
@@ -72,13 +76,15 @@ def read_env_int(name: str, *, required: bool = False, default: Optional[int] = 
         except ValueError as e:
             raise EnvVariableValueException(name, x, int) from e
 
-    if required:
-        return _read_env_required(name, converter)
-    return _read_env_optional(name, default, converter)
+    return _read_env(name, required, default, converter)
 
 
 @overload
-def read_env_float(name: str, *, required: bool = True) -> float: ...
+def read_env_float(name: str, *, required: Literal[True]) -> float: ...
+
+
+@overload
+def read_env_float(name: str, *, required: Literal[False]) -> Optional[float]: ...
 
 
 @overload
@@ -94,13 +100,15 @@ def read_env_float(name: str, *, required: bool = False, default: Optional[float
         except ValueError as e:
             raise EnvVariableValueException(name, x, float) from e
 
-    if required:
-        return _read_env_required(name, converter)
-    return _read_env_optional(name, default, converter)
+    return _read_env(name, required, default, converter)
 
 
 @overload
-def read_env_bool(name: str, *, required: bool = True) -> bool: ...
+def read_env_bool(name: str, *, required: Literal[True]) -> bool: ...
+
+
+@overload
+def read_env_bool(name: str, *, required: Literal[False]) -> Optional[bool]: ...
 
 
 @overload
@@ -118,6 +126,4 @@ def read_env_bool(name: str, *, required: bool = False, default: Optional[bool] 
             return False
         raise EnvVariableValueException(name, x, bool)
 
-    if required:
-        return _read_env_required(name, converter)
-    return _read_env_optional(name, default, converter)
+    return _read_env(name, required, default, converter)
