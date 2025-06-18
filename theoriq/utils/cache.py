@@ -1,14 +1,6 @@
-"""Utility module"""
-
-import os
 import time
 from collections import OrderedDict
 from typing import Generic, Optional, TypeVar
-
-
-def is_protocol_secured() -> bool:
-    return os.getenv("THEORIQ_SECURED", "true").lower() == "true"
-
 
 # Define a type variable for generic support
 T = TypeVar("T")
