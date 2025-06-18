@@ -13,7 +13,7 @@ class MissingEnvVariableException(Exception):
 class EnvVariableValueException(Exception):
     """Environment variable is assigned a value that is inconsistent with its declared data type."""
 
-    def __init__(self, name: str, value: str, expected_type: Type) -> None:
+    def __init__(self, *, name: str, value: str, expected_type: Type) -> None:
         self.name = name
         super().__init__(f"Environment variable {name} value `{value}` has invalid type, expected: {expected_type}")
 
@@ -40,7 +40,7 @@ def _int_converter(name: str) -> Callable[[str], int]:
         try:
             return int(x)
         except ValueError as e:
-            raise EnvVariableValueException(name, x, int) from e
+            raise EnvVariableValueException(name=name, value=x, expected_type=int) from e
 
     return convert
 
@@ -50,7 +50,7 @@ def _float_converter(name: str) -> Callable[[str], float]:
         try:
             return float(x)
         except ValueError as e:
-            raise EnvVariableValueException(name, x, float) from e
+            raise EnvVariableValueException(name=name, value=x, expected_type=float) from e
 
     return convert
 
@@ -61,7 +61,7 @@ def _bool_converter(name: str) -> Callable[[str], bool]:
             return True
         if x.lower() in ["false", "0", "f"]:
             return False
-        raise EnvVariableValueException(name, x, bool)
+        raise EnvVariableValueException(name=name, value=x, expected_type=bool)
 
     return convert
 
