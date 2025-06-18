@@ -1,11 +1,9 @@
 import os
-from typing import Callable, Literal, Optional, Type, TypeVar, overload
+from typing import Callable, Optional, Type, TypeVar
 
 
 class MissingEnvVariableException(Exception):
-    """
-    Custom exception raised when a required environment variable is missing.
-    """
+    """Required environment variable is missing."""
 
     def __init__(self, name: str) -> None:
         self.name = name
@@ -13,10 +11,7 @@ class MissingEnvVariableException(Exception):
 
 
 class EnvVariableValueException(Exception):
-    """
-    Custom exception raised if an environment variable is assigned a value
-    that is inconsistent with its declared data type.
-    """
+    """Environment variable is assigned a value that is inconsistent with its declared data type."""
 
     def __init__(self, name: str, value: str, expected_type: Type) -> None:
         self.name = name
@@ -26,104 +21,86 @@ class EnvVariableValueException(Exception):
 T = TypeVar("T")
 
 
-def _read_env(name: str, required: bool, default: Optional[T], convert: Callable[[str], T]) -> Optional[T]:
-    result: Optional[str] = os.getenv(name)
-
-    if result is not None:
-        return convert(result)
-    if default is not None:
-        return default
-    if required:
+def _read_env_required(name: str, convert: Callable[[str], T]) -> T:
+    value = os.getenv(name)
+    if value is None:
         raise MissingEnvVariableException(name)
-    return None
+    return convert(value)
 
 
-@overload
-def read_env_str(name: str, *, required: Literal[True]) -> str: ...
+def _read_env_optional(name: str, default: Optional[T], convert: Callable[[str], T]) -> Optional[T]:
+    value = os.getenv(name)
+    if value is not None:
+        return convert(value)
+    return default
 
 
-@overload
-def read_env_str(name: str, *, required: Literal[False]) -> Optional[str]: ...
-
-
-@overload
-def read_env_str(name: str, *, default: Optional[str] = None) -> Optional[str]: ...
-
-
-def read_env_str(name: str, *, required: bool = False, default: Optional[str] = None) -> Optional[str]:
-    """Read an environment variable as string."""
-    return _read_env(name, required, default, lambda x: x)
-
-
-@overload
-def read_env_int(name: str, *, required: Literal[True]) -> int: ...
-
-
-@overload
-def read_env_int(name: str, *, required: Literal[False]) -> Optional[int]: ...
-
-
-@overload
-def read_env_int(name: str, *, default: Optional[int] = None) -> Optional[int]: ...
-
-
-def read_env_int(name: str, *, required: bool = False, default: Optional[int] = None) -> Optional[int]:
-    """Read an environment variable as integer."""
-
-    def converter(x: str) -> int:
+def _int_converter(name: str) -> Callable[[str], int]:
+    def convert(x: str) -> int:
         try:
             return int(x)
         except ValueError as e:
             raise EnvVariableValueException(name, x, int) from e
 
-    return _read_env(name, required, default, converter)
+    return convert
 
 
-@overload
-def read_env_float(name: str, *, required: Literal[True]) -> float: ...
-
-
-@overload
-def read_env_float(name: str, *, required: Literal[False]) -> Optional[float]: ...
-
-
-@overload
-def read_env_float(name: str, *, default: Optional[float] = None) -> Optional[float]: ...
-
-
-def read_env_float(name: str, *, required: bool = False, default: Optional[float] = None) -> Optional[float]:
-    """Read an environment variable as float."""
-
-    def converter(x: str) -> float:
+def _float_converter(name: str) -> Callable[[str], float]:
+    def convert(x: str) -> float:
         try:
             return float(x)
         except ValueError as e:
             raise EnvVariableValueException(name, x, float) from e
 
-    return _read_env(name, required, default, converter)
+    return convert
 
 
-@overload
-def read_env_bool(name: str, *, required: Literal[True]) -> bool: ...
-
-
-@overload
-def read_env_bool(name: str, *, required: Literal[False]) -> Optional[bool]: ...
-
-
-@overload
-def read_env_bool(name: str, *, default: Optional[bool] = None) -> Optional[bool]: ...
-
-
-def read_env_bool(name: str, *, required: bool = False, default: Optional[bool] = None) -> Optional[bool]:
-    """Read an environment variable as boolean."""
-
-    def converter(x: str) -> bool:
-        result = x.strip().lower()
-        if result in ["true", "1", "t"]:
+def _bool_converter(name: str) -> Callable[[str], bool]:
+    def convert(x: str) -> bool:
+        if x.lower() in ["true", "1", "t"]:
             return True
-        if result in ["false", "0", "f"]:
+        if x.lower() in ["false", "0", "f"]:
             return False
         raise EnvVariableValueException(name, x, bool)
 
-    return _read_env(name, required, default, converter)
+    return convert
+
+
+def read_env_str(name: str, default: Optional[str] = None) -> Optional[str]:
+    """Read an environment variable as optional string."""
+    return _read_env_optional(name, default, lambda x: x)
+
+
+def must_read_env_str(name: str) -> str:
+    """Read an environment variable as string."""
+    return _read_env_required(name, lambda x: x)
+
+
+def read_env_int(name: str, default: Optional[int] = None) -> Optional[int]:
+    """Read an environment variable as optional integer."""
+    return _read_env_optional(name, default, _int_converter(name))
+
+
+def must_read_env_int(name: str) -> int:
+    """Read an environment variable as integer."""
+    return _read_env_required(name, _int_converter(name))
+
+
+def read_env_float(name: str, default: Optional[float] = None) -> Optional[float]:
+    """Read an environment variable as optional float."""
+    return _read_env_optional(name, default, _float_converter(name))
+
+
+def must_read_env_float(name: str) -> float:
+    """Read an environment variable as float."""
+    return _read_env_required(name, _float_converter(name))
+
+
+def read_env_bool(name: str, default: Optional[bool] = None) -> Optional[bool]:
+    """Read an environment variable as optional boolean."""
+    return _read_env_optional(name, default, _bool_converter(name))
+
+
+def must_read_env_bool(name: str) -> bool:
+    """Read an environment variable as boolean."""
+    return _read_env_required(name, _bool_converter(name))
