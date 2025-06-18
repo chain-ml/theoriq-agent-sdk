@@ -14,7 +14,7 @@ from theoriq.agent import Agent, AgentDeploymentConfiguration
 from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
 from theoriq.api.v1alpha2 import ConfigureContext
 from theoriq.api.v1alpha2.configure import AgentConfigurator
-from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
+from theoriq.api.v1alpha2.schemas import ExecuteRequestBody, AgentSchemas
 from theoriq.biscuit import TheoriqBiscuit, TheoriqBiscuitError, TheoriqCost
 from theoriq.extra.flask.common import get_bearer_token
 from theoriq.extra.globals import agent_var
@@ -84,6 +84,15 @@ def theoriq_configuration_blueprint(agent_configurator: AgentConfigurator) -> Bl
     return blueprint
 
 
+def theoriq_schemas_blueprint() -> Blueprint:
+    """
+    Creates a blueprint for the schemas endpoint.
+    """
+    blueprint = Blueprint("theoriq_schemas", __name__, url_prefix="/schemas")
+    blueprint.add_url_rule("/", view_func=get_schemas, methods=["GET"])
+    return blueprint
+
+
 def theoriq_execute_blueprint(execute_fn: ExecuteRequestFnV1alpha2) -> Blueprint:
     blueprint = Blueprint("theoriq_execute", __name__)
     blueprint.add_url_rule(
@@ -104,6 +113,7 @@ def _build_v1alpha2_blueprint(execute_fn: ExecuteRequestFnV1alpha2, agent_config
     v1alpha2_blueprint.register_blueprint(theoriq_execute_blueprint(execute_fn))
     v1alpha2_blueprint.register_blueprint(theoriq_system_blueprint())
     v1alpha2_blueprint.register_blueprint(theoriq_configuration_blueprint(agent_configurator))
+    v1alpha2_blueprint.register_blueprint(theoriq_schemas_blueprint())
 
     return v1alpha2_blueprint
 
@@ -213,3 +223,20 @@ def apply_configuration(agent_id: str, agent_configurator: AgentConfigurator) ->
     else:
         agent_configurator.configure_fn(context, payload)
         return Response(status=200)
+
+
+def get_schemas() -> Response:
+    """
+    Returns the schemas supported by the agent.
+    """
+    agent = agent_var.get()
+
+    # For now, we'll return a basic structure with just the configuration schema
+    # This can be extended later to include notification and execute schemas
+    schemas = AgentSchemas(
+        configuration=agent.schema,
+        notification=None,  # TODO: Add notification schema support if needed
+        execute=None,  # TODO: Add execute schema support if needed
+    )
+
+    return jsonify(schemas.model_dump())

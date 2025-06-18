@@ -62,7 +62,7 @@ class Agent:
         schema (Optional[Dict]): Configuration Schema for the agent.
     """
 
-    def __init__(self, config: AgentDeploymentConfiguration, schema: Optional[Dict] = None) -> None:
+    def __init__(self, config: AgentDeploymentConfiguration, schemas: Optional[Dict] = None) -> None:
         self._config = config
         self._schema = schema
         self.virtual_address: AgentAddress = AgentAddress.null()
