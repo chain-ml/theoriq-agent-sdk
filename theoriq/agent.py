@@ -25,53 +25,23 @@ from .biscuit.theoriq_biscuit import TheoriqBiscuit, TheoriqFactBase
 
 
 # as from .api.v1alpha2.schemas import AgentSchemas leads to circular import
+# TODO: fix
 class ExecuteSchema(BaseModel):
-    """
-    Represents a schema for an execute operation.
-
-    Attributes:
-        request: JSON schema for the request
-        response: JSON schema for the response
-    """
-
     request: Dict[str, Any]
     response: Dict[str, Any]
 
 
 class AgentSchemas(BaseModel):
-    """
-    Represents the schemas supported by an agent.
-
-    Attributes:
-        configuration: Optional JSON schema for agent configuration
-        notification: Optional JSON schema for notifications
-        execute: Optional mapping of operation names to their execute schemas
-    """
-
-    configuration: Optional[Dict[str, Any]] = None
-    notification: Optional[Dict[str, Any]] = None
     execute: Optional[Dict[str, ExecuteSchema]] = None
+    notification: Optional[Dict[str, Any]] = None
+    configuration: Optional[Dict[str, Any]] = None
 
     @classmethod
     def empty(cls) -> AgentSchemas:
         return AgentSchemas(configuration=None, notification=None, execute=None)
 
-    def set_configuration(self, schema: Dict[str, Any]) -> None:
-        self.configuration = schema
 
-    def set_notification(self, schema: Dict[str, Any]) -> None:
-        self.notification = schema
-
-    def set_execute(self, schema_map: Dict[str, ExecuteSchema]) -> None:
-        self.execute = schema_map
-
-    def add_execute(self, key: str, schema: ExecuteSchema) -> None:
-        if self.execute is None:
-            self.execute = {}
-        self.execute[key] = schema
-
-
-class AgentConfigurationSchemaError(Exception):
+class AgentSchemaError(Exception):
     pass
 
 
@@ -183,7 +153,7 @@ class Agent:
         try:
             validator.validate(values)
         except ValidationError as e:
-            raise AgentConfigurationSchemaError(e.message) from e
+            raise AgentSchemaError(f"ValidationError for agent configuration: {e.message}") from e
 
     def __str__(self) -> str:
         return f"Address: {self.config.address}, Public key: 0x{self.config.public_key.to_hex()}"
@@ -205,11 +175,11 @@ class Agent:
                 try:
                     Draft7Validator.check_schema(schema)
                 except SchemaError as e:
-                    raise AgentConfigurationSchemaError(f"SchemaError for {name}: {e.message}")
+                    raise AgentSchemaError(f"SchemaError for {name}: {e.message}") from e
 
         validate_schema(schemas.configuration, name="configuration")
         validate_schema(schemas.notification, name="notification")
         if schemas.execute is not None:
-            for key, schema in schemas.execute.items():
-                validate_schema(schema.request, name=f"execute {key} request")
-                validate_schema(schema.response, name=f"execute {key} response")
+            for operation, execute_schema in schemas.execute.items():
+                validate_schema(execute_schema.request, name=f"execute/{operation} request")
+                validate_schema(execute_schema.response, name=f"execute/{operation} response")

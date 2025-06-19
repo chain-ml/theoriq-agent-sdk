@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Generator, Final
+from typing import Dict, Final, Generator
 
 import dotenv
 import pytest

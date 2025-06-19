@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 class ExecuteSchema(BaseModel):
     """
-    Represents a schema for an execute operation.
+    Represents a schema for an execute request.
 
     Attributes:
         request: JSON schema for the request
@@ -23,29 +23,15 @@ class AgentSchemas(BaseModel):
     Represents the schemas supported by an agent.
 
     Attributes:
-        configuration: Optional JSON schema for agent configuration
-        notification: Optional JSON schema for notifications
-        execute: Optional mapping of operation names to their execute schemas
+        execute: Optional mapping of operation names to their execute schemas; for agents supporting execute requests
+        notification: Optional JSON schema for notifications; for publisher agents
+        configuration: Optional JSON schema for agent configuration; for configurable agents
     """
 
-    configuration: Optional[Dict[str, Any]] = None
-    notification: Optional[Dict[str, Any]] = None
     execute: Optional[Dict[str, ExecuteSchema]] = None
+    notification: Optional[Dict[str, Any]] = None
+    configuration: Optional[Dict[str, Any]] = None
 
     @classmethod
     def empty(cls) -> AgentSchemas:
         return AgentSchemas(configuration=None, notification=None, execute=None)
-
-    def set_configuration(self, schema: Dict[str, Any]) -> None:
-        self.configuration = schema
-
-    def set_notification(self, schema: Dict[str, Any]) -> None:
-        self.notification = schema
-
-    def set_execute(self, schema_map: Dict[str, ExecuteSchema]) -> None:
-        self.execute = schema_map
-
-    def add_execute(self, key: str, schema: ExecuteSchema) -> None:
-        if self.execute is None:
-            self.execute = {}
-        self.execute[key] = schema

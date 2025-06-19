@@ -84,9 +84,6 @@ def theoriq_configuration_blueprint(agent_configurator: AgentConfigurator) -> Bl
 
 
 def theoriq_schemas_blueprint() -> Blueprint:
-    """
-    Creates a blueprint for the schemas endpoint.
-    """
     blueprint = Blueprint("theoriq_schemas", __name__, url_prefix="/schemas")
     blueprint.add_url_rule("/", view_func=get_schemas, methods=["GET"])
     return blueprint
@@ -193,6 +190,11 @@ def get_configuration_schema() -> Response:
     return jsonify(agent.schemas.configuration or {})
 
 
+def get_schemas() -> Response:
+    agent = agent_var.get()
+    return jsonify(agent.schemas.model_dump())
+
+
 def validate_configuration(agent_id: str) -> Response:
     payload = request.json
     agent = agent_var.get()
@@ -222,12 +224,3 @@ def apply_configuration(agent_id: str, agent_configurator: AgentConfigurator) ->
     else:
         agent_configurator.configure_fn(context, payload)
         return Response(status=200)
-
-
-def get_schemas() -> Response:
-    """
-    Returns the schemas supported by the agent.
-    """
-    agent = agent_var.get()
-
-    return jsonify(agent.schemas.model_dump())

@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2 import ExecuteRequestFn
-from theoriq.api.v1alpha2.schemas import AgentSchemas, ExecuteSchema, ExecuteRequestBody
+from theoriq.api.v1alpha2.schemas import AgentSchemas, ExecuteRequestBody, ExecuteSchema
 from theoriq.extra.flask import run_agent_flask_app
 from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
 from theoriq.types import AgentDataObject
