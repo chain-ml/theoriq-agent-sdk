@@ -6,9 +6,10 @@ from typing import Any, Dict, Optional
 import biscuit_auth
 from biscuit_auth import Biscuit, KeyPair, PrivateKey  # pylint: disable=E0611
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from jsonschema import ValidationError
+from jsonschema import SchemaError, ValidationError
 from jsonschema.validators import Draft7Validator
 
+from .api.v1alpha2.schemas import AgentSchemas
 from .biscuit import (
     AgentAddress,
     AuthorizationError,
@@ -59,12 +60,12 @@ class Agent:
 
     Attributes:
         config (AgentDeploymentConfiguration): Agent configuration.
-        schema (Optional[Dict]): Configuration Schema for the agent.
+        schemas (AgentSchemas): Schemas for the agent.
     """
 
-    def __init__(self, config: AgentDeploymentConfiguration, schemas: Optional[Dict] = None) -> None:
+    def __init__(self, config: AgentDeploymentConfiguration, schemas: AgentSchemas = AgentSchemas.empty()) -> None:
         self._config = config
-        self._schema = schema
+        self._schemas = schemas
         self.virtual_address: AgentAddress = AgentAddress.null()
 
     @property
@@ -72,8 +73,8 @@ class Agent:
         return self._config
 
     @property
-    def schema(self) -> Optional[Dict]:
-        return self._schema
+    def schemas(self) -> AgentSchemas:
+        return self._schemas
 
     def authentication_biscuit(self) -> AuthenticationBiscuit:
         address = self.config.address if self.virtual_address.is_null else self.virtual_address
@@ -128,10 +129,10 @@ class Agent:
         return private_key.sign(challenge)
 
     def validate_configuration(self, values: Any) -> None:
-        if self.schema is None:
+        if self.schemas.configuration is None:
             return
 
-        validator = Draft7Validator(self.schema)
+        validator = Draft7Validator(self.schemas.configuration)
         try:
             validator.validate(values)
         except ValidationError as e:
@@ -151,6 +152,17 @@ class Agent:
         return cls(config)
 
     @classmethod
-    def validate_schema(cls, schema: Optional[Dict[str, Any]]) -> None:
-        if schema is not None:
-            Draft7Validator.check_schema(schema)
+    def validate_schemas(cls, schemas: AgentSchemas) -> None:
+        def validate_schema(schema: Optional[Dict[str, Any]], name: str) -> None:
+            if schema is not None:
+                try:
+                    Draft7Validator.check_schema(schema)
+                except SchemaError as e:
+                    raise AgentConfigurationSchemaError(f"SchemaError for {name}: {e.message}")
+
+        validate_schema(schemas.configuration, name="configuration")
+        validate_schema(schemas.notification, name="notification")
+        if schemas.execute is not None:
+            for key, schema in schemas.execute.items():
+                validate_schema(schema.request, name=f"execute {key} request")
+                validate_schema(schema.response, name=f"execute {key} response")

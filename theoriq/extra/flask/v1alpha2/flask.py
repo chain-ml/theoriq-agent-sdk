@@ -3,7 +3,6 @@
 import json
 import logging
 import threading
-from typing import Any, Dict, Optional
 
 import pydantic
 from flask import Blueprint, Response, jsonify, request
@@ -14,7 +13,7 @@ from theoriq.agent import Agent, AgentDeploymentConfiguration
 from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
 from theoriq.api.v1alpha2 import ConfigureContext
 from theoriq.api.v1alpha2.configure import AgentConfigurator
-from theoriq.api.v1alpha2.schemas import ExecuteRequestBody, AgentSchemas
+from theoriq.api.v1alpha2.schemas import AgentSchemas, ExecuteRequestBody
 from theoriq.biscuit import TheoriqBiscuit, TheoriqBiscuitError, TheoriqCost
 from theoriq.extra.flask.common import get_bearer_token
 from theoriq.extra.globals import agent_var
@@ -35,7 +34,7 @@ logger = logging.getLogger(__name__)
 def theoriq_blueprint(
     agent_config: AgentDeploymentConfiguration,
     execute_fn: ExecuteRequestFnV1alpha2,
-    schema: Optional[Dict[str, Any]] = None,
+    schemas: AgentSchemas = AgentSchemas.empty(),
     agent_configurator: AgentConfigurator = AgentConfigurator.default(),
 ) -> Blueprint:
     """
@@ -44,11 +43,11 @@ def theoriq_blueprint(
     """
 
     main_blueprint = Blueprint("main_blueprint", __name__)
-    Agent.validate_schema(schema)
+    Agent.validate_schemas(schemas)
 
     @main_blueprint.before_request
     def set_context() -> None:
-        agent_var.set(Agent(agent_config, schema))
+        agent_var.set(Agent(agent_config, schemas))
 
     configure_error_handlers(main_blueprint)
 
@@ -191,7 +190,7 @@ def _execute_async(
 
 def get_configuration_schema() -> Response:
     agent = agent_var.get()
-    return jsonify(agent.schema or {})
+    return jsonify(agent.schemas.configuration or {})
 
 
 def validate_configuration(agent_id: str) -> Response:
@@ -206,7 +205,7 @@ def apply_configuration(agent_id: str, agent_configurator: AgentConfigurator) ->
     agent = agent_var.get()
     protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
 
-    # Validate configuration
+    # Validate configurations
     agent.validate_configuration(payload)
     context = ConfigureContext(agent, protocol_client)
     context.set_virtual_address(agent_id)
@@ -231,12 +230,4 @@ def get_schemas() -> Response:
     """
     agent = agent_var.get()
 
-    # For now, we'll return a basic structure with just the configuration schema
-    # This can be extended later to include notification and execute schemas
-    schemas = AgentSchemas(
-        configuration=agent.schema,
-        notification=None,  # TODO: Add notification schema support if needed
-        execute=None,  # TODO: Add execute schema support if needed
-    )
-
-    return jsonify(schemas.model_dump())
+    return jsonify(agent.schemas.model_dump())

@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2 import ExecuteRequestFn
-from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
+from theoriq.api.v1alpha2.schemas import AgentSchemas, ExecuteRequestBody
 from theoriq.extra.flask import run_agent_flask_app
 from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
 from theoriq.types import AgentDataObject
@@ -82,7 +82,8 @@ class AgentRunner:
             else self.create_configurable_execute_fn(agent_name)
         )
 
-        blueprint = theoriq_blueprint(agent_config=agent_config, execute_fn=execute, schema=schema)
+        schemas = AgentSchemas(configuration=schema)
+        blueprint = theoriq_blueprint(agent_config=agent_config, execute_fn=execute, schemas=schemas)
 
         thread = threading.Thread(target=run_agent_flask_app, args=(blueprint, port))
         thread.daemon = True
