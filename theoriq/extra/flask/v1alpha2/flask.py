@@ -43,11 +43,11 @@ def theoriq_blueprint(
     """
 
     main_blueprint = Blueprint("main_blueprint", __name__)
-    Agent.validate_schemas(schemas)
+    Agent.validate_schemas(schemas.configuration, schemas.notification, schemas.execute)  # type: ignore
 
     @main_blueprint.before_request
     def set_context() -> None:
-        agent_var.set(Agent(agent_config, schemas))
+        agent_var.set(Agent(agent_config, schemas.configuration, schemas.notification, schemas.execute))  # type: ignore
 
     configure_error_handlers(main_blueprint)
 
@@ -187,12 +187,23 @@ def _execute_async(
 
 def get_configuration_schema() -> Response:
     agent = agent_var.get()
-    return jsonify(agent.schemas.configuration or {})
+    return jsonify(agent.configuration_schema or {})
 
 
 def get_schemas() -> Response:
     agent = agent_var.get()
-    return jsonify(agent.schemas.model_dump())
+
+    execute_schemas = (
+        None
+        if agent.execute_schemas is None
+        else {key: value.model_dump() for key, value in agent.execute_schemas.items()}
+    )
+    schemas = {
+        "configuration": agent.configuration_schema,
+        "notification": agent.notification_schema,
+        "execute": execute_schemas,
+    }
+    return jsonify(schemas)
 
 
 def validate_configuration(agent_id: str) -> Response:
