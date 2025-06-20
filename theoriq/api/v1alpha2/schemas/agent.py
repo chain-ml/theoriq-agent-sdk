@@ -24,6 +24,21 @@ class Metadata(BaseModel):
     cost_card: Optional[str] = Field(None, alias="costCard")
     example_prompts: List[str] = Field(..., alias="examplePrompts")
 
+    def format(self) -> str:
+        parts = [
+            f"Name: {self.name}",
+            f"Short description: {self.short_description}",
+            f"Long description: " f"{self.long_description}",
+            f"Tags: {self.tags}",
+            f"Example prompts: {self.example_prompts}",
+        ]
+        if self.cost_card is not None:
+            parts.append(f"Cost card: {self.cost_card}")
+        return "\n".join(parts)
+
+    def format_with_id(self, id: str) -> str:
+        return f"Agent address: {id}\n" + self.format()
+
 
 class Virtual(BaseModel):
     agent_id: str = Field(..., alias="agentId")
@@ -100,5 +115,8 @@ class AgentResponse(BaseModel):
     configuration: Configuration
     schemas: AgentSchemas
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         return f"AgentResponse(id={self.system.id}, name={self.system.public_key})"
+
+    def format(self) -> str:
+        return self.metadata.format_with_id(self.system.id)
