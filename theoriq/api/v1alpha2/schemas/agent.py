@@ -3,6 +3,8 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
+from .schemas import AgentSchemas
+
 
 class System(BaseModel):
     id: str
@@ -111,6 +113,7 @@ class AgentResponse(BaseModel):
     system: System
     metadata: Metadata
     configuration: Configuration
+    schemas: AgentSchemas
 
     def __repr__(self) -> str:
         return f"AgentResponse(id={self.system.id}, name={self.system.public_key})"

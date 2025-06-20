@@ -6,8 +6,9 @@ from typing import Any, Dict, Optional
 import biscuit_auth
 from biscuit_auth import Biscuit, KeyPair, PrivateKey  # pylint: disable=E0611
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from jsonschema import ValidationError
+from jsonschema import SchemaError, ValidationError
 from jsonschema.validators import Draft7Validator
+from pydantic import BaseModel
 
 from .biscuit import (
     AgentAddress,
@@ -23,7 +24,14 @@ from .biscuit.payload_hash import PayloadHash
 from .biscuit.theoriq_biscuit import TheoriqBiscuit, TheoriqFactBase
 
 
-class AgentConfigurationSchemaError(Exception):
+# as from .api.v1alpha2.schemas import AgentSchemas leads to circular import
+# TODO: fix
+class ExecuteSchema(BaseModel):
+    request: Dict[str, Any]
+    response: Dict[str, Any]
+
+
+class AgentSchemaError(Exception):
     pass
 
 
@@ -59,12 +67,22 @@ class Agent:
 
     Attributes:
         config (AgentDeploymentConfiguration): Agent configuration.
-        schema (Optional[Dict]): Configuration Schema for the agent.
+        configuration_schema (Optional[Dict[str, Any]]): Configuration schema for the agent.
+        notification_schema (Optional[Dict[str, Any]]): Notification schema for the agent.
+        execute_schemas (Optional[Dict[str, ExecuteSchema]]): Execute schemas for the agent.
     """
 
-    def __init__(self, config: AgentDeploymentConfiguration, schema: Optional[Dict] = None) -> None:
+    def __init__(
+        self,
+        config: AgentDeploymentConfiguration,
+        configuration_schema: Optional[Dict[str, Any]] = None,
+        notification_schema: Optional[Dict[str, Any]] = None,
+        execute_schemas: Optional[Dict[str, ExecuteSchema]] = None,
+    ) -> None:
         self._config = config
-        self._schema = schema
+        self._configuration_schema = configuration_schema
+        self._notification_schema = notification_schema
+        self._execute_schemas = execute_schemas
         self.virtual_address: AgentAddress = AgentAddress.null()
 
     @property
@@ -72,8 +90,16 @@ class Agent:
         return self._config
 
     @property
-    def schema(self) -> Optional[Dict]:
-        return self._schema
+    def configuration_schema(self) -> Optional[Dict[str, Any]]:
+        return self._configuration_schema
+
+    @property
+    def notification_schema(self) -> Optional[Dict[str, Any]]:
+        return self._notification_schema
+
+    @property
+    def execute_schemas(self) -> Optional[Dict[str, ExecuteSchema]]:
+        return self._execute_schemas
 
     def authentication_biscuit(self) -> AuthenticationBiscuit:
         address = self.config.address if self.virtual_address.is_null else self.virtual_address
@@ -128,14 +154,14 @@ class Agent:
         return private_key.sign(challenge)
 
     def validate_configuration(self, values: Any) -> None:
-        if self.schema is None:
+        if self.configuration_schema is None:
             return
 
-        validator = Draft7Validator(self.schema)
+        validator = Draft7Validator(self.configuration_schema)
         try:
             validator.validate(values)
         except ValidationError as e:
-            raise AgentConfigurationSchemaError(e.message) from e
+            raise AgentSchemaError(f"ValidationError for agent configuration: {e.message}") from e
 
     def __str__(self) -> str:
         return f"Address: {self.config.address}, Public key: 0x{self.config.public_key.to_hex()}"
@@ -151,6 +177,22 @@ class Agent:
         return cls(config)
 
     @classmethod
-    def validate_schema(cls, schema: Optional[Dict[str, Any]]) -> None:
-        if schema is not None:
-            Draft7Validator.check_schema(schema)
+    def validate_schemas(
+        cls,
+        configuration_schema: Optional[Dict[str, Any]] = None,
+        notification_schema: Optional[Dict[str, Any]] = None,
+        execute_schemas: Optional[Dict[str, ExecuteSchema]] = None,
+    ) -> None:
+        def validate_schema(schema: Optional[Dict[str, Any]], name: str) -> None:
+            if schema is not None:
+                try:
+                    Draft7Validator.check_schema(schema)
+                except SchemaError as e:
+                    raise AgentSchemaError(f"SchemaError for {name}: {e.message}") from e
+
+        validate_schema(configuration_schema, name="configuration")
+        validate_schema(notification_schema, name="notification")
+        if execute_schemas is not None:
+            for operation, execute_schema in execute_schemas.items():
+                validate_schema(execute_schema.request, name=f"execute/{operation} request")
+                validate_schema(execute_schema.response, name=f"execute/{operation} response")
