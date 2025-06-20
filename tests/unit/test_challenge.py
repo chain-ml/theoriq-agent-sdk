@@ -2,7 +2,7 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from tests.unit.fixtures import *  # noqa: F403
 
-from theoriq.agent import Agent, AgentDeploymentConfiguration
+from theoriq.api.v1alpha2.agent import Agent, AgentDeploymentConfiguration
 
 
 @pytest.fixture()

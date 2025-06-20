@@ -9,9 +9,9 @@ from flask import Blueprint, Response, jsonify, request
 
 import theoriq
 from theoriq import ExecuteRuntimeError
-from theoriq.agent import Agent, AgentDeploymentConfiguration
 from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
 from theoriq.api.v1alpha2 import ConfigureContext
+from theoriq.api.v1alpha2.agent import Agent, AgentDeploymentConfiguration
 from theoriq.api.v1alpha2.configure import AgentConfigurator
 from theoriq.api.v1alpha2.schemas import AgentSchemas, ExecuteRequestBody
 from theoriq.biscuit import TheoriqBiscuit, TheoriqBiscuitError, TheoriqCost

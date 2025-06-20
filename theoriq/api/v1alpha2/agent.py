@@ -10,7 +10,7 @@ from jsonschema import SchemaError, ValidationError
 from jsonschema.validators import Draft7Validator
 from pydantic import BaseModel
 
-from .biscuit import (
+from theoriq.biscuit import (
     AgentAddress,
     AuthorizationError,
     RequestBiscuit,
@@ -19,9 +19,9 @@ from .biscuit import (
     TheoriqCost,
     VerificationError,
 )
-from .biscuit.authentication_biscuit import AuthenticationBiscuit, AuthenticationFacts
-from .biscuit.payload_hash import PayloadHash
-from .biscuit.theoriq_biscuit import TheoriqBiscuit, TheoriqFactBase
+from theoriq.biscuit.authentication_biscuit import AuthenticationBiscuit, AuthenticationFacts
+from theoriq.biscuit.payload_hash import PayloadHash
+from theoriq.biscuit.theoriq_biscuit import TheoriqBiscuit, TheoriqFactBase
 
 
 # as from .api.v1alpha2.schemas import AgentSchemas leads to circular import

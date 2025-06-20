@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
-from theoriq.agent import Agent
 from theoriq.biscuit import AgentAddress, RequestBiscuit, ResponseBiscuit, TheoriqBiscuit, TheoriqBudget
 from theoriq.biscuit.facts import TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
 from theoriq.types import AgentMetadata, Metric
 
 from ..common import ExecuteContextBase, ExecuteResponse
+from .agent import Agent
 from .protocol.protocol_client import ProtocolClient, RequestStatus
 from .schemas.request import Configuration, ExecuteRequestBody
 
