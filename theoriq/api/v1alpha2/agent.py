@@ -8,7 +8,6 @@ from biscuit_auth import Biscuit, KeyPair, PrivateKey  # pylint: disable=E0611
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from jsonschema import SchemaError, ValidationError
 from jsonschema.validators import Draft7Validator
-from pydantic import BaseModel
 
 from theoriq.biscuit import (
     AgentAddress,
@@ -25,12 +24,7 @@ from theoriq.biscuit import (
     VerificationError,
 )
 
-
-# as from .api.v1alpha2.schemas import AgentSchemas leads to circular import
-# TODO: fix
-class ExecuteSchema(BaseModel):
-    request: Dict[str, Any]
-    response: Dict[str, Any]
+from .schemas import AgentSchemas
 
 
 class AgentSchemaError(Exception):
@@ -69,22 +63,12 @@ class Agent:
 
     Attributes:
         config (AgentDeploymentConfiguration): Agent configuration.
-        configuration_schema (Optional[Dict[str, Any]]): Configuration schema for the agent.
-        notification_schema (Optional[Dict[str, Any]]): Notification schema for the agent.
-        execute_schemas (Optional[Dict[str, ExecuteSchema]]): Execute schemas for the agent.
+        schemas (AgentSchemas): Schemas for the agent.
     """
 
-    def __init__(
-        self,
-        config: AgentDeploymentConfiguration,
-        configuration_schema: Optional[Dict[str, Any]] = None,
-        notification_schema: Optional[Dict[str, Any]] = None,
-        execute_schemas: Optional[Dict[str, ExecuteSchema]] = None,
-    ) -> None:
+    def __init__(self, config: AgentDeploymentConfiguration, schemas: AgentSchemas = AgentSchemas.empty()) -> None:
         self._config = config
-        self._configuration_schema = configuration_schema
-        self._notification_schema = notification_schema
-        self._execute_schemas = execute_schemas
+        self._schemas = schemas
         self.virtual_address: AgentAddress = AgentAddress.null()
 
     @property
@@ -92,16 +76,8 @@ class Agent:
         return self._config
 
     @property
-    def configuration_schema(self) -> Optional[Dict[str, Any]]:
-        return self._configuration_schema
-
-    @property
-    def notification_schema(self) -> Optional[Dict[str, Any]]:
-        return self._notification_schema
-
-    @property
-    def execute_schemas(self) -> Optional[Dict[str, ExecuteSchema]]:
-        return self._execute_schemas
+    def schemas(self) -> AgentSchemas:
+        return self._schemas
 
     def authentication_biscuit(self) -> AuthenticationBiscuit:
         address = self.config.address if self.virtual_address.is_null else self.virtual_address
@@ -156,10 +132,10 @@ class Agent:
         return private_key.sign(challenge)
 
     def validate_configuration(self, values: Any) -> None:
-        if self.configuration_schema is None:
+        if self.schemas.configuration is None:
             return
 
-        validator = Draft7Validator(self.configuration_schema)
+        validator = Draft7Validator(self.schemas.configuration)
         try:
             validator.validate(values)
         except ValidationError as e:
@@ -179,12 +155,7 @@ class Agent:
         return cls(config)
 
     @classmethod
-    def validate_schemas(
-        cls,
-        configuration_schema: Optional[Dict[str, Any]] = None,
-        notification_schema: Optional[Dict[str, Any]] = None,
-        execute_schemas: Optional[Dict[str, ExecuteSchema]] = None,
-    ) -> None:
+    def validate_schemas(cls, schemas: AgentSchemas) -> None:
         def validate_schema(schema: Optional[Dict[str, Any]], name: str) -> None:
             if schema is not None:
                 try:
@@ -192,9 +163,9 @@ class Agent:
                 except SchemaError as e:
                     raise AgentSchemaError(f"SchemaError for {name}: {e.message}") from e
 
-        validate_schema(configuration_schema, name="configuration")
-        validate_schema(notification_schema, name="notification")
-        if execute_schemas is not None:
-            for operation, execute_schema in execute_schemas.items():
+        validate_schema(schemas.configuration, name="configuration")
+        validate_schema(schemas.notification, name="notification")
+        if schemas.execute is not None:
+            for operation, execute_schema in schemas.execute.items():
                 validate_schema(execute_schema.request, name=f"execute/{operation} request")
                 validate_schema(execute_schema.response, name=f"execute/{operation} response")
