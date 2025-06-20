@@ -3,9 +3,9 @@ from __future__ import annotations
 import threading
 from typing import Callable, Optional
 
-from theoriq import Agent
-from theoriq.api.v1alpha2 import ProtocolClient
-from theoriq.api.v1alpha2.protocol.biscuit_provider import BiscuitProviderFromPrivateKey
+from .agent import Agent
+from .protocol import ProtocolClient
+from .protocol.biscuit_provider import BiscuitProviderFromPrivateKey
 
 
 class PublisherContext:

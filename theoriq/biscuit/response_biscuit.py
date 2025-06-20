@@ -4,8 +4,8 @@ from uuid import UUID
 
 from biscuit_auth import Biscuit, BlockBuilder  # pylint: disable=E0611
 
-from theoriq.biscuit import TheoriqBiscuit, TheoriqCost, TheoriqResponse
-from theoriq.biscuit.facts import ExecuteResponseFacts
+from .facts import ExecuteResponseFacts, TheoriqCost, TheoriqResponse
+from .theoriq_biscuit import TheoriqBiscuit
 
 
 class ResponseBiscuit:

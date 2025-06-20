@@ -3,9 +3,9 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable
 
-from theoriq import Agent
 from theoriq.biscuit import AgentAddress, RequestFact, TheoriqBiscuit
 
+from .agent import Agent
 from .protocol import ProtocolClient
 
 logger = logging.getLogger(__name__)

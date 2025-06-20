@@ -8,7 +8,7 @@ from flask import Flask
 from flask.testing import FlaskClient
 from tests.unit.fixtures import *  # noqa: F403
 
-from theoriq.agent import AgentDeploymentConfiguration
+from theoriq.api.v1alpha2.agent import AgentDeploymentConfiguration
 from theoriq.api.v1alpha2.execute import ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2.schemas import ChallengeResponseBody, ExecuteRequestBody
 from theoriq.biscuit import AgentAddress, TheoriqCost
