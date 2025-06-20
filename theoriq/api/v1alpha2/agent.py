@@ -12,16 +12,18 @@ from pydantic import BaseModel
 
 from theoriq.biscuit import (
     AgentAddress,
+    AuthenticationBiscuit,
+    AuthenticationFacts,
     AuthorizationError,
+    PayloadHash,
     RequestBiscuit,
     RequestFacts,
     ResponseBiscuit,
+    TheoriqBiscuit,
     TheoriqCost,
+    TheoriqFactBase,
     VerificationError,
 )
-from theoriq.biscuit.authentication_biscuit import AuthenticationBiscuit, AuthenticationFacts
-from theoriq.biscuit.payload_hash import PayloadHash
-from theoriq.biscuit.theoriq_biscuit import TheoriqBiscuit, TheoriqFactBase
 
 
 # as from .api.v1alpha2.schemas import AgentSchemas leads to circular import
