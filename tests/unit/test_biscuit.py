@@ -34,10 +34,10 @@ def biscuit_facts(request_facts: RequestFacts, response_facts: ResponseFacts) ->
 @pytest.fixture
 def request_facts(request) -> RequestFacts:
     if getattr(request, "param", None) is None:
-        return utils.new_request_facts(b"Hello World", ADDRESS_ONE, ADDRESS_TWO, 10)
+        return utils.new_request_facts(b"Hello World", ADDRESS_ONE, ADDRESS_TWO)
     else:
         (body, from_addr, to_addr, amount) = request.param
-        return utils.new_request_facts(body, from_addr, to_addr, amount)
+        return utils.new_request_facts(body, from_addr, to_addr)
 
 
 @pytest.fixture
@@ -46,7 +46,7 @@ def response_facts(request) -> Optional[ResponseFacts]:
         return None
     else:
         (uuid, body, to_addr, amount) = request.param
-        return utils.new_response_facts(uuid, body, to_addr, amount)
+        return utils.new_response_facts(uuid, body, to_addr)
 
 
 def one_hour_ago() -> datetime:
@@ -107,7 +107,7 @@ def test_read_response_facts(agent_biscuit, response_facts):
 @pytest.mark.parametrize("agent_biscuit", [ADDRESS_TWO], indirect=True)
 def test_append_request_facts(agent_biscuit: biscuit_auth.Biscuit):
     agent_kp = biscuit_auth.KeyPair()
-    req_facts = utils.new_request_facts(b"help", ADDRESS_TWO, ADDRESS_THREE, 5)
+    req_facts = utils.new_request_facts(b"help", ADDRESS_TWO, ADDRESS_THREE)
     agent_biscuit = agent_biscuit.append_third_party_block(agent_kp, req_facts.to_block_builder())  # type: ignore
 
     assert agent_biscuit.block_count() == 2
@@ -128,7 +128,7 @@ def test_append_request_facts(agent_biscuit: biscuit_auth.Biscuit):
 @pytest.mark.parametrize("agent_biscuit", [ADDRESS_TWO], indirect=True)
 def test_append_response_facts(agent_biscuit, request_facts):
     agent_kp = biscuit_auth.KeyPair()
-    resp_facts = utils.new_response_facts(request_facts.req_id, b"hi", ADDRESS_ONE, 2)
+    resp_facts = utils.new_response_facts(request_facts.req_id, b"hi", ADDRESS_ONE)
     agent_biscuit = agent_biscuit.append_third_party_block(agent_kp, resp_facts.to_block_builder())  # type: ignore
 
     assert agent_biscuit.block_count() == 2

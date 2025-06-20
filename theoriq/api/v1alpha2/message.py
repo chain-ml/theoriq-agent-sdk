@@ -4,7 +4,7 @@ import uuid
 from typing import Optional, Sequence
 
 from theoriq import ExecuteResponse
-from theoriq.biscuit import TheoriqBudget, TheoriqRequest
+from theoriq.biscuit import TheoriqRequest
 from theoriq.dialog import Dialog, DialogItem, ItemBlock
 
 from ..common import RequestSenderBase
@@ -20,13 +20,12 @@ class Messenger(RequestSenderBase):
         self._client = client or ProtocolClient.from_env()
         self._biscuit_provider = biscuit_provider
 
-    def send_request(self, blocks: Sequence[ItemBlock], budget: TheoriqBudget, to_addr: str) -> ExecuteResponse:
+    def send_request(self, blocks: Sequence[ItemBlock], to_addr: str) -> ExecuteResponse:
         """
         Sends a request to another address, attenuating the biscuit for the request and handling the response.
 
         Args:
             blocks (Sequence[ItemBlock]): The blocks of data to include in the request.
-            budget (TheoriqBudget): The budget for processing the request.
             to_addr (str): The address to which the request is sent.
 
         Returns:
@@ -38,9 +37,7 @@ class Messenger(RequestSenderBase):
         body = execute_request_body.model_dump_json().encode("utf-8")
 
         theoriq_request = TheoriqRequest.from_body(body=body, from_addr=self._biscuit_provider.address, to_addr=to_addr)
-        theoriq_biscuit = self._biscuit_provider.get_request_biscuit(
-            request_id=uuid.uuid4(), facts=[theoriq_request, budget]
-        )
+        theoriq_biscuit = self._biscuit_provider.get_request_biscuit(request_id=uuid.uuid4(), facts=[theoriq_request])
         response = self._client.post_request(request_biscuit=theoriq_biscuit, content=body, to_addr=to_addr)
         return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
 

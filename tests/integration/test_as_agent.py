@@ -7,7 +7,6 @@ from tests.integration.agent_runner import AgentRunner
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import DeployedAgentManager
 from theoriq.api.v1alpha2.message import Messenger
-from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
 from theoriq.types import SourceType
 
@@ -58,7 +57,7 @@ def test_messenger(agent_map: Dict[str, AgentResponse], owner_messenger: Messeng
     for receiver_id, receiver in agent_map.items():
         message = "Hello from Parent Agent"
         blocks = [TextItemBlock(message)]
-        response = owner_messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=receiver_id)
+        response = owner_messenger.send_request(blocks=blocks, to_addr=receiver_id)
         actual = response.body.extract_last_text()
         expected = AgentRunner.get_echo_execute_output(message=message, agent_name=receiver.metadata.name)
         assert actual == expected

@@ -9,7 +9,6 @@ from tests.integration.agent_runner import AgentRunner, TestConfig
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import AgentConfigurationError, DeployedAgentManager, VirtualAgentManager
 from theoriq.api.v1alpha2.message import Messenger
-from theoriq.biscuit import TheoriqBudget
 from theoriq.dialog import TextItemBlock
 from theoriq.types import AgentConfiguration, AgentMetadata
 
@@ -23,7 +22,7 @@ def assert_send_message_to_configurable_agent(
     agent: AgentResponse, agent_map: Dict[str, AgentResponse], messenger: Messenger, message: str = "Hello from user"
 ) -> None:
     blocks = [TextItemBlock(message)]
-    response = messenger.send_request(blocks=blocks, budget=TheoriqBudget.empty(), to_addr=agent.system.id)
+    response = messenger.send_request(blocks=blocks, to_addr=agent.system.id)
 
     virtual = agent.configuration.ensure_virtual
     deployed_agent_name = agent_map[virtual.agent_id].metadata.name

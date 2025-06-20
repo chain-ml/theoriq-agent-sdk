@@ -8,10 +8,8 @@ from flask import Flask
 
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
-from theoriq.biscuit import TheoriqCost
 from theoriq.dialog import TextItemBlock
 from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
-from theoriq.types import Currency
 
 logger = logging.getLogger(__name__)
 dotenv.load_dotenv()
@@ -45,7 +43,7 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
     blocks = [
         TextItemBlock(text=llm_result),
     ]
-    return context.new_response(blocks=blocks, cost=TheoriqCost(amount=1, currency=Currency.USDC))
+    return context.new_response(blocks=blocks)
 
 
 if __name__ == "__main__":
