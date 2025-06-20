@@ -7,7 +7,7 @@ import pytest
 from biscuit_auth import KeyPair, PrivateKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
-from theoriq.api.v1alpha2.agent import AgentDeploymentConfiguration
+from theoriq import AgentDeploymentConfiguration
 
 
 @pytest.fixture(scope="function")
