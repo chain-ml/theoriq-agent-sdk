@@ -99,6 +99,7 @@ class AgentRunner:
         response_schema: Dict[str, Any],
         notification_schema: Dict[str, Any],
     ) -> threading.Thread:
+        # non-configurable agent act as publisher in test_pub_sub.py
         schemas = AgentSchemas(
             execute={"sample": ExecuteSchema(request=request_schema, response=response_schema)},
             notification=notification_schema,

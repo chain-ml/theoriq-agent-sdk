@@ -218,7 +218,7 @@ def apply_configuration(agent_id: str, agent_configurator: AgentConfigurator) ->
     agent = agent_var.get()
     protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
 
-    # Validate configurations
+    # Validate configuration
     agent.validate_configuration(payload)
     context = ConfigureContext(agent, protocol_client)
     context.set_virtual_address(agent_id)
