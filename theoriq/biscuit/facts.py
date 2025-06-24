@@ -13,8 +13,6 @@ from uuid import UUID
 from biscuit_auth import BlockBuilder, Fact, Rule
 from typing_extensions import Self
 
-from theoriq.types import Currency
-
 from .agent_address import AgentAddress
 from .payload_hash import PayloadHash
 from .utils import verify_address
@@ -136,7 +134,6 @@ class RequestFact(TheoriqFactBase):
         return [fact]
 
 
-
 class ResponseFact(TheoriqFactBase):
     """`theoriq:response` fact"""
 
@@ -161,7 +158,6 @@ class ResponseFact(TheoriqFactBase):
             {"req_id": str(self.request_id), "body_hash": str(self.body_hash), "to_addr": self.to_addr},
         )
         return [fact]
-
 
 
 class ExecuteRequestFacts(TheoriqFactBase):
