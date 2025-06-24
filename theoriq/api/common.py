@@ -197,7 +197,7 @@ class ExecuteResponse:
         Returns a string representation of the ExecuteResponse instance.
 
         Returns:
-            str: A string representing the ExecuteResponse, including the body, cost, and status code.
+            str: A string representing the ExecuteResponse, including the body and status code.
         """
         return f"ExecuteResponse(body={self.body}, status_code={self.status_code})"
 
