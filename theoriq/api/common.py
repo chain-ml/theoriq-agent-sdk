@@ -83,7 +83,7 @@ class ExecuteContextBase(RequestSenderBase):
 
     def new_response(self, blocks: Sequence[ItemBlock]) -> ExecuteResponse:
         """
-        Creates a new response with the specified blocks and cost.
+        Creates a new response with the specified blocks.
 
         Args:
             blocks (Sequence[ItemBlock]): The blocks of data to include in the response.
