@@ -9,9 +9,9 @@ from flask import Blueprint, Response, jsonify, request
 
 import theoriq
 from theoriq import ExecuteRuntimeError
-from theoriq.agent import Agent, AgentDeploymentConfiguration
 from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
 from theoriq.api.v1alpha2 import ConfigureContext
+from theoriq.api.v1alpha2.agent import Agent, AgentDeploymentConfiguration
 from theoriq.api.v1alpha2.configure import AgentConfigurator
 from theoriq.api.v1alpha2.schemas import AgentSchemas, ExecuteRequestBody
 from theoriq.biscuit import TheoriqBiscuit, TheoriqBiscuitError
@@ -42,11 +42,11 @@ def theoriq_blueprint(
     """
 
     main_blueprint = Blueprint("main_blueprint", __name__)
-    Agent.validate_schemas(schemas.configuration, schemas.notification, schemas.execute)  # type: ignore
+    Agent.validate_schemas(schemas)
 
     @main_blueprint.before_request
     def set_context() -> None:
-        agent_var.set(Agent(agent_config, schemas.configuration, schemas.notification, schemas.execute))  # type: ignore
+        agent_var.set(Agent(agent_config, schemas))
 
     configure_error_handlers(main_blueprint)
 
@@ -186,23 +186,12 @@ def _execute_async(
 
 def get_configuration_schema() -> Response:
     agent = agent_var.get()
-    return jsonify(agent.configuration_schema or {})
+    return jsonify(agent.schemas.configuration or {})
 
 
 def get_schemas() -> Response:
     agent = agent_var.get()
-
-    execute_schemas = (
-        None
-        if agent.execute_schemas is None
-        else {key: value.model_dump() for key, value in agent.execute_schemas.items()}
-    )
-    schemas = {
-        "configuration": agent.configuration_schema,
-        "notification": agent.notification_schema,
-        "execute": execute_schemas,
-    }
-    return jsonify(schemas)
+    return jsonify(agent.schemas.model_dump())
 
 
 def validate_configuration(agent_id: str) -> Response:

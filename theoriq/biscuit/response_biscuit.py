@@ -4,9 +4,8 @@ from uuid import UUID
 
 from biscuit_auth import Biscuit, BlockBuilder  # pylint: disable=E0611
 
-from theoriq.biscuit import TheoriqBiscuit, TheoriqResponse
-from theoriq.biscuit.facts import ExecuteResponseFacts, TheoriqCost
-from theoriq.types import Currency
+from .facts import ExecuteResponseFacts, TheoriqResponse
+from .theoriq_biscuit import TheoriqBiscuit
 
 
 class ResponseBiscuit:
@@ -47,9 +46,7 @@ class ResponseFacts:
     def to_block_builder(self) -> BlockBuilder:
         """Construct a biscuit block using the response facts"""
         response_fact = self.response.to_theoriq_fact(self.req_id)
-        cost_fact = TheoriqCost.zero(Currency.USDT).to_theoriq_fact(self.req_id)
 
         block_builder = BlockBuilder("")
         block_builder.merge(response_fact.to_block_builder())
-        block_builder.merge(cost_fact.to_block_builder())
         return block_builder
