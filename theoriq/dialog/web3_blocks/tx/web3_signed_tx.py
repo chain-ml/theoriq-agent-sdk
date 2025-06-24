@@ -6,21 +6,22 @@ from theoriq.dialog import BaseData, ItemBlock
 
 
 class Web3SignedTxItem(BaseData):
-    def __init__(self, tx_hash: str) -> None:
+    def __init__(self, *, chain_id: int, tx_hash: str) -> None:
+        self.chain_id = chain_id
         self.tx_hash = tx_hash
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> Web3SignedTxItem:
-        return cls(tx_hash=data["txHash"])
+        return cls(chain_id=int(data["chainId"]), tx_hash=data["txHash"])
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"txHash": self.tx_hash}
+        return {"chainId": self.chain_id, "txHash": self.tx_hash}
 
     def to_str(self) -> str:
-        return f"Transaction hash: `{self.tx_hash}`"
+        return f"Transaction hash: `{self.tx_hash}` on chain `{self.chain_id}`"
 
     def __str__(self) -> str:
-        return f"Web3SignedTxItem(txHash={self.tx_hash})"
+        return f"Web3SignedTxItem(chainId={self.chain_id}, txHash={self.tx_hash})"
 
 
 class Web3SignedTxBlock(ItemBlock[Web3SignedTxItem]):
