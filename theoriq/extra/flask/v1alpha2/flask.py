@@ -3,7 +3,6 @@
 import json
 import logging
 import threading
-from typing import Any, Dict, Optional
 
 import pydantic
 from flask import Blueprint, Response, jsonify, request
@@ -14,7 +13,7 @@ from theoriq.agent import Agent, AgentDeploymentConfiguration
 from theoriq.api import ExecuteContextV1alpha2, ExecuteRequestFnV1alpha2
 from theoriq.api.v1alpha2 import ConfigureContext
 from theoriq.api.v1alpha2.configure import AgentConfigurator
-from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
+from theoriq.api.v1alpha2.schemas import AgentSchemas, ExecuteRequestBody
 from theoriq.biscuit import TheoriqBiscuit, TheoriqBiscuitError
 from theoriq.extra.flask.common import get_bearer_token
 from theoriq.extra.globals import agent_var
@@ -34,7 +33,7 @@ logger = logging.getLogger(__name__)
 def theoriq_blueprint(
     agent_config: AgentDeploymentConfiguration,
     execute_fn: ExecuteRequestFnV1alpha2,
-    schema: Optional[Dict[str, Any]] = None,
+    schemas: AgentSchemas = AgentSchemas.empty(),
     agent_configurator: AgentConfigurator = AgentConfigurator.default(),
 ) -> Blueprint:
     """
@@ -43,11 +42,11 @@ def theoriq_blueprint(
     """
 
     main_blueprint = Blueprint("main_blueprint", __name__)
-    Agent.validate_schema(schema)
+    Agent.validate_schemas(schemas.configuration, schemas.notification, schemas.execute)  # type: ignore
 
     @main_blueprint.before_request
     def set_context() -> None:
-        agent_var.set(Agent(agent_config, schema))
+        agent_var.set(Agent(agent_config, schemas.configuration, schemas.notification, schemas.execute))  # type: ignore
 
     configure_error_handlers(main_blueprint)
 
@@ -83,6 +82,12 @@ def theoriq_configuration_blueprint(agent_configurator: AgentConfigurator) -> Bl
     return blueprint
 
 
+def theoriq_schemas_blueprint() -> Blueprint:
+    blueprint = Blueprint("theoriq_schemas", __name__, url_prefix="/schemas")
+    blueprint.add_url_rule("/", view_func=get_schemas, methods=["GET"])
+    return blueprint
+
+
 def theoriq_execute_blueprint(execute_fn: ExecuteRequestFnV1alpha2) -> Blueprint:
     blueprint = Blueprint("theoriq_execute", __name__)
     blueprint.add_url_rule(
@@ -103,6 +108,7 @@ def _build_v1alpha2_blueprint(execute_fn: ExecuteRequestFnV1alpha2, agent_config
     v1alpha2_blueprint.register_blueprint(theoriq_execute_blueprint(execute_fn))
     v1alpha2_blueprint.register_blueprint(theoriq_system_blueprint())
     v1alpha2_blueprint.register_blueprint(theoriq_configuration_blueprint(agent_configurator))
+    v1alpha2_blueprint.register_blueprint(theoriq_schemas_blueprint())
 
     return v1alpha2_blueprint
 
@@ -180,7 +186,23 @@ def _execute_async(
 
 def get_configuration_schema() -> Response:
     agent = agent_var.get()
-    return jsonify(agent.schema or {})
+    return jsonify(agent.configuration_schema or {})
+
+
+def get_schemas() -> Response:
+    agent = agent_var.get()
+
+    execute_schemas = (
+        None
+        if agent.execute_schemas is None
+        else {key: value.model_dump() for key, value in agent.execute_schemas.items()}
+    )
+    schemas = {
+        "configuration": agent.configuration_schema,
+        "notification": agent.notification_schema,
+        "execute": execute_schemas,
+    }
+    return jsonify(schemas)
 
 
 def validate_configuration(agent_id: str) -> Response:

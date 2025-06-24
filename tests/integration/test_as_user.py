@@ -46,6 +46,9 @@ def test_get_agents(agent_map: Dict[str, AgentResponse], user_manager: DeployedA
         same_agent = user_manager.get_agent(agent.system.id)
         assert agents_are_equal(agent, same_agent)
 
+        assert agent.schemas.execute is not None
+        assert agent.schemas.notification is not None
+
 
 @pytest.mark.order(4)
 @pytest.mark.usefixtures("agent_flask_apps")

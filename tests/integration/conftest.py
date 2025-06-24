@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Generator
+from typing import Dict, Final, Generator
 
 import dotenv
 import pytest
@@ -12,6 +12,8 @@ from theoriq.api.v1alpha2.manage import DeployedAgentManager
 from theoriq.api.v1alpha2.message import Messenger
 
 dotenv.load_dotenv()
+
+STRING_SCHEMA: Final[Dict[str, str]] = {"type": "string"}
 
 
 @pytest.fixture(scope="session")
@@ -27,11 +29,13 @@ def agent_flask_apps(agent_registry: AgentRegistry) -> Generator[None, None, Non
 
     non_configurable_agents = agent_registry.get_agents_of_types([AgentType.OWNER, AgentType.BASIC])
     for agent in non_configurable_agents:
-        agent_runner.run_non_configurable_agent(agent)
+        agent_runner.run_non_configurable_agent(
+            agent, request_schema=STRING_SCHEMA, response_schema=STRING_SCHEMA, notification_schema=STRING_SCHEMA
+        )
 
     configurable_agents = agent_registry.get_agents_of_type(AgentType.CONFIGURABLE)
     for agent in configurable_agents:
-        agent_runner.run_configurable_agent(agent, TestConfig.model_json_schema())
+        agent_runner.run_configurable_agent(agent, configuration_schema=TestConfig.model_json_schema())
 
     yield
 

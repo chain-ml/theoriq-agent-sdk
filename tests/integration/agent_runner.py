@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from theoriq import AgentDeploymentConfiguration, ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2 import ExecuteRequestFn
-from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
+from theoriq.api.v1alpha2.schemas import AgentSchemas, ExecuteRequestBody, ExecuteSchema
 from theoriq.extra.flask import run_agent_flask_app
 from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
 from theoriq.types import AgentDataObject
@@ -59,12 +59,12 @@ class AgentRunner:
 
         return execute_configurable
 
-    def run_agent(self, agent_data: AgentDataObject, schema: Optional[Dict[str, Any]]) -> threading.Thread:
+    def run_agent(self, agent_data: AgentDataObject, schemas: AgentSchemas) -> threading.Thread:
         """
         Start agent Flask app in a separate daemon thread with the assumption
         that `env_prefix` is contained in labels of AgentDataObject.
 
-        If schema is provided, use echo_execute_configurable(), otherwise echo_execute().
+        If schemas.configuration is provided, use echo_execute_configurable(), otherwise echo_execute().
         """
         agent_config = AgentDeploymentConfiguration.from_env(env_prefix=agent_data.metadata.labels["env_prefix"])
         deployment = agent_data.spec.configuration.ensure_deployment
@@ -78,11 +78,11 @@ class AgentRunner:
         agent_name = agent_data.spec.metadata.name
         execute = (
             self.create_echo_execute_fn(agent_name)
-            if schema is None
+            if schemas.configuration is None
             else self.create_configurable_execute_fn(agent_name)
         )
 
-        blueprint = theoriq_blueprint(agent_config=agent_config, execute_fn=execute, schema=schema)
+        blueprint = theoriq_blueprint(agent_config=agent_config, execute_fn=execute, schemas=schemas)
 
         thread = threading.Thread(target=run_agent_flask_app, args=(blueprint, port))
         thread.daemon = True
@@ -91,11 +91,25 @@ class AgentRunner:
         self._running_threads.append(thread)
         return thread
 
-    def run_non_configurable_agent(self, agent_data: AgentDataObject) -> threading.Thread:
-        return self.run_agent(agent_data, schema=None)
+    def run_non_configurable_agent(
+        self,
+        agent_data: AgentDataObject,
+        *,
+        request_schema: Dict[str, Any],
+        response_schema: Dict[str, Any],
+        notification_schema: Dict[str, Any],
+    ) -> threading.Thread:
+        # non-configurable agent act as publisher in test_pub_sub.py
+        schemas = AgentSchemas(
+            execute={"sample": ExecuteSchema(request=request_schema, response=response_schema)},
+            notification=notification_schema,
+        )
+        return self.run_agent(agent_data, schemas=schemas)
 
-    def run_configurable_agent(self, agent_data: AgentDataObject, schema: Dict[str, Any]) -> threading.Thread:
-        return self.run_agent(agent_data, schema=schema)
+    def run_configurable_agent(
+        self, agent_data: AgentDataObject, configuration_schema: Dict[str, Any]
+    ) -> threading.Thread:
+        return self.run_agent(agent_data, schemas=AgentSchemas(configuration=configuration_schema))
 
     def stop_all(self, timeout: float = 0.5) -> None:
         for thread in self._running_threads:
