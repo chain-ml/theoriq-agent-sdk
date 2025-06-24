@@ -89,7 +89,7 @@ class ExecuteContextBase(RequestSenderBase):
             blocks (Sequence[ItemBlock]): The blocks of data to include in the response.
 
         Returns:
-            ExecuteResponse: The response object with the provided blocks and cost.
+            ExecuteResponse: The response object with the provided blocks.
         """
         return ExecuteResponse(dialog_item=DialogItem.new(source=self.agent_address, blocks=blocks))
 
