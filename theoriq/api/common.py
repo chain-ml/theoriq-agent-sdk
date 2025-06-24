@@ -65,7 +65,7 @@ class ExecuteContextBase(RequestSenderBase):
             body (bytes): The body content of the error response.
 
         Returns:
-            ResponseBiscuit: A biscuit for the error response with a zero cost.
+            ResponseBiscuit: A biscuit for the error response.
         """
         return self._agent.attenuate_biscuit_for_response(self._request_biscuit, body)
 
