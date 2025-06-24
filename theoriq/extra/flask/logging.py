@@ -6,8 +6,8 @@ from flask import Flask
 from ..logging import http_request_context, init
 
 
-def init_logging(app: Flask, level: Optional[Union[str, int]] = None) -> None:
-    init(level)
+def init_logging(app: Flask, level: Optional[Union[str, int]] = None, force: bool = False) -> None:
+    init(level, force)
     app.before_request(http_request_context.before_request)
     app.after_request(http_request_context.after_request)
 
