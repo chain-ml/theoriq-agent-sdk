@@ -9,7 +9,7 @@ from biscuit_auth import Biscuit, BlockBuilder, KeyPair  # pylint: disable=E0611
 from biscuit_auth.biscuit_auth import PrivateKey, PublicKey  # type: ignore
 
 from .agent_address import AgentAddress
-from .facts import ExecuteRequestFacts, TheoriqBudget, TheoriqRequest, TheoriqResponse
+from .facts import ExecuteRequestFacts, TheoriqRequest, TheoriqResponse
 from .response_biscuit import ResponseBiscuit, ResponseFacts
 from .theoriq_biscuit import TheoriqBiscuit
 from .utils import from_base64_token
@@ -51,11 +51,9 @@ class RequestFacts:
     def to_block_builder(self) -> BlockBuilder:
         """Construct a biscuit block builder using the facts"""
         request_fact = self.request.to_theoriq_fact(self.req_id)
-        budget_fact = TheoriqBudget.empty().to_theoriq_fact(self.req_id)
 
         block_builder = BlockBuilder("")
         block_builder.merge(request_fact.to_block_builder())
-        block_builder.merge(budget_fact.to_block_builder())
         return block_builder
 
     def __str__(self) -> str:

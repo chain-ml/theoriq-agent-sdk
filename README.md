@@ -46,10 +46,9 @@ The `ExecuteContext` class is central to managing the execution process. It hold
 
 - `send_event`: Sends an event message using the protocol client.
 - `new_error_response_biscuit`: Creates a new response biscuit in case of an error.
-- `new_free_response`: Creates a new response with zero cost.
-- `new_response`: Creates a new response with specified blocks and cost.
+- `new_response`: Creates a new response with specified blocks.
 - `runtime_error_response`: Generates a response for a runtime error.
-- `send_request`: Sends a request to another address, handling the response and cost.
+- `send_request`: Sends a request to another address, handling the response.
 
 ***Properties:***
 - `agent_address`: Returns the agent's address.

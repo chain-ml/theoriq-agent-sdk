@@ -136,44 +136,6 @@ class RequestFact(TheoriqFactBase):
         return [fact]
 
 
-class BudgetFact(TheoriqFactBase):
-    """`theoriq:budget` fact"""
-
-    def __init__(self, *, request_id: UUID, amount: str, currency: str, voucher: str) -> None:
-        self.request_id = request_id
-        self.amount = amount
-        self.currency = currency
-        self.voucher = voucher
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, self.__class__):
-            return self.__dict__ == other.__dict__
-        return False
-
-    @classmethod
-    def biscuit_rule(cls) -> Rule:
-        return Rule(
-            "data($req_id, $amount, $currency, $voucher) <- theoriq:budget($req_id, $amount, $currency, $voucher)"
-        )
-
-    @classmethod
-    def from_fact(cls, fact: Fact) -> BudgetFact:
-        [req_id, amount, currency, voucher] = fact.terms
-        return cls(request_id=req_id, amount=amount, currency=currency, voucher=voucher)
-
-    def to_facts(self) -> List[Fact]:
-        """Convert to a biscuit fact"""
-        fact = Fact(
-            "theoriq:budget({req_id}, {amount}, {currency}, {voucher})",
-            {
-                "req_id": str(self.request_id),
-                "amount": self.amount,
-                "currency": self.currency,
-                "voucher": self.voucher,
-            },
-        )
-        return [fact]
-
 
 class ResponseFact(TheoriqFactBase):
     """`theoriq:response` fact"""
@@ -201,62 +163,34 @@ class ResponseFact(TheoriqFactBase):
         return [fact]
 
 
-class CostFact(TheoriqFactBase):
-    """`theoriq:cost` fact"""
-
-    def __init__(self, *, request_id: UUID, amount: str, currency: str) -> None:
-        super().__init__()
-        self.request_id = request_id
-        self.amount = amount
-        self.currency = currency
-
-    @classmethod
-    def biscuit_rule(cls) -> Rule:
-        return Rule("data($req_id, $amount, $currency) <- theoriq:cost($req_id, $amount, $currency)")
-
-    @classmethod
-    def from_fact(cls, fact: Fact) -> CostFact:
-        [req_id, amount, currency] = fact.terms
-        return cls(request_id=req_id, amount=amount, currency=currency)
-
-    def to_facts(self) -> List[Fact]:
-        fact = Fact(
-            "theoriq:cost({req_id}, {amount}, {currency})",
-            {"req_id": str(self.request_id), "amount": self.amount, "currency": self.currency},
-        )
-        return [fact]
-
 
 class ExecuteRequestFacts(TheoriqFactBase):
-    """`theoriq:request` & `theoriq:budget` facts"""
+    """`theoriq:request` fact"""
 
-    def __init__(self, *, request: RequestFact, budget: BudgetFact) -> None:
-        assert request.request_id == budget.request_id
+    def __init__(self, *, request: RequestFact) -> None:
         self.request = request
-        self.budget = budget
 
     @classmethod
     def biscuit_rule(cls) -> Rule:
         return Rule(
             """
-            data($req_id, $body_hash, $from_addr, $target_addr, $amount, $currency, $voucher) <- theoriq:request($req_id, $body_hash, $from_addr, $target_addr), theoriq:budget($req_id, $amount, $currency, $voucher)
+            data($req_id, $body_hash, $from_addr, $target_addr) <- theoriq:request($req_id, $body_hash, $from_addr, $target_addr)
             """
         )
 
     @classmethod
     def from_fact(cls, fact: Fact) -> Self:
-        [req_id, body_hash, from_addr, to_addr, amount, currency, voucher] = fact.terms
+        [req_id, body_hash, from_addr, to_addr] = fact.terms
         request = RequestFact(request_id=req_id, body_hash=body_hash, from_addr=from_addr, to_addr=to_addr)
-        budget = BudgetFact(request_id=req_id, amount=amount, currency=currency, voucher=voucher)
-        return cls(request=request, budget=budget)
+        return cls(request=request)
 
     def to_facts(self) -> List[Fact]:
-        facts = [self.request.to_facts(), self.budget.to_facts()]
+        facts = [self.request.to_facts()]
         return list(itertools.chain.from_iterable(facts))
 
 
 class ExecuteResponseFacts(TheoriqFactBase):
-    """`theoriq:response` & `theoriq:cost` facts"""
+    """`theoriq:response` fact"""
 
     def __init__(self, *, response: ResponseFact) -> None:
         self.response = response
@@ -324,45 +258,6 @@ class TheoriqRequest(FactConvertibleBase[RequestFact]):
         return f"TheoriqRequest(body_hash={self.body_hash}, from_addr={self.from_addr}, to_addr={self.to_addr})"
 
 
-class TheoriqBudget(FactConvertibleBase[BudgetFact]):
-
-    def __init__(self, *, amount: str | int, currency: Currency | str, voucher: str) -> None:
-        self.amount = str(amount)
-        self.currency: Currency = currency if isinstance(currency, Currency) else Currency(currency)
-        self.voucher = voucher
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, self.__class__):
-            return self.__dict__ == other.__dict__
-        return False
-
-    def __str__(self) -> str:
-        if len(self.voucher) == 0:
-            return f"TheoriqBudget(amount={self.amount}, currency={self.currency})"
-
-        currency = self.currency.value if self.currency else None
-        return f"TheoriqBudget(amount={self.amount}, currency={currency}, voucher={self.voucher})"
-
-    def to_theoriq_fact(self, request_id: UUID) -> BudgetFact:
-        return BudgetFact(request_id=request_id, amount=self.amount, currency=self.currency.value, voucher=self.voucher)
-
-    @classmethod
-    def from_theoriq_fact(cls, fact: BudgetFact) -> Self:
-        return cls(amount=fact.amount, currency=Currency(fact.currency), voucher=fact.voucher)
-
-    @classmethod
-    def from_amount(cls, *, amount: str | int, currency: Currency) -> TheoriqBudget:
-        return cls(amount=amount, currency=currency, voucher="")
-
-    @classmethod
-    def empty(cls) -> TheoriqBudget:
-        return cls(amount=0, currency=Currency.USDC, voucher="")
-
-    @classmethod
-    def from_voucher(cls, *, voucher: str) -> TheoriqBudget:
-        return cls(amount="", currency=Currency.USDC, voucher=voucher)
-
-
 class TheoriqResponse(FactConvertibleBase[ResponseFact]):
     def __init__(self, *, body_hash: PayloadHash, to_addr: str) -> None:
         self._body_hash = body_hash
@@ -388,29 +283,3 @@ class TheoriqResponse(FactConvertibleBase[ResponseFact]):
         """Create a response fact from a response body"""
         body_hash = PayloadHash(body)
         return cls(body_hash=body_hash, to_addr=to_addr)
-
-
-class TheoriqCost(FactConvertibleBase[CostFact]):
-    def __init__(self, *, amount: str | int, currency: str | Currency) -> None:
-        self.amount = str(amount)
-        self.currency = currency if isinstance(currency, Currency) else Currency(currency)
-
-    @classmethod
-    def zero(cls, currency: Currency) -> TheoriqCost:
-        """Return a zero cost"""
-        return cls(amount=0, currency=currency)
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, self.__class__):
-            return self.__dict__ == other.__dict__
-        return False
-
-    def to_theoriq_fact(self, request_id: UUID) -> CostFact:
-        return CostFact(request_id=request_id, amount=self.amount, currency=self.currency.value)
-
-    @classmethod
-    def from_theoriq_fact(cls, fact: CostFact) -> Self:
-        return cls(amount=fact.amount, currency=Currency(fact.currency))
-
-    def __str__(self) -> str:
-        return f"TheoriqCost(amount={self.amount}, currency={self.currency.value})"
