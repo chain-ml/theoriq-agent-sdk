@@ -258,27 +258,25 @@ class ExecuteRequestFacts(TheoriqFactBase):
 class ExecuteResponseFacts(TheoriqFactBase):
     """`theoriq:response` & `theoriq:cost` facts"""
 
-    def __init__(self, *, response: ResponseFact, cost: CostFact) -> None:
+    def __init__(self, *, response: ResponseFact) -> None:
         self.response = response
-        self.cost = cost
 
     @classmethod
     def biscuit_rule(cls) -> Rule:
         return Rule(
             """
-            data($req_id, $body_hash, $target_addr, $amount, $currency) <- theoriq:response($req_id, $body_hash, $target_addr), theoriq:cost($req_id, $amount, $currency)
+            data($req_id, $body_hash, $target_addr) <- theoriq:response($req_id, $body_hash, $target_addr)
             """
         )
 
     @classmethod
     def from_fact(cls, fact: Fact) -> Self:
-        [req_id, body_hash, to_addr, amount, currency] = fact.terms
+        [req_id, body_hash, to_addr] = fact.terms
         response = ResponseFact(request_id=req_id, body_hash=body_hash, to_addr=to_addr)
-        cost = CostFact(request_id=req_id, amount=amount, currency=currency)
-        return cls(response=response, cost=cost)
+        return cls(response=response)
 
     def to_facts(self) -> List[Fact]:
-        facts = [self.response.to_facts(), self.cost.to_facts()]
+        facts = [self.response.to_facts()]
         return list(itertools.chain.from_iterable(facts))
 
 
