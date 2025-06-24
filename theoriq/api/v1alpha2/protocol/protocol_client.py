@@ -10,12 +10,12 @@ import httpx
 from biscuit_auth import PublicKey
 from pydantic import BaseModel
 
-from theoriq import Agent
 from theoriq.biscuit import AgentAddress, PayloadHash, RequestBiscuit, RequestFact, ResponseFact, TheoriqBiscuit
 from theoriq.biscuit.authentication_biscuit import AuthenticationBiscuit
 from theoriq.types import Metric
 from theoriq.utils import TTLCache, is_protocol_secured
 
+from ..agent import Agent
 from ..schemas.agent import AgentResponse
 from ..schemas.api import PublicKeyResponse
 from ..schemas.biscuit import BiscuitResponse

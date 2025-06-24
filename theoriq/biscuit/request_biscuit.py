@@ -8,9 +8,10 @@ from uuid import UUID
 from biscuit_auth import Biscuit, BlockBuilder, KeyPair  # pylint: disable=E0611
 from biscuit_auth.biscuit_auth import PrivateKey, PublicKey  # type: ignore
 
-from . import AgentAddress, TheoriqBiscuit
+from .agent_address import AgentAddress
 from .facts import ExecuteRequestFacts, TheoriqBudget, TheoriqCost, TheoriqRequest, TheoriqResponse
 from .response_biscuit import ResponseBiscuit, ResponseFacts
+from .theoriq_biscuit import TheoriqBiscuit
 from .utils import from_base64_token
 
 
