@@ -10,12 +10,12 @@ import httpx
 from biscuit_auth import PublicKey
 from pydantic import BaseModel
 
-from theoriq import Agent
 from theoriq.biscuit import AgentAddress, PayloadHash, RequestBiscuit, RequestFact, ResponseFact, TheoriqBiscuit
 from theoriq.biscuit.authentication_biscuit import AuthenticationBiscuit
 from theoriq.types import Metric
 from theoriq.utils import TTLCache, is_protocol_secured
 
+from ..agent import Agent
 from ..schemas.agent import AgentResponse
 from ..schemas.api import PublicKeyResponse
 from ..schemas.biscuit import BiscuitResponse
@@ -154,13 +154,13 @@ class ProtocolClient:
             response.raise_for_status()
             return response.json()
 
-    def post_configure(self, biscuit: TheoriqBiscuit, to_addr: str) -> Dict[str, Any]:
+    def post_configure(self, biscuit: TheoriqBiscuit, to_addr: str) -> AgentResponse:
         url = f'{self._uri}/agents/{to_addr.removeprefix("0x")}/configure'
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
             response = client.post(url=url, headers=headers)
             response.raise_for_status()
-            return response.json()
+            return AgentResponse.model_validate(response.json())
 
     def post_request_success(self, theoriq_biscuit: TheoriqBiscuit, response: Optional[str], agent: Agent) -> None:
         self._post_request_complete(theoriq_biscuit, response, agent, RequestStatus.SUCCESS)

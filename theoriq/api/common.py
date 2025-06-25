@@ -3,12 +3,11 @@ from __future__ import annotations
 import abc
 from typing import Any, Dict, Optional, Sequence
 
-from theoriq import Agent
-
 from ..biscuit import RequestBiscuit, ResponseBiscuit, TheoriqBudget, TheoriqCost
 from ..dialog import DialogItem, ErrorItemBlock, ItemBlock, TextItemBlock
 from ..types import AgentMetadata, Currency, SourceType
 from ..utils import TTLCache
+from .v1alpha2.agent import Agent
 
 
 class RequestSenderBase(abc.ABC):

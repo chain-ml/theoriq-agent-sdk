@@ -1,123 +1,109 @@
-import logging
 import os
 import time
-from typing import Dict, Final, Generator, List
+from typing import Dict, Generator, List
 
-import dotenv
 import pytest
-from tests.integration.utils import (
-    PARENT_AGENT_ENV_PREFIX,
-    PARENT_AGENT_NAME,
-    TEST_AGENT_DATA_LIST,
-    TEST_CHILD_AGENT_DATA_LIST,
-    join_threads,
-    run_echo_agents,
-)
+from tests.integration.agent_registry import AgentRegistry, AgentType
 
 from theoriq.api.v1alpha2 import AgentResponse
-from theoriq.api.v1alpha2.manage import AgentManager
+from theoriq.api.v1alpha2.manage import DeployedAgentManager
 from theoriq.api.v1alpha2.publish import Publisher, PublisherContext
 from theoriq.api.v1alpha2.subscribe import Subscriber
 from theoriq.biscuit import AgentAddress
 
-dotenv.load_dotenv()
 
-THEORIQ_API_KEY: Final[str] = os.environ["THEORIQ_API_KEY"]
-user_manager = AgentManager.from_api_key(api_key=THEORIQ_API_KEY)
-
-global_agent_map: Dict[str, AgentResponse] = {}
-global_notification_queue_pub: List[str] = []
-
-
-def publishing_job(context: PublisherContext) -> None:
-    i = 0
-    while True:
-        notification = f"Sample notification #{i}"
-        global_notification_queue_pub.append(notification)
-        context.publish(notification)
-
-        i += 1
-        time.sleep(0.3)
+@pytest.fixture(scope="module")
+def notification_queue() -> Generator[List[str], None, None]:
+    notification_queue: List[str] = []
+    yield notification_queue
+    notification_queue.clear()
 
 
-def assert_notification_queues(notification_queue_sub: List[str]) -> None:
-    # every element in subscriber queue must be in global_notification_queue_pub
+def assert_notification_queues(*, publisher_queue: List[str], subscriber_queue: List[str]) -> None:
+    # every element in subscriber queue must be in publisher queue
     # not the other way around because publisher starts publishing before subscriber subscribes
 
-    assert len(notification_queue_sub) <= len(global_notification_queue_pub)
+    assert 0 < len(subscriber_queue) <= len(publisher_queue)
 
-    for notification in notification_queue_sub:
-        assert notification in global_notification_queue_pub
-
-
-def get_parent_agent_address() -> AgentAddress:
-    maybe_parent_agent = next(
-        (agent for agent in global_agent_map.values() if agent.metadata.name == PARENT_AGENT_NAME), None
-    )
-    if maybe_parent_agent is None:
-        raise RuntimeError("Parent agent data object not found")
-    return AgentAddress(maybe_parent_agent.system.id)
+    for notification in subscriber_queue:
+        assert notification in publisher_queue
 
 
-@pytest.fixture(scope="session", autouse=True)
-def flask_apps() -> Generator[None, None, None]:
-    logging.basicConfig(level=logging.INFO)
-    threads = run_echo_agents(TEST_AGENT_DATA_LIST)
-    yield
-    join_threads(threads)
+def get_owner_agent_address(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> AgentAddress:
+    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
+    owner_name = owner_agent_data.spec.metadata.name
+    owner_agent = next(agent for agent in agent_map.values() if agent.metadata.name == owner_name)
+    return AgentAddress(owner_agent.system.id)
 
 
 @pytest.mark.order(1)
-def test_registration() -> None:
-    for agent_data_obj in TEST_AGENT_DATA_LIST:
-        agent = user_manager.create_agent(agent_data_obj)
-        print(f"Successfully registered `{agent.metadata.name}` with id=`{agent.system.id}`\n")
-        global_agent_map[agent.system.id] = agent
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_registration(
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
+) -> None:
+    agent_data_objs = agent_registry.get_agents_of_types([AgentType.OWNER, AgentType.BASIC])
+    for agent_data in agent_data_objs:
+        agent = user_manager.create_agent(agent_data.spec.metadata, agent_data.spec.configuration)
+        agent_map[agent.system.id] = agent
 
 
 @pytest.mark.order(2)
-def test_publishing() -> None:
-    """Parent agent is a publisher."""
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_publishing(agent_registry: AgentRegistry, notification_queue: List[str]) -> None:
+    def publishing_job(context: PublisherContext) -> None:
+        i = 0
+        while i < 1_000:
+            notification = f"Sample notification #{i}"
+            notification_queue.append(notification)
+            context.publish(notification)
 
-    publisher = Publisher.from_env(env_prefix=PARENT_AGENT_ENV_PREFIX)
+            i += 1
+            time.sleep(0.3)
+
+    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
+    publisher = Publisher.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
     publisher.new_job(job=publishing_job, background=True).start()
 
 
 @pytest.mark.order(3)
-def test_subscribing_as_agent() -> None:
-    """Child agent is a subscriber."""
-
-    agent_notification_queue_sub: List[str] = []
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_subscribing_as_agent(
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], notification_queue: List[str]
+) -> None:
+    local_notification_queue: List[str] = []
 
     def subscribing_handler(notification: str) -> None:
-        agent_notification_queue_sub.append(notification)
+        local_notification_queue.append(notification)
 
-    child_agent_data = TEST_CHILD_AGENT_DATA_LIST[0]
-    subscriber = Subscriber.from_env(env_prefix=child_agent_data.metadata.labels["env_prefix"])
-    subscriber.new_job(agent_address=get_parent_agent_address(), handler=subscribing_handler, background=True).start()
+    basic_agent_data = agent_registry.get_first_agent_of_type(AgentType.BASIC)
+    subscriber = Subscriber.from_env(env_prefix=basic_agent_data.metadata.labels["env_prefix"])
+    owner_address = get_owner_agent_address(agent_registry, agent_map)
+    subscriber.new_job(owner_address, subscribing_handler, background=True).start()
 
     time.sleep(1.0)
-    assert_notification_queues(agent_notification_queue_sub)
+    assert_notification_queues(publisher_queue=notification_queue, subscriber_queue=local_notification_queue)
 
 
 @pytest.mark.order(4)
-def test_subscribing_as_user() -> None:
-    """User is a subscriber."""
-
-    user_notification_queue_sub: List[str] = []
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_subscribing_as_user(
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], notification_queue: List[str]
+) -> None:
+    local_notification_queue: List[str] = []
 
     def subscribing_handler(notification: str) -> None:
-        user_notification_queue_sub.append(notification)
+        local_notification_queue.append(notification)
 
-    subscriber = Subscriber.from_api_key(api_key=THEORIQ_API_KEY)
-    subscriber.new_job(agent_address=get_parent_agent_address(), handler=subscribing_handler, background=True).start()
+    subscriber = Subscriber.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
+    owner_address = get_owner_agent_address(agent_registry, agent_map)
+    subscriber.new_job(owner_address, subscribing_handler, background=True).start()
 
     time.sleep(1.0)
-    assert_notification_queues(user_notification_queue_sub)
+    assert_notification_queues(publisher_queue=notification_queue, subscriber_queue=local_notification_queue)
 
 
 @pytest.mark.order(-1)
-def test_deletion() -> None:
-    for agent in global_agent_map.values():
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_deletion(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
+    for agent in agent_map.values():
         user_manager.delete_agent(agent.system.id)
-        print(f"Successfully deleted `{agent.system.id}`\n")

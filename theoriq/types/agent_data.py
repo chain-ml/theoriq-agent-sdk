@@ -1,100 +1,119 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional
 
 import yaml
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic.alias_generators import to_camel
 
 from .data_object import DataObject, DataObjectSpecBase
 
 
-class AgentUrls:
-    def __init__(self, *, end_point: str, icon: str) -> None:
-        self.end_point = end_point
-        self.icon = icon
+class Header(BaseModel):
+    name: str
+    value: str
+
+
+class DeploymentConfiguration(BaseModel):
+    headers: List[Header] = Field(default_factory=list)
+    url: str
+
+
+class VirtualConfiguration(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    agent_id: str
+    configuration: Dict[str, Any]
+
+
+class AgentConfiguration(BaseModel):
+    deployment: Optional[DeploymentConfiguration] = None
+    virtual: Optional[VirtualConfiguration] = None
 
     @classmethod
-    def undefined(cls) -> AgentUrls:
-        return AgentUrls(end_point="", icon="")
+    def for_deployed(cls, url: str, headers: Optional[List[Header]] = None) -> AgentConfiguration:
+        """Build a new configuration for a deployed agent."""
+        return cls(deployment=DeploymentConfiguration(url=url, headers=headers or []), virtual=None)
 
     @classmethod
-    def from_dict(cls, values: Mapping[str, Any]) -> AgentUrls:
-        end_point = values.get("endPoint", "")
-        icon = values.get("icon", "")
-        return cls(end_point=end_point, icon=icon)
+    def for_virtual(cls, agent_id: str, configuration: Dict[str, Any]) -> AgentConfiguration:
+        """Build a new configuration for a virtual agent."""
+        return cls(deployment=None, virtual=VirtualConfiguration(agent_id=agent_id, configuration=configuration))
+
+    @property
+    def ensure_deployment(self) -> DeploymentConfiguration:
+        if self.deployment is None:
+            raise RuntimeError("DeploymentConfiguration is None")
+        return self.deployment
+
+    @property
+    def ensure_virtual(self) -> VirtualConfiguration:
+        if self.virtual is None:
+            raise RuntimeError("VirtualConfiguration is None")
+        return self.virtual
+
+    @model_validator(mode="after")
+    def validate_configuration(self) -> AgentConfiguration:
+        both_are_none = self.deployment is None and self.virtual is None
+        both_are_not_none = self.deployment is not None and self.virtual is not None
+        if both_are_none or both_are_not_none:
+            raise ValueError("Exactly one of deployment or virtual must be provided")
+
+        return self
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"endPoint": self.end_point, "icon": self.icon}
-
-    def __str__(self) -> str:
-        return f"EndPoint: {self.end_point} - Icon: {self.icon}"
+        return self.model_dump(by_alias=True, exclude_none=True)
 
 
-class AgentDescriptions:
-    def __init__(self, *, short: str, long: str) -> None:
-        self.short = short
-        self.long = long
+class AgentMetadata(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
-    @classmethod
-    def from_dict(cls, values: Mapping[str, Any]) -> AgentDescriptions:
-        short = values.get("short", "")
-        long = values.get("long", "")
-        return cls(short=short, long=long)
+    name: str
+    short_description: str
+    long_description: str
+    tags: List[str] = Field(default_factory=list)
+    example_prompts: List[str] = Field(default_factory=list)
+    cost_card: Optional[str] = None
+    image_url: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"shortDescription": self.short, "longDescription": self.long}
-
-    def __str__(self) -> str:
-        return f"{self.short} - {self.long}"
-
-
-class AgentMetadata:
-    def __init__(
-        self,
-        name: str,
-        descriptions: AgentDescriptions,
-        tags: Sequence[str],
-        examples: Sequence[str],
-        cost_card: Optional[str],
-    ) -> None:
-        self.name = name  # duplicated with DataObjectMetadata.name; not really used
-        self.descriptions = descriptions
-        self.tags = tags
-        self.examples = examples
-        self.cost_card = cost_card
-
-    @classmethod
-    def from_dict(cls, values: Mapping[str, Any]) -> AgentMetadata:
-        descriptions = AgentDescriptions.from_dict(values.get("descriptions", {}))
-        tags = [value for value in values.get("tags", [])]
-        examples = [value for value in values.get("examplePrompts", [])]
-        cost_card = values.get("costCard")
-
-        return AgentMetadata(name="", descriptions=descriptions, tags=tags, examples=examples, cost_card=cost_card)
-
-    def to_dict(self) -> Dict[str, Any]:
-        result = {
-            "tags": self.tags,
-            "examplePrompts": self.examples,
-            "costCard": self.cost_card,
-        }
-        result |= {**self.descriptions.to_dict()}
-        return result
+        return self.model_dump(by_alias=True)
 
 
 class AgentSpec(DataObjectSpecBase):
-    def __init__(self, metadata: AgentMetadata, urls: AgentUrls) -> None:
-        self.metadata = metadata
-        self.urls = urls
+    def __init__(self, metadata: AgentMetadata, configuration: Optional[AgentConfiguration] = None) -> None:
+        self._metadata = metadata
+        self._configuration = configuration
+
+    @property
+    def metadata(self) -> AgentMetadata:
+        return self._metadata
+
+    @property
+    def configuration(self) -> AgentConfiguration:
+        if self._configuration is None:
+            raise RuntimeError("AgentConfiguration is None")
+        return self._configuration
+
+    @property
+    def maybe_configuration(self) -> Optional[AgentConfiguration]:
+        return self._configuration
+
+    @property
+    def has_configuration(self) -> bool:
+        return self.configuration is not None
 
     @classmethod
     def from_dict(cls, values: Mapping[str, Any]) -> AgentSpec:
-        metadata = AgentMetadata.from_dict(values)
-        urls = AgentUrls.from_dict(values.get("urls", {}))
-        return AgentSpec(metadata, urls=urls)
+        metadata = AgentMetadata.model_validate(values["metadata"])
+        config_values = values.get("configuration")
+        configuration = AgentConfiguration.model_validate(config_values) if config_values is not None else None
+        return AgentSpec(metadata=metadata, configuration=configuration)
 
     def to_dict(self) -> Dict[str, Any]:
-        result = self.metadata.to_dict()
-        result |= {"imageUrl": self.urls.icon}
+        result: Dict[str, Any] = {"metadata": self.metadata.to_dict()}
+        if self.has_configuration:
+            result["configuration"] = self.configuration.to_dict()
         return result
 
 
@@ -109,29 +128,3 @@ class AgentDataObject(DataObject[AgentSpec]):
             values = yaml.safe_load(f)
             cls._check_kind(values, "TheoriqAgent")
             return AgentDataObject.from_dict(values)
-
-    def to_payload(self, headers: Optional[Sequence[Dict[str, str]]] = None) -> Dict[str, Any]:
-        """
-        Convert to payload expected by create agent endpoint.
-
-        Args:
-            headers (Optional[Sequence[Dict[str, str]]]): Optional headers to be added to the request,
-                each header is a dictionary with `name` and `value`
-        """
-        return {
-            "configuration": {
-                "deployment": {
-                    "headers": headers or [],
-                    "url": self.spec.urls.end_point,
-                },
-            },
-            "metadata": {
-                "name": self.metadata.name,
-                "shortDescription": self.spec.metadata.descriptions.short,
-                "longDescription": self.spec.metadata.descriptions.long,
-                "tags": self.spec.metadata.tags,
-                "examplePrompts": self.spec.metadata.examples,
-                "imageUrl": self.spec.urls.icon,
-                "costCard": self.spec.metadata.cost_card,
-            },
-        }

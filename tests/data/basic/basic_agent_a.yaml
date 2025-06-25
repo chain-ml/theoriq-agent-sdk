@@ -1,0 +1,22 @@
+kind: TheoriqAgent
+version: 0.1
+metadata:
+  name: Agent Data Object
+  labels:
+    author: ChainML Labs
+    env_prefix: BASIC_A_
+    agent_type: basic
+spec:
+  metadata:
+    name: Basic Agent A
+    shortDescription: Short description
+    longDescription: A much longer description
+    tags:
+      - tag1
+      - tag2
+    examplePrompts:
+      - Hi
+  configuration:
+    deployment:
+      headers: []
+      url: http://192.168.2.36:8090

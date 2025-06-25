@@ -6,24 +6,28 @@ from typing import Any, Dict, Optional
 import biscuit_auth
 from biscuit_auth import Biscuit, KeyPair, PrivateKey  # pylint: disable=E0611
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from jsonschema import ValidationError
+from jsonschema import SchemaError, ValidationError
 from jsonschema.validators import Draft7Validator
 
-from .biscuit import (
+from theoriq.biscuit import (
     AgentAddress,
+    AuthenticationBiscuit,
+    AuthenticationFacts,
     AuthorizationError,
+    PayloadHash,
     RequestBiscuit,
     RequestFacts,
     ResponseBiscuit,
+    TheoriqBiscuit,
     TheoriqCost,
+    TheoriqFactBase,
     VerificationError,
 )
-from .biscuit.authentication_biscuit import AuthenticationBiscuit, AuthenticationFacts
-from .biscuit.payload_hash import PayloadHash
-from .biscuit.theoriq_biscuit import TheoriqBiscuit, TheoriqFactBase
+
+from .schemas import AgentSchemas
 
 
-class AgentConfigurationSchemaError(Exception):
+class AgentSchemaError(Exception):
     pass
 
 
@@ -59,12 +63,12 @@ class Agent:
 
     Attributes:
         config (AgentDeploymentConfiguration): Agent configuration.
-        schema (Optional[Dict]): Configuration Schema for the agent.
+        schemas (AgentSchemas): Schemas for the agent.
     """
 
-    def __init__(self, config: AgentDeploymentConfiguration, schema: Optional[Dict] = None) -> None:
+    def __init__(self, config: AgentDeploymentConfiguration, schemas: AgentSchemas = AgentSchemas.empty()) -> None:
         self._config = config
-        self._schema = schema
+        self._schemas = schemas
         self.virtual_address: AgentAddress = AgentAddress.null()
 
     @property
@@ -72,8 +76,8 @@ class Agent:
         return self._config
 
     @property
-    def schema(self) -> Optional[Dict]:
-        return self._schema
+    def schemas(self) -> AgentSchemas:
+        return self._schemas
 
     def authentication_biscuit(self) -> AuthenticationBiscuit:
         address = self.config.address if self.virtual_address.is_null else self.virtual_address
@@ -128,14 +132,14 @@ class Agent:
         return private_key.sign(challenge)
 
     def validate_configuration(self, values: Any) -> None:
-        if self.schema is None:
+        if self.schemas.configuration is None:
             return
 
-        validator = Draft7Validator(self.schema)
+        validator = Draft7Validator(self.schemas.configuration)
         try:
             validator.validate(values)
         except ValidationError as e:
-            raise AgentConfigurationSchemaError(e.message) from e
+            raise AgentSchemaError(f"ValidationError for agent configuration: {e.message}") from e
 
     def __str__(self) -> str:
         return f"Address: {self.config.address}, Public key: 0x{self.config.public_key.to_hex()}"
@@ -151,6 +155,17 @@ class Agent:
         return cls(config)
 
     @classmethod
-    def validate_schema(cls, schema: Optional[Dict[str, Any]]) -> None:
-        if schema is not None:
-            Draft7Validator.check_schema(schema)
+    def validate_schemas(cls, schemas: AgentSchemas) -> None:
+        def validate_schema(schema: Optional[Dict[str, Any]], name: str) -> None:
+            if schema is not None:
+                try:
+                    Draft7Validator.check_schema(schema)
+                except SchemaError as e:
+                    raise AgentSchemaError(f"SchemaError for {name}: {e.message}") from e
+
+        validate_schema(schemas.configuration, name="configuration")
+        validate_schema(schemas.notification, name="notification")
+        if schemas.execute is not None:
+            for operation, execute_schema in schemas.execute.items():
+                validate_schema(execute_schema.request, name=f"execute/{operation} request")
+                validate_schema(execute_schema.response, name=f"execute/{operation} response")

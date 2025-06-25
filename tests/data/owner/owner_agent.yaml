@@ -1,0 +1,22 @@
+kind: TheoriqAgent
+version: 0.1
+metadata:
+  name: TheoriqAgentDataObject
+  labels:
+    author: ChainML Labs
+    env_prefix: OWNER_
+    agent_type: owner
+spec:
+  metadata:
+    name: Owner Agent
+    shortDescription: Short owner description
+    longDescription: A much longer owner description
+    tags:
+      - owner
+      - master
+    examplePrompts:
+      - Greetings
+  configuration:
+    deployment:
+      headers: []
+      url: http://192.168.2.36:8089
