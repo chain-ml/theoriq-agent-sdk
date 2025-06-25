@@ -98,8 +98,7 @@ class ErrorItemBlock(ItemBlock[ErrorItem]):
             ErrorItemBlock: A new instance of ErrorItemBlock initialized with the provided data.
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        values = data.get("error")
-        if values is None:
+        if "error" not in data:
             raise ValueError("Missing 'error' key")
         return cls(err=ErrorItem.from_dict(data), key=block_key, reference=block_ref)
 
