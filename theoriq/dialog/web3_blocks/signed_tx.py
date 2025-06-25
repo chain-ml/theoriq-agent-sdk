@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from theoriq.dialog import BaseData, ItemBlock
+from theoriq.dialog import BaseData
+from theoriq.dialog.web3 import Web3ItemBlock
 
 
 class Web3SignedTxItem(BaseData):
@@ -24,7 +25,7 @@ class Web3SignedTxItem(BaseData):
         return f"Web3SignedTxItem(chainId={self.chain_id}, txHash={self.tx_hash})"
 
 
-class Web3SignedTxBlock(ItemBlock[Web3SignedTxItem]):
+class Web3SignedTxBlock(Web3ItemBlock[Web3SignedTxItem]):
     def __init__(self, *, item: Web3SignedTxItem, key: Optional[str] = None, reference: Optional[str] = None) -> None:
         super().__init__(block_type=self.block_type(), data=item, key=key, reference=reference)
 

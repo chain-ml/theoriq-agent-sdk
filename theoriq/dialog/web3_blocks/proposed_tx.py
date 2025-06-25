@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from theoriq.dialog import BaseData, ItemBlock
+from theoriq.dialog import BaseData, Web3ItemBlock
 
 
 class Web3ProposedTxItem(BaseData):
@@ -59,7 +59,7 @@ class Web3ProposedTxItem(BaseData):
         return f"Web3ProposedTxItem({self.description})"
 
 
-class Web3ProposedTxBlock(ItemBlock[Web3ProposedTxItem]):
+class Web3ProposedTxBlock(Web3ItemBlock[Web3ProposedTxItem]):
     def __init__(self, *, item: Web3ProposedTxItem, key: Optional[str] = None, reference: Optional[str] = None) -> None:
         super().__init__(block_type=self.block_type(), data=item, key=key, reference=reference)
 

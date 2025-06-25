@@ -1,22 +1,24 @@
 from __future__ import annotations
 
-import json
-from typing import Any, Dict, Optional, Type, Mapping
+from typing import Any, Dict, Generic, Optional, Type, TypeVar
 
-from .item_block import BaseData, ItemBlock
-from .web3_blocks import Web3SignedTxBlock, Web3ProposedTxBlock
+from .item_block import ItemBlock
 
-WEB3_BLOCKS: Mapping[str, Type[ItemBlock]] = {
-    block.block_type(): block for block in [Web3ProposedTxBlock, Web3SignedTxBlock]
-}
+T = TypeVar("T")
 
 
-class Web3ItemBlock(ItemBlock):
+class Web3ItemBlock(ItemBlock, Generic[T]):
     """
     A class representing a router for web3 blocks. This acts as a factory that creates
     the appropriate specific web3 block type based on the block_type. Specific web3
     block types should inherit from this class.
     """
+
+    _registry: Dict[str, Type[Web3ItemBlock]] = {}
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        Web3ItemBlock._registry[cls.block_type()] = cls
 
     @classmethod
     def from_dict(
@@ -36,9 +38,9 @@ class Web3ItemBlock(ItemBlock):
         """
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
 
-        block_class = WEB3_BLOCKS.get(block_type)
+        block_class = cls._registry.get(block_type)
         if block_class is None:
-            raise ValueError(f"Invalid item type {block_type}, expected one of {', '.join(WEB3_BLOCKS.keys())}")
+            raise ValueError(f"Invalid item type {block_type}, expected one of {', '.join(cls._registry.keys())}")
 
         return block_class.from_dict(data, block_type, block_key, block_ref)
 
