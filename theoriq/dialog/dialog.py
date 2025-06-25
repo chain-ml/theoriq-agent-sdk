@@ -16,7 +16,7 @@ from .metrics import MetricsItemBlock
 from .router import RouteItem, RouterItemBlock
 from .runtime_error import ErrorItemBlock
 from .text import TextItemBlock
-from .web3 import Web3Item, Web3ItemBlock
+from .web3 import Web3ItemBlock
 
 BLOCK_CLASSES_MAP: Mapping[str, Type[ItemBlock]] = {
     "code": CodeItemBlock,
@@ -77,7 +77,9 @@ class DialogItem:
             block_type: str = item["type"]
             block_class = BLOCK_CLASSES_MAP.get(ItemBlock.root_type(block_type))
             if block_class is None:
-                raise ValueError(f"Invalid item type {block_type}")
+                raise ValueError(
+                    f"Invalid item type {block_type}, expected one of {', '.join(BLOCK_CLASSES_MAP.keys())}"
+                )
 
             block_data = item["data"]
             block_key = item.get("key", None)
@@ -159,13 +161,6 @@ class DialogItem:
     @classmethod
     def new_route(cls, source: str, route: str, score: float) -> DialogItem:
         return DialogItem.new(source=source, blocks=[RouterItemBlock([RouteItem(route, score)])])
-
-    @classmethod
-    def new_web3(cls, source: str, chain_id: int, method: str, args: Dict[str, Any]) -> DialogItem:
-        return DialogItem.new(
-            source=source,
-            blocks=[Web3ItemBlock(item=Web3Item(chain_id=chain_id, method=method, args=args))],
-        )
 
     def __str__(self) -> str:
         source_str = f"{self.source[:6]}...{self.source[-4:]}"
