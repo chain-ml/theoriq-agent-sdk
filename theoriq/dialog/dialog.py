@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type
+from typing import Any, Callable, Dict, Final, Iterable, List, Mapping, Optional, Sequence, Tuple, Type
 
 from pydantic import BaseModel, field_serializer, field_validator
 
@@ -16,19 +16,21 @@ from .metrics import MetricsItemBlock
 from .router import RouteItem, RouterItemBlock
 from .runtime_error import ErrorItemBlock
 from .text import TextItemBlock
-from .web3 import Web3ItemBlock
+from .web3 import Web3ProposedTxBlock, Web3SignedTxBlock
 
-BLOCK_CLASSES_MAP: Mapping[str, Type[ItemBlock]] = {
-    "code": CodeItemBlock,
-    "custom": CustomItemBlock,
-    "data": DataItemBlock,
-    "error": ErrorItemBlock,
-    "image": ImageItemBlock,
-    "metrics": MetricsItemBlock,
-    "router": RouterItemBlock,
-    "text": TextItemBlock,
-    "web3": Web3ItemBlock,
-}
+BLOCK_CLASSES: Final[List[Type[ItemBlock]]] = [
+    CodeItemBlock,
+    CustomItemBlock,
+    DataItemBlock,
+    ErrorItemBlock,
+    ImageItemBlock,
+    MetricsItemBlock,
+    RouterItemBlock,
+    TextItemBlock,
+    Web3ProposedTxBlock,
+    Web3SignedTxBlock,
+]
+BLOCK_CLASSES_MAP: Mapping[str, Type[ItemBlock]] = {block_cls.block_type(): block_cls for block_cls in BLOCK_CLASSES}
 
 
 class DialogItem:
@@ -75,11 +77,13 @@ class DialogItem:
         blocks = values.get("blocks", [])
         for item in blocks:
             block_type: str = item["type"]
-            block_class = BLOCK_CLASSES_MAP.get(ItemBlock.root_type(block_type))
+            block_class = BLOCK_CLASSES_MAP.get(ItemBlock.root_type(block_type))  # try root type first
             if block_class is None:
-                raise ValueError(
-                    f"Invalid item type {block_type}, expected one of {', '.join(BLOCK_CLASSES_MAP.keys())}"
-                )
+                block_class = BLOCK_CLASSES_MAP.get(block_type)  # then try full type
+                if block_class is None:
+                    raise ValueError(
+                        f"Invalid item type {block_type}, expected one of {', '.join(BLOCK_CLASSES_MAP.keys())}"
+                    )
 
             block_data = item["data"]
             block_key = item.get("key", None)
