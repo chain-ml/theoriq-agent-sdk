@@ -83,8 +83,8 @@ def theoriq_configuration_blueprint(agent_configurator: AgentConfigurator) -> Bl
 
 
 def theoriq_schemas_blueprint() -> Blueprint:
-    blueprint = Blueprint("theoriq_schemas", __name__, url_prefix="/schemas")
-    blueprint.add_url_rule("/", view_func=get_schemas, methods=["GET"])
+    blueprint = Blueprint("theoriq_schemas", __name__)
+    blueprint.add_url_rule("/schemas", view_func=get_schemas, methods=["GET"])
     return blueprint
 
 

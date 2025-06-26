@@ -84,7 +84,7 @@ class AgentRunner:
 
         blueprint = theoriq_blueprint(agent_config=agent_config, execute_fn=execute, schemas=schemas)
 
-        thread = threading.Thread(target=run_agent_flask_app, args=(blueprint, port))
+        thread = threading.Thread(target=run_agent_flask_app, args=(blueprint, port, "0.0.0.0", None, logging.INFO))
         thread.daemon = True
         thread.start()
 
