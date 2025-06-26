@@ -146,9 +146,10 @@ class ProtocolClient:
         if cached_response:
             return cached_response
 
+        url = f"{self._uri}/agents/{agent_address.address}/configuration"
         headers = request_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
-            response = client.get(url=f"{self._uri}/agents/{agent_address.address}/configuration", headers=headers)
+            response = client.get(url=url, headers=headers)
             response.raise_for_status()
             configuration = response.json()
             if configuration is not None:
@@ -172,6 +173,28 @@ class ProtocolClient:
             response = client.post(url=url, headers=headers)
             response.raise_for_status()
             return AgentResponse.model_validate(response.json())
+
+    def delete_configure(self, biscuit: TheoriqBiscuit, to_addr: str) -> AgentResponse:
+        url = f'{self._uri}/agents/{to_addr.removeprefix("0x")}/configure'
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.delete(url=url, headers=headers)
+            response.raise_for_status()
+            return AgentResponse.model_validate(response.json())
+
+    def post_system_tag(self, biscuit: TheoriqBiscuit, *, agent_id: str, tag: str) -> None:
+        url = f"{self._uri}/agents/0x{agent_id.removeprefix('0x')}/system-tags/{tag}"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, headers=headers)
+            response.raise_for_status()
+
+    def delete_system_tag(self, biscuit: TheoriqBiscuit, *, agent_id: str, tag: str) -> None:
+        url = f"{self._uri}/agents/0x{agent_id.removeprefix('0x')}/system-tags/{tag}"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.delete(url=url, headers=headers)
+            response.raise_for_status()
 
     def post_request_success(self, theoriq_biscuit: TheoriqBiscuit, response: Optional[str], agent: Agent) -> None:
         self._post_request_complete(theoriq_biscuit, response, agent, RequestStatus.SUCCESS)

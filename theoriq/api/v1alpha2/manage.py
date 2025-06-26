@@ -72,6 +72,12 @@ class AgentManagerBase(abc.ABC):
     def delete_agent(self, agent_id: str) -> None:
         self._client.delete_agent(biscuit=self._biscuit_provider.get_biscuit(), agent_id=agent_id)
 
+    def add_system_tag(self, *, agent_id: str, tag: str) -> None:
+        self._client.post_system_tag(biscuit=self._biscuit_provider.get_biscuit(), agent_id=agent_id, tag=tag)
+
+    def delete_system_tag(self, *, agent_id: str, tag: str) -> None:
+        self._client.delete_system_tag(biscuit=self._biscuit_provider.get_biscuit(), agent_id=agent_id, tag=tag)
+
     @classmethod
     def from_api_key(cls, api_key: str) -> Self:
         return cls(biscuit_provider=BiscuitProviderFactory.from_api_key(api_key=api_key))

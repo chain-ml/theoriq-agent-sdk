@@ -84,6 +84,22 @@ def test_updating(agent_registry: AgentRegistry, user_manager: DeployedAgentMana
 
     assert response.metadata.name == "Updated Owner Agent"
 
+@pytest.mark.order(7)
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_system_tag(agent_registry: AgentRegistry, user_manager: DeployedAgentManager) -> None:
+    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
+    config = AgentDeploymentConfiguration.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
+
+    user_manager.add_system_tag(agent_id=str(config.address), tag="curated")
+
+    agent = user_manager.get_agent(agent_id=str(config.address))
+    assert "curated" in agent.system.tags
+
+    user_manager.delete_system_tag(agent_id=str(config.address), tag="curated")
+
+    agent = user_manager.get_agent(agent_id=str(config.address))
+    assert "curated" not in agent.system.tags
+
 
 @pytest.mark.order(-1)
 @pytest.mark.usefixtures("agent_flask_apps")
