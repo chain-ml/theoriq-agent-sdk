@@ -73,6 +73,17 @@ class ProtocolClient:
             response.raise_for_status()
             return BiscuitResponse.model_validate(response.json())
 
+    def create_api_key(self, biscuit: TheoriqBiscuit, expires_at: datetime) -> Dict[str, Any]:
+        url = f"{self._uri}/auth/api-keys"
+        headers = biscuit.to_headers()
+
+        expiration_timestamp = int(expires_at.timestamp())
+        body = {"expiresAt": expiration_timestamp}
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, json=body, headers=headers)
+            response.raise_for_status()
+            return response.json()
+
     def get_agent(self, agent_id: str, biscuit: Optional[TheoriqBiscuit] = None) -> AgentResponse:
         headers = biscuit.to_headers() if biscuit is not None else None
         with httpx.Client(timeout=self._timeout) as client:
