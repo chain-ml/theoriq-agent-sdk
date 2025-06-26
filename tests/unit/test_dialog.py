@@ -9,6 +9,8 @@ from theoriq.dialog import (
     DialogItem,
     ItemBlock,
     TextItemBlock,
+    Web3ProposedTxBlock,
+    Web3SignedTxBlock,
     format_source_and_blocks,
 )
 from theoriq.types import SourceType
@@ -38,6 +40,66 @@ dialog_payload = {
     ]
 }
 
+dialog_web3_payload = {
+    "items": [
+        {
+            "sourceType": str(SourceType.User),
+            "source": USER_ADDRESS,
+            "timestamp": "2025-06-25T13:24:35-04:00",
+            "blocks": [{"data": {"text": "Send me an approval tx for 2 WETH in decimal"}, "type": "text"}],
+        },
+        {
+            "sourceType": str(SourceType.Agent),
+            "source": RANDOM_AGENT_ADDRESS,
+            "timestamp": "2025-06-25T17:24:46.532032Z",
+            "blocks": [
+                {
+                    "type": "web3:proposedTx",
+                    "data": {
+                        "abi": {
+                            "constant": False,
+                            "inputs": [
+                                {"name": "_spender", "type": "address"},
+                                {"name": "_value", "type": "uint256"},
+                            ],
+                            "name": "approve",
+                            "outputs": [{"name": "", "type": "bool"}],
+                            "payable": False,
+                            "stateMutability": "nonpayable",
+                            "type": "function",
+                        },
+                        "description": "Approve WETH 0x4200000000000000000000000000000000000006 for the Uniswap V3 Position Manager in the amount of 2 WETH",
+                        "knownAddresses": {"0x4200000000000000000000000000000000000006": "WETH"},
+                        "txChainId": 8453,
+                        "txData": "0x095ea4b300000000000000000000000003a520b32c04bf3b2e37beb72e919cf827eb34f10000000000000000000000000000000000000000000000001ac26d694ec60000",
+                        "txGasLimit": 29279,
+                        "txNonce": 42,
+                        "txTo": "0x4200000000000000000000000000000000000006",
+                    },
+                }
+            ],
+        },
+        {
+            "sourceType": str(SourceType.User),
+            "source": USER_ADDRESS,
+            "timestamp": "2025-06-25T13:25:14-04:00",
+            "blocks": [
+                {
+                    "data": {"text": "transaction sent successfully"},
+                    "type": "text:markdown",
+                },
+                {
+                    "type": "web3:signedTx",
+                    "data": {
+                        "txHash": "0x0159def724215e361a61db0b25118ad09cb63cf88ea69bb26c53289e44255gb4",
+                        "chainId": 8453,
+                    },
+                },
+            ],
+        },
+    ]
+}
+
 
 def test_dialog_deserialization() -> None:
     d: Dialog = Dialog.model_validate(dialog_payload)
@@ -47,6 +109,13 @@ def test_dialog_deserialization() -> None:
         next(iter(d.items[0].find_blocks_of_type("text"))).data.text
         == "Give me the trending tokens in the last 24 hours"
     )
+
+
+def test_web3_dialog() -> None:
+    d: Dialog = Dialog.model_validate(dialog_web3_payload)
+    assert isinstance(d, Dialog)
+    assert isinstance(d.items[1].blocks[0], Web3ProposedTxBlock)
+    assert isinstance(d.items[2].blocks[1], Web3SignedTxBlock)
 
 
 def test_format_source() -> None:
