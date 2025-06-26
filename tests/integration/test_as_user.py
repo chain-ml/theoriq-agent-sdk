@@ -84,6 +84,7 @@ def test_updating(agent_registry: AgentRegistry, user_manager: DeployedAgentMana
 
     assert response.metadata.name == "Updated Owner Agent"
 
+
 @pytest.mark.order(7)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_system_tag(agent_registry: AgentRegistry, user_manager: DeployedAgentManager) -> None:

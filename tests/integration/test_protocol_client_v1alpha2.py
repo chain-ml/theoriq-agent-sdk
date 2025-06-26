@@ -10,6 +10,7 @@ def test_get_public_key():
     pub_key = client.get_public_key()
     assert pub_key.key_type == "ed25519"
 
+
 def test_create_api_key():
     client = ProtocolClient("http://localhost:8080")
 
@@ -19,4 +20,3 @@ def test_create_api_key():
 
     assert isinstance(response["biscuit"], str)
     assert response["data"]["expiresAt"] == int(expires_at.timestamp())
-
