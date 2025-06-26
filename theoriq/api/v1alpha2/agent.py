@@ -19,7 +19,6 @@ from theoriq.biscuit import (
     RequestFacts,
     ResponseBiscuit,
     TheoriqBiscuit,
-    TheoriqCost,
     TheoriqFactBase,
     VerificationError,
 )
@@ -96,10 +95,8 @@ class Agent:
         self.authorize_biscuit(request_biscuit.biscuit)
         self._verify_biscuit_facts(request_biscuit.request_facts, body)
 
-    def attenuate_biscuit_for_response(
-        self, req_biscuit: RequestBiscuit, body: bytes, cost: TheoriqCost
-    ) -> ResponseBiscuit:
-        return req_biscuit.attenuate_for_response(body, cost, self.config.private_key)
+    def attenuate_biscuit_for_response(self, req_biscuit: RequestBiscuit, body: bytes) -> ResponseBiscuit:
+        return req_biscuit.attenuate_for_response(body, self.config.private_key)
 
     def attenuate_biscuit(self, biscuit: TheoriqBiscuit, fact: TheoriqFactBase) -> TheoriqBiscuit:
         return biscuit.attenuate_third_party_block(self.config.private_key, fact)

@@ -2,8 +2,6 @@ from .agent_address import AgentAddress
 from .authentication_biscuit import AuthenticationBiscuit, AuthenticationFacts
 from .error import AuthorizationError, ParseBiscuitError, TheoriqBiscuitError, VerificationError
 from .facts import (
-    BudgetFact,
-    CostFact,
     ExecuteRequestFacts,
     ExecuteResponseFacts,
     ExpiresAtFact,
@@ -11,8 +9,6 @@ from .facts import (
     RequestFact,
     ResponseFact,
     SubjectFact,
-    TheoriqBudget,
-    TheoriqCost,
     TheoriqFactBase,
     TheoriqRequest,
     TheoriqResponse,

@@ -11,10 +11,10 @@ from tests.unit.fixtures import *  # noqa: F403
 from theoriq.api.v1alpha2.agent import AgentDeploymentConfiguration
 from theoriq.api.v1alpha2.execute import ExecuteContext, ExecuteResponse
 from theoriq.api.v1alpha2.schemas import ChallengeResponseBody, ExecuteRequestBody
-from theoriq.biscuit import AgentAddress, TheoriqCost
+from theoriq.biscuit import AgentAddress
 from theoriq.dialog import DialogItem
 from theoriq.extra.flask.v1alpha2.flask import theoriq_blueprint
-from theoriq.types import Currency, SourceType
+from theoriq.types import SourceType
 
 from .. import OsEnviron
 from .utils import new_biscuit_for_request, new_request_facts
@@ -60,7 +60,7 @@ def test_send_execute_request(
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
         from_address = AgentAddress.random()
         req_body_bytes = _build_request_body_bytes("My name is John Doe", from_address)
-        request_facts = new_request_facts(req_body_bytes, from_address, agent_config.address, 10)
+        request_facts = new_request_facts(req_body_bytes, from_address, agent_config.address)
         req_biscuit = new_biscuit_for_request(request_facts, theoriq_private_key)
         response = client.post("/api/v1alpha2/execute", data=req_body_bytes, headers=req_biscuit.to_headers())
         assert response.status_code == 200
@@ -94,7 +94,7 @@ def test_send_execute_request_with_ill_formatted_body_returns_400(
 
         # Generate a request biscuit
         req_body_bytes = json.dumps(request_body).encode("utf-8")
-        request_facts = new_request_facts(req_body_bytes, from_address, agent_config.address, 10)
+        request_facts = new_request_facts(req_body_bytes, from_address, agent_config.address)
         req_biscuit = new_biscuit_for_request(request_facts, theoriq_private_key)
         response = client.post("/api/v1alpha2/execute", data=req_body_bytes, headers=req_biscuit.to_headers())
         assert response.status_code == 400
@@ -108,7 +108,7 @@ def test_send_execute_request_when_execute_fn_fails_returns_500(
         req_body_bytes = _build_request_body_bytes("My name is John Doe should fail", from_address)
 
         # Generate a request biscuit
-        request_facts = new_request_facts(req_body_bytes, from_address, agent_config.address, 10)
+        request_facts = new_request_facts(req_body_bytes, from_address, agent_config.address)
         req_biscuit = new_biscuit_for_request(request_facts, theoriq_private_key)
         response = client.post("/api/v1alpha2/execute", data=req_body_bytes, headers=req_biscuit.to_headers())
         print(response.headers)
@@ -121,7 +121,7 @@ def test_send_chat_completion_request(
     with OsEnviron("THEORIQ_URI", "http://mock_flask_test"):
         from_address = AgentAddress.random()
         req_body_bytes = _build_request_body_bytes("My name is John Doe", from_address)
-        request_facts = new_request_facts(req_body_bytes, from_address, agent_config.address, 10)
+        request_facts = new_request_facts(req_body_bytes, from_address, agent_config.address)
         req_biscuit = new_biscuit_for_request(request_facts, theoriq_private_key)
 
         response = client.post("/api/v1alpha2/execute", data=req_body_bytes, headers=req_biscuit.to_headers())
@@ -131,15 +131,14 @@ def test_send_chat_completion_request(
         assert response_body.blocks[0].data.text == "My name is John Doe"
 
 
-def echo_last_prompt(context: ExecuteContext, request: ExecuteRequestBody) -> ExecuteResponse:
-    assert context.budget.amount == "10"
+def echo_last_prompt(_context: ExecuteContext, request: ExecuteRequestBody) -> ExecuteResponse:
     last_prompt = request.last_item.blocks[0].data.text if request.last_item else "should fail"
 
     if "should fail" in last_prompt:
         raise RuntimeError("Execute function fails")
 
     response_body = DialogItem.new_text(source=str(AgentAddress.one()), text=last_prompt)
-    return ExecuteResponse(response_body, TheoriqCost(amount="5", currency=Currency.USDC))
+    return ExecuteResponse(response_body)
 
 
 def _build_request_body_bytes(text: str, source: AgentAddress) -> bytes:
