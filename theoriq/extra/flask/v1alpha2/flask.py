@@ -172,16 +172,17 @@ def _execute_async(
     execute_context: ExecuteContextV1alpha2,
     execute_request_body: ExecuteRequestBody,
 ) -> None:
-    try:
-        execute_response = execute_fn(execute_context, execute_request_body)
-    except ExecuteRuntimeError as err:
-        execute_response = execute_context.runtime_error_response(err)
+    with ExecuteLogContext(execute_context):
+        try:
+            execute_response = execute_fn(execute_context, execute_request_body)
+        except ExecuteRuntimeError as err:
+            execute_response = execute_context.runtime_error_response(err)
 
-    response_payload = {"response": execute_response.body.to_dict()}
-    response = Response(response=json.dumps(response_payload), content_type="application/json")
-    response_biscuit = execute_context.new_response_biscuit(response.get_data())
+        response_payload = {"response": execute_response.body.to_dict()}
+        response = Response(response=json.dumps(response_payload), content_type="application/json")
+        response_biscuit = execute_context.new_response_biscuit(response.get_data())
 
-    execute_context.complete_request(response_biscuit, response.get_data())
+        execute_context.complete_request(response_biscuit, response.get_data())
 
 
 def get_configuration_schema() -> Response:
