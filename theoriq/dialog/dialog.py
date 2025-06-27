@@ -106,10 +106,16 @@ class DialogItem:
         }
 
     def find_blocks_of_type(self, block_type: str) -> Iterable[ItemBlock[Any]]:
+        has_subtype = ItemBlock.sub_type(block_type) is not None
+
         for block in self.blocks:
-            if block.block_type() == block_type:
-                yield block
+            if block.is_valid(block_type):
+                if not has_subtype or block.full_block_type == block_type:
+                    yield block
         return
+
+    def find_blocks_of_type_as_list(self, block_type: str) -> List[ItemBlock[Any]]:
+        return list(self.find_blocks_of_type(block_type))
 
     def extract_last_text(self) -> str:
         """
