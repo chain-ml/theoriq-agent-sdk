@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 from typing_extensions import Self
 
 from ...biscuit import TheoriqRequest
-from ...types import AgentConfiguration, AgentMetadata
+from ...types import AgentConfiguration, AgentDataObject, AgentMetadata
 from . import AgentResponse, ProtocolClient
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 
@@ -45,6 +45,9 @@ class AgentManager:
         # virtual agent
         return self._try_configure_agent(agent, f"Agent {agent.system.id} created but failed to configure")
 
+    def create_agent_from_data(self, agent_data: AgentDataObject) -> AgentResponse:
+        return self.create_agent(agent_data.spec.metadata, agent_data.spec.configuration)
+
     def _create_agent(self, metadata: AgentMetadata, configuration: AgentConfiguration) -> AgentResponse:
         payload_dict = {"metadata": metadata.to_dict(), "configuration": configuration.to_dict()}
         payload = json.dumps(payload_dict).encode("utf-8")
@@ -80,6 +83,11 @@ class AgentManager:
             return agent  # deployed agent
         # virtual agent
         return self._try_configure_agent(agent, f"Agent {agent.system.id} updated but failed to configure")
+
+    def update_agent_from_data(self, agent_id: str, agent_data: AgentDataObject) -> AgentResponse:
+        return self.update_agent(
+            agent_id, metadata=agent_data.spec.metadata, configuration=agent_data.spec.maybe_configuration
+        )
 
     def _update_agent(
         self,

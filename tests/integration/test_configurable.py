@@ -39,7 +39,7 @@ def test_registration(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: AgentManager
 ) -> None:
     configurable_agent_data = agent_registry.get_first_agent_of_type(AgentType.CONFIGURABLE)
-    agent = user_manager.create_agent(configurable_agent_data.spec.metadata, configurable_agent_data.spec.configuration)
+    agent = user_manager.create_agent_from_data(configurable_agent_data)
 
     assert agent.schemas.configuration is not None
     agent_map[agent.system.id] = agent
