@@ -3,14 +3,16 @@ from __future__ import annotations
 import abc
 import json
 import uuid
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from typing_extensions import Self
 
 from ...biscuit import TheoriqRequest
 from ...types import AgentConfiguration, AgentMetadata
-from . import AgentResponse, ProtocolClient
-from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
+from .protocol import ProtocolClient
+from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory, BiscuitProviderFromAPIKey
+from .schemas import AgentResponse, AgentWeb3Transaction, AgentWeb3TransactionHash
 
 
 class AgentManagerBase(abc.ABC):
@@ -77,6 +79,43 @@ class AgentManagerBase(abc.ABC):
 
     def delete_system_tag(self, *, agent_id: str, tag: str) -> None:
         self._client.delete_system_tag(biscuit=self._biscuit_provider.get_biscuit(), agent_id=agent_id, tag=tag)
+
+    def submit_web3_transaction(
+        self, raw_transaction: str, metadata: Optional[Dict[str, str]] = None
+    ) -> AgentWeb3TransactionHash:
+        if isinstance(self._biscuit_provider, BiscuitProviderFromAPIKey):
+            raise ValueError("Only agent can submit a transaction; authorized as user")
+
+        return self._client.post_web3_transaction(
+            self._biscuit_provider.get_biscuit(), raw_transaction=raw_transaction, metadata=metadata
+        )
+
+    def store_web3_transaction(self, tx_hash: str, chain_id: int, metadata: Optional[Dict[str, str]] = None) -> None:
+        self._client.store_web3_transaction(
+            self._biscuit_provider.get_biscuit(), tx_hash=tx_hash, chain_id=chain_id, metadata=metadata
+        )
+
+    def get_web3_transactions(
+        self,
+        agent_id: Optional[str] = None,
+        chain_id: Optional[int] = None,
+        limit: Optional[int] = None,
+        signer: Optional[str] = None,
+        submitted_after: Optional[datetime] = None,
+        submitted_before: Optional[datetime] = None,
+    ) -> List[AgentWeb3Transaction]:
+        return self._client.get_web3_transactions(
+            self._biscuit_provider.get_biscuit(),
+            agent_id=agent_id,
+            chain_id=chain_id,
+            limit=limit,
+            signer=signer,
+            submitted_after=submitted_after,
+            submitted_before=submitted_before,
+        )
+
+    def get_web3_transaction(self, tx_hash: str) -> AgentWeb3Transaction:
+        return self._client.get_web3_transaction(self._biscuit_provider.get_biscuit(), tx_hash=tx_hash)
 
     @classmethod
     def from_api_key(cls, api_key: str) -> Self:
