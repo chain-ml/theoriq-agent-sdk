@@ -16,18 +16,6 @@ def is_owned_by_agent(agent: AgentResponse) -> bool:
     return source_type.is_agent
 
 
-@pytest.fixture()
-def owner_manager(agent_registry: AgentRegistry) -> AgentManager:
-    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
-    return AgentManager.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
-
-
-@pytest.fixture()
-def owner_messenger(agent_registry: AgentRegistry) -> Messenger:
-    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
-    return Messenger.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
-
-
 @pytest.mark.order(1)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_registration_owner(

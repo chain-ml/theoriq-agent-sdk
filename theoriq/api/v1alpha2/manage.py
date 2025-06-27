@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import json
 import uuid
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from typing_extensions import Self
 
 from ...biscuit import TheoriqRequest
 from ...types import AgentConfiguration, AgentDataObject, AgentMetadata
-from . import AgentResponse, ProtocolClient
+from .protocol import ProtocolClient
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
+from .schemas import AgentResponse, AgentWeb3Transaction
 
 
 class AgentConfigurationError(Exception):
@@ -28,6 +30,9 @@ class AgentManager:
     def __init__(self, biscuit_provider: BiscuitProvider, client: Optional[ProtocolClient] = None) -> None:
         self._client = client or ProtocolClient.from_env()
         self._biscuit_provider = biscuit_provider
+
+    def create_api_key(self, expires_at: datetime) -> Dict[str, Any]:
+        return self._client.create_api_key(self._biscuit_provider.get_biscuit(), expires_at)
 
     def get_agents(self) -> List[AgentResponse]:
         biscuit = self._biscuit_provider.get_biscuit()
@@ -113,6 +118,39 @@ class AgentManager:
 
     def delete_agent(self, agent_id: str) -> None:
         self._client.delete_agent(biscuit=self._biscuit_provider.get_biscuit(), agent_id=agent_id)
+
+    def add_system_tag(self, *, agent_id: str, tag: str) -> None:
+        self._client.post_system_tag(biscuit=self._biscuit_provider.get_biscuit(), agent_id=agent_id, tag=tag)
+
+    def delete_system_tag(self, *, agent_id: str, tag: str) -> None:
+        self._client.delete_system_tag(biscuit=self._biscuit_provider.get_biscuit(), agent_id=agent_id, tag=tag)
+
+    def post_web3_transaction(self, tx_hash: str, chain_id: int, metadata: Optional[Dict[str, str]] = None) -> None:
+        self._client.post_web3_transaction_by_hash(
+            self._biscuit_provider.get_biscuit(), tx_hash=tx_hash, chain_id=chain_id, metadata=metadata
+        )
+
+    def get_web3_transactions(
+        self,
+        agent_id: Optional[str] = None,
+        chain_id: Optional[int] = None,
+        limit: Optional[int] = None,
+        signer: Optional[str] = None,
+        submitted_after: Optional[datetime] = None,
+        submitted_before: Optional[datetime] = None,
+    ) -> List[AgentWeb3Transaction]:
+        return self._client.get_web3_transactions(
+            self._biscuit_provider.get_biscuit(),
+            agent_id=agent_id,
+            chain_id=chain_id,
+            limit=limit,
+            signer=signer,
+            submitted_after=submitted_after,
+            submitted_before=submitted_before,
+        )
+
+    def get_web3_transaction(self, tx_hash: str) -> AgentWeb3Transaction:
+        return self._client.get_web3_transaction(self._biscuit_provider.get_biscuit(), tx_hash=tx_hash)
 
     @classmethod
     def from_api_key(cls, api_key: str) -> Self:

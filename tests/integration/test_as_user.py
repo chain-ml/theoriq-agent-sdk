@@ -1,4 +1,5 @@
 from copy import deepcopy
+from datetime import datetime, timedelta, timezone
 from typing import Dict
 
 import pytest
@@ -83,6 +84,33 @@ def test_updating(agent_registry: AgentRegistry, user_manager: AgentManager) -> 
     response = user_manager.update_agent(agent_id=str(config.address), metadata=updated_agent_data.spec.metadata)
 
     assert response.metadata.name == "Updated Owner Agent"
+
+
+@pytest.mark.order(7)
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_system_tag(agent_registry: AgentRegistry, user_manager: DeployedAgentManager) -> None:
+    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
+    config = AgentDeploymentConfiguration.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
+
+    user_manager.add_system_tag(agent_id=str(config.address), tag="curated")
+
+    agent = user_manager.get_agent(agent_id=str(config.address))
+    assert "curated" in agent.system.tags
+
+    user_manager.delete_system_tag(agent_id=str(config.address), tag="curated")
+
+    agent = user_manager.get_agent(agent_id=str(config.address))
+    assert "curated" not in agent.system.tags
+
+
+@pytest.mark.order(8)
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_create_api_key(user_manager: DeployedAgentManager) -> None:
+    expires_at = datetime.now(tz=timezone.utc) + timedelta(minutes=1)
+    response = user_manager.create_api_key(expires_at)
+
+    assert isinstance(response["biscuit"], str)
+    assert response["data"]["expiresAt"] == int(expires_at.timestamp())
 
 
 @pytest.mark.order(-1)
