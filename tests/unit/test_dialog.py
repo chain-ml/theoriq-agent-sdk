@@ -118,6 +118,24 @@ def test_web3_dialog() -> None:
     assert isinstance(d.items[2].blocks[1], Web3SignedTxBlock)
 
 
+def test_find_blocks_of_type() -> None:
+    d: Dialog = Dialog.model_validate(dialog_web3_payload)
+
+    agent_item, user_item = d.items[1], d.items[2]
+
+    assert len(agent_item.find_blocks_of_type_as_list("text")) == 0
+    assert len(agent_item.find_blocks_of_type_as_list("text:markdown")) == 0
+    assert len(agent_item.find_blocks_of_type_as_list("text:unknown_subtype")) == 0
+    assert len(agent_item.find_blocks_of_type_as_list("web3:proposedTx")) == 1
+    assert len(agent_item.find_blocks_of_type_as_list("web3:unknown_subtype")) == 0
+
+    assert len(user_item.find_blocks_of_type_as_list("text")) == 1
+    assert len(user_item.find_blocks_of_type_as_list("text:markdown")) == 1
+    assert len(user_item.find_blocks_of_type_as_list("text:unknown_subtype")) == 0
+    assert len(user_item.find_blocks_of_type_as_list("web3:signedTx")) == 1
+    assert len(user_item.find_blocks_of_type_as_list("web3:unknown_subtype")) == 0
+
+
 def test_format_source() -> None:
     d: Dialog = Dialog.model_validate(dialog_payload)
 
