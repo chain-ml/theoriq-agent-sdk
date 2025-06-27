@@ -1,4 +1,5 @@
 from copy import deepcopy
+from datetime import datetime, timedelta, timezone
 from typing import Dict
 
 import pytest
@@ -100,6 +101,16 @@ def test_system_tag(agent_registry: AgentRegistry, user_manager: DeployedAgentMa
 
     agent = user_manager.get_agent(agent_id=str(config.address))
     assert "curated" not in agent.system.tags
+
+
+@pytest.mark.order(8)
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_create_api_key(user_manager: DeployedAgentManager) -> None:
+    expires_at = datetime.now(tz=timezone.utc) + timedelta(minutes=1)
+    response = user_manager.create_api_key(expires_at)
+
+    assert isinstance(response["biscuit"], str)
+    assert response["data"]["expiresAt"] == int(expires_at.timestamp())
 
 
 @pytest.mark.order(-1)

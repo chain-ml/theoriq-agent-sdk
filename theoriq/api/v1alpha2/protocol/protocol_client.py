@@ -19,7 +19,6 @@ from ..agent import Agent
 from ..schemas import (
     AgentResponse,
     AgentWeb3Transaction,
-    AgentWeb3TransactionHash,
     BiscuitResponse,
     EventRequestBody,
     MetricsRequestBody,
@@ -322,21 +321,6 @@ class ProtocolClient:
             response.raise_for_status()
             return [AgentWeb3Transaction.model_validate(item) for item in response.json()]
 
-    def post_web3_transaction(
-        self, biscuit: TheoriqBiscuit, raw_transaction: str, metadata: Optional[Dict[str, str]] = None
-    ) -> AgentWeb3TransactionHash:
-        url = f"{self._uri}/web3/transactions"
-        headers = biscuit.to_headers()
-
-        body: Dict[str, Any] = {"rawTransaction": raw_transaction}
-        if metadata is not None:
-            body["metadata"] = metadata
-
-        with httpx.Client(timeout=self._timeout) as client:
-            response = client.post(url=url, json=body, headers=headers)
-            response.raise_for_status()
-            return AgentWeb3TransactionHash.model_validate(response.json())
-
     def get_web3_transaction(self, biscuit: TheoriqBiscuit, tx_hash: str) -> AgentWeb3Transaction:
         url = f"{self._uri}/web3/transactions/{tx_hash}"
         headers = biscuit.to_headers()
@@ -345,7 +329,7 @@ class ProtocolClient:
             response.raise_for_status()
             return AgentWeb3Transaction.model_validate(response.json())
 
-    def store_web3_transaction(
+    def post_web3_transaction_by_hash(
         self, biscuit: TheoriqBiscuit, tx_hash: str, chain_id: int, metadata: Optional[Dict[str, str]] = None
     ) -> None:
         url = f"{self._uri}/web3/transactions/{tx_hash}"

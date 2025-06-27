@@ -1,11 +1,16 @@
-from typing import Dict
+from typing import Dict, Final
 
+import httpx
 import pytest
 from tests.integration.agent_registry import AgentRegistry, AgentType
 
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import DeployedAgentManager
-from theoriq.api.v1alpha2.schemas import AgentWeb3Transaction, AgentWeb3TransactionHash
+from theoriq.api.v1alpha2.schemas import AgentWeb3Transaction
+
+ETH_SEPOLIA_TX_HASH: Final[str] = "0xa8f64019914a952349d168340b5e7051c72bd722e60346defeb48bf99f5fdad1"
+ETH_SEPOLIA_CHAIN_ID: Final[int] = 11155111
+METADATA: Final[Dict[str, str]] = {"abc": "xyz"}
 
 
 @pytest.mark.order(1)
@@ -21,36 +26,41 @@ def test_registration_owner(
 @pytest.mark.order(2)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_post_web3_transaction_as_user(user_manager: DeployedAgentManager) -> None:
-    with pytest.raises(ValueError, match="Only agent can submit a transaction; authorized as user"):
-        user_manager.submit_web3_transaction(raw_transaction="0x0123456789abcdef", metadata={"abc": "xyz"})
+
+    with pytest.raises(httpx.HTTPStatusError) as e:
+        user_manager.post_web3_transaction(ETH_SEPOLIA_TX_HASH, ETH_SEPOLIA_CHAIN_ID)
+    assert e.value.response.status_code == 401
 
 
 @pytest.mark.order(3)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_post_web3_transaction(owner_manager: DeployedAgentManager) -> None:
-    tx_hash = owner_manager.submit_web3_transaction(raw_transaction="0x0123456789abcdef", metadata={"abc": "xyz"})
-
-    assert isinstance(tx_hash, AgentWeb3TransactionHash)
-    assert isinstance(tx_hash.tx_hash, str)
-
-    transaction = owner_manager.get_web3_transaction(tx_hash.tx_hash)
-
-    assert isinstance(transaction, AgentWeb3Transaction)
+    owner_manager.post_web3_transaction(tx_hash=ETH_SEPOLIA_TX_HASH, chain_id=ETH_SEPOLIA_CHAIN_ID, metadata=METADATA)
 
 
 @pytest.mark.order(4)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_get_web3_transactions_as_user(user_manager: DeployedAgentManager) -> None:
-    transactions = user_manager.get_web3_transactions()
-    assert len(transactions) > 1
-    assert isinstance(transactions[0], AgentWeb3Transaction)
+def test_get_web3_transaction(owner_manager: DeployedAgentManager) -> None:
+    tx = owner_manager.get_web3_transaction(ETH_SEPOLIA_TX_HASH)
+    assert isinstance(tx, AgentWeb3Transaction)
+    assert tx.chain_id == ETH_SEPOLIA_CHAIN_ID
+    assert tx.hash == ETH_SEPOLIA_TX_HASH
+    assert tx.metadata == METADATA
 
 
 @pytest.mark.order(5)
 @pytest.mark.usefixtures("agent_flask_apps")
+def test_get_web3_transactions_as_user(user_manager: DeployedAgentManager) -> None:
+    transactions = user_manager.get_web3_transactions()
+    assert len(transactions) >= 1
+    assert isinstance(transactions[0], AgentWeb3Transaction)
+
+
+@pytest.mark.order(6)
+@pytest.mark.usefixtures("agent_flask_apps")
 def test_get_web3_transactions(owner_manager: DeployedAgentManager) -> None:
     transactions = owner_manager.get_web3_transactions()
-    assert len(transactions) == 1
+    assert len(transactions) >= 1
     assert isinstance(transactions[0], AgentWeb3Transaction)
 
 

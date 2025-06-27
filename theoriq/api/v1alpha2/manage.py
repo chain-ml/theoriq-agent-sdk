@@ -11,8 +11,8 @@ from typing_extensions import Self
 from ...biscuit import TheoriqRequest
 from ...types import AgentConfiguration, AgentMetadata
 from .protocol import ProtocolClient
-from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory, BiscuitProviderFromAPIKey
-from .schemas import AgentResponse, AgentWeb3Transaction, AgentWeb3TransactionHash
+from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
+from .schemas import AgentResponse, AgentWeb3Transaction
 
 
 class AgentManagerBase(abc.ABC):
@@ -21,6 +21,10 @@ class AgentManagerBase(abc.ABC):
     def __init__(self, biscuit_provider: BiscuitProvider, client: Optional[ProtocolClient] = None) -> None:
         self._client = client or ProtocolClient.from_env()
         self._biscuit_provider = biscuit_provider
+
+    def create_api_key(self, expires_at: datetime) -> Dict[str, Any]:
+        # only works as user
+        return self._client.create_api_key(self._biscuit_provider.get_biscuit(), expires_at)
 
     def get_agents(self) -> List[AgentResponse]:
         biscuit = self._biscuit_provider.get_biscuit()
@@ -80,18 +84,8 @@ class AgentManagerBase(abc.ABC):
     def delete_system_tag(self, *, agent_id: str, tag: str) -> None:
         self._client.delete_system_tag(biscuit=self._biscuit_provider.get_biscuit(), agent_id=agent_id, tag=tag)
 
-    def submit_web3_transaction(
-        self, raw_transaction: str, metadata: Optional[Dict[str, str]] = None
-    ) -> AgentWeb3TransactionHash:
-        if isinstance(self._biscuit_provider, BiscuitProviderFromAPIKey):
-            raise ValueError("Only agent can submit a transaction; authorized as user")
-
-        return self._client.post_web3_transaction(
-            self._biscuit_provider.get_biscuit(), raw_transaction=raw_transaction, metadata=metadata
-        )
-
-    def store_web3_transaction(self, tx_hash: str, chain_id: int, metadata: Optional[Dict[str, str]] = None) -> None:
-        self._client.store_web3_transaction(
+    def post_web3_transaction(self, tx_hash: str, chain_id: int, metadata: Optional[Dict[str, str]] = None) -> None:
+        self._client.post_web3_transaction_by_hash(
             self._biscuit_provider.get_biscuit(), tx_hash=tx_hash, chain_id=chain_id, metadata=metadata
         )
 

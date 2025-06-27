@@ -6,4 +6,4 @@ from .event_request import EventRequestBody
 from .metrics import MetricsRequestBody
 from .request import ExecuteRequestBody
 from .schemas import AgentSchemas, ExecuteSchema
-from .web3 import AgentWeb3Transaction, AgentWeb3TransactionHash
+from .web3 import AgentWeb3Transaction

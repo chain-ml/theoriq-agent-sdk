@@ -10,7 +10,3 @@ class AgentWeb3Transaction(BaseModel):
     metadata: Optional[Dict[str, str]] = None
     signer: str
     submitted_at: str = Field(..., alias="submittedAt")
-
-
-class AgentWeb3TransactionHash(BaseModel):
-    tx_hash: str = Field(..., alias="txHash")
