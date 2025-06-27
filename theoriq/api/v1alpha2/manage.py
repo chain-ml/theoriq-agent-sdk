@@ -23,7 +23,6 @@ class AgentManagerBase(abc.ABC):
         self._biscuit_provider = biscuit_provider
 
     def create_api_key(self, expires_at: datetime) -> Dict[str, Any]:
-        # only works as user
         return self._client.create_api_key(self._biscuit_provider.get_biscuit(), expires_at)
 
     def get_agents(self) -> List[AgentResponse]:

@@ -26,7 +26,6 @@ def test_registration_owner(
 @pytest.mark.order(2)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_post_web3_transaction_as_user(user_manager: DeployedAgentManager) -> None:
-
     with pytest.raises(httpx.HTTPStatusError) as e:
         user_manager.post_web3_transaction(ETH_SEPOLIA_TX_HASH, ETH_SEPOLIA_CHAIN_ID)
     assert e.value.response.status_code == 401
@@ -42,6 +41,7 @@ def test_post_web3_transaction(owner_manager: DeployedAgentManager) -> None:
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_get_web3_transaction(owner_manager: DeployedAgentManager) -> None:
     tx = owner_manager.get_web3_transaction(ETH_SEPOLIA_TX_HASH)
+
     assert isinstance(tx, AgentWeb3Transaction)
     assert tx.chain_id == ETH_SEPOLIA_CHAIN_ID
     assert tx.hash == ETH_SEPOLIA_TX_HASH
@@ -52,6 +52,7 @@ def test_get_web3_transaction(owner_manager: DeployedAgentManager) -> None:
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_get_web3_transactions_as_user(user_manager: DeployedAgentManager) -> None:
     transactions = user_manager.get_web3_transactions()
+
     assert len(transactions) >= 1
     assert isinstance(transactions[0], AgentWeb3Transaction)
 
@@ -60,6 +61,7 @@ def test_get_web3_transactions_as_user(user_manager: DeployedAgentManager) -> No
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_get_web3_transactions(owner_manager: DeployedAgentManager) -> None:
     transactions = owner_manager.get_web3_transactions()
+
     assert len(transactions) >= 1
     assert isinstance(transactions[0], AgentWeb3Transaction)
 
@@ -67,5 +69,5 @@ def test_get_web3_transactions(owner_manager: DeployedAgentManager) -> None:
 @pytest.mark.order(-1)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_deletion_owner(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
-    for agent in agent_map.values():  # should be the only one in the map
+    for agent in agent_map.values():
         user_manager.delete_agent(agent.system.id)
