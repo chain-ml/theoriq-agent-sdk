@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Type
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -24,6 +24,10 @@ class VirtualConfiguration(BaseModel):
 
     agent_id: str
     configuration: Dict[str, Any]
+
+    def validate_schema(self, schema: Type[BaseModel]) -> None:
+        """Ensure the configuration is valid against the given schema and update the configuration field."""
+        self.configuration = schema.model_validate(self.configuration).model_dump()
 
 
 class AgentConfiguration(BaseModel):
@@ -123,8 +127,13 @@ class AgentDataObject(DataObject[AgentSpec]):
         return super()._from_dict(AgentSpec, values)
 
     @classmethod
-    def from_yaml(cls, filename: str) -> AgentDataObject:
+    def from_yaml(
+        cls, filename: str, virtual_configuration_schema: Optional[Type[BaseModel]] = None
+    ) -> AgentDataObject:
         with open(filename, "r", encoding="utf-8") as f:
             values = yaml.safe_load(f)
-            cls._check_kind(values, "TheoriqAgent")
-            return AgentDataObject.from_dict(values)
+        cls._check_kind(values, "TheoriqAgent")
+        data_object = AgentDataObject.from_dict(values)
+        if virtual_configuration_schema is not None:
+            data_object.spec.configuration.ensure_virtual.validate_schema(virtual_configuration_schema)
+        return data_object
