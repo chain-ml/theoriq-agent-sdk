@@ -5,7 +5,7 @@ from tests.integration.agent_registry import AgentRegistry, AgentType
 from tests.integration.agent_runner import AgentRunner
 
 from theoriq.api.v1alpha2 import AgentResponse
-from theoriq.api.v1alpha2.manage import DeployedAgentManager
+from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.dialog import TextItemBlock
 from theoriq.types import SourceType
@@ -17,9 +17,9 @@ def is_owned_by_agent(agent: AgentResponse) -> bool:
 
 
 @pytest.fixture()
-def owner_manager(agent_registry: AgentRegistry) -> DeployedAgentManager:
+def owner_manager(agent_registry: AgentRegistry) -> AgentManager:
     owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
-    return DeployedAgentManager.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
+    return AgentManager.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
 
 
 @pytest.fixture()
@@ -31,7 +31,7 @@ def owner_messenger(agent_registry: AgentRegistry) -> Messenger:
 @pytest.mark.order(1)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_registration_owner(
-    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: AgentManager
 ) -> None:
     owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
     agent = user_manager.create_agent(owner_agent_data.spec.metadata, owner_agent_data.spec.configuration)
@@ -41,7 +41,7 @@ def test_registration_owner(
 @pytest.mark.order(2)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_registration_basic(
-    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], owner_manager: DeployedAgentManager
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], owner_manager: AgentManager
 ) -> None:
     for basic_agent_data in agent_registry.get_agents_of_type(AgentType.BASIC):
         agent = owner_manager.create_agent(basic_agent_data.spec.metadata, basic_agent_data.spec.configuration)
@@ -65,7 +65,7 @@ def test_messenger(agent_map: Dict[str, AgentResponse], owner_messenger: Messeng
 
 @pytest.mark.order(-2)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_deletion_basic(agent_map: Dict[str, AgentResponse], owner_manager: DeployedAgentManager) -> None:
+def test_deletion_basic(agent_map: Dict[str, AgentResponse], owner_manager: AgentManager) -> None:
     basic_agents = [agent for agent in agent_map.values() if is_owned_by_agent(agent)]
     for basic_agent in basic_agents:
         owner_manager.delete_agent(basic_agent.system.id)
@@ -76,6 +76,6 @@ def test_deletion_basic(agent_map: Dict[str, AgentResponse], owner_manager: Depl
 
 @pytest.mark.order(-1)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_deletion_owner(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
+def test_deletion_owner(agent_map: Dict[str, AgentResponse], user_manager: AgentManager) -> None:
     for agent in agent_map.values():  # should be the only one in the map
         user_manager.delete_agent(agent.system.id)

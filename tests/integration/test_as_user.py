@@ -8,7 +8,7 @@ from tests.integration.utils import agents_are_equal
 
 from theoriq import AgentDeploymentConfiguration
 from theoriq.api.v1alpha2 import AgentResponse
-from theoriq.api.v1alpha2.manage import DeployedAgentManager
+from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
 from theoriq.dialog import TextItemBlock
 
@@ -16,7 +16,7 @@ from theoriq.dialog import TextItemBlock
 @pytest.mark.order(1)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_registration(
-    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: AgentManager
 ) -> None:
     agent_data_objs = agent_registry.get_agents_of_types([AgentType.OWNER, AgentType.BASIC])
     for agent_data in agent_data_objs:
@@ -26,7 +26,7 @@ def test_registration(
 
 @pytest.mark.order(2)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_minting(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
+def test_minting(agent_map: Dict[str, AgentResponse], user_manager: AgentManager) -> None:
     for agent_id in agent_map.keys():
         agent = user_manager.mint_agent(agent_id)
         assert agent.system.state == "online"
@@ -34,7 +34,7 @@ def test_minting(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgen
 
 @pytest.mark.order(3)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_get_agents(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
+def test_get_agents(agent_map: Dict[str, AgentResponse], user_manager: AgentManager) -> None:
     agents = user_manager.get_agents()
     assert len(agents) >= len(agent_map.keys())
     fetched_agents: Dict[str, AgentResponse] = {agent.system.id: agent for agent in agents}
@@ -52,7 +52,7 @@ def test_get_agents(agent_map: Dict[str, AgentResponse], user_manager: DeployedA
 
 @pytest.mark.order(4)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_unminting(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
+def test_unminting(agent_map: Dict[str, AgentResponse], user_manager: AgentManager) -> None:
     for agent_id in agent_map.keys():
         agent = user_manager.unmint_agent(agent_id)
         assert agent.system.state == "configured"
@@ -73,7 +73,7 @@ def test_messenger(agent_map: Dict[str, AgentResponse], user_messenger: Messenge
 
 @pytest.mark.order(6)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_updating(agent_registry: AgentRegistry, user_manager: DeployedAgentManager) -> None:
+def test_updating(agent_registry: AgentRegistry, user_manager: AgentManager) -> None:
     owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
     updated_agent_data = deepcopy(owner_agent_data)
     updated_agent_data.spec.metadata.name = "Updated Owner Agent"
@@ -87,6 +87,6 @@ def test_updating(agent_registry: AgentRegistry, user_manager: DeployedAgentMana
 
 @pytest.mark.order(-1)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_deletion(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
+def test_deletion(agent_map: Dict[str, AgentResponse], user_manager: AgentManager) -> None:
     for agent in agent_map.values():
         user_manager.delete_agent(agent.system.id)

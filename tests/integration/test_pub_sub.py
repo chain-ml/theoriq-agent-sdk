@@ -6,7 +6,7 @@ import pytest
 from tests.integration.agent_registry import AgentRegistry, AgentType
 
 from theoriq.api.v1alpha2 import AgentResponse
-from theoriq.api.v1alpha2.manage import DeployedAgentManager
+from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.publish import Publisher, PublisherContext
 from theoriq.api.v1alpha2.subscribe import Subscriber
 from theoriq.biscuit import AgentAddress
@@ -39,7 +39,7 @@ def get_owner_agent_address(agent_registry: AgentRegistry, agent_map: Dict[str, 
 @pytest.mark.order(1)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_registration(
-    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: AgentManager
 ) -> None:
     agent_data_objs = agent_registry.get_agents_of_types([AgentType.OWNER, AgentType.BASIC])
     for agent_data in agent_data_objs:
@@ -104,6 +104,6 @@ def test_subscribing_as_user(
 
 @pytest.mark.order(-1)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_deletion(agent_map: Dict[str, AgentResponse], user_manager: DeployedAgentManager) -> None:
+def test_deletion(agent_map: Dict[str, AgentResponse], user_manager: AgentManager) -> None:
     for agent in agent_map.values():
         user_manager.delete_agent(agent.system.id)
