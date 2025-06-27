@@ -1,6 +1,7 @@
 import os.path
 
 import pytest
+from pydantic import BaseModel, ValidationError
 from tests import DATA_DIR
 
 from theoriq.types import (
@@ -83,6 +84,27 @@ def test_agent_configuration_validation() -> None:
             virtual=VirtualConfiguration(agent_id="0xabc", configuration={}),
         )
     assert "Exactly one of deployment or virtual must be provided" in str(e.value)
+
+
+def test_virtual_agent_configuration_schema_validation() -> None:
+    class TestConfig(BaseModel):
+        text: str
+        number: int
+
+    class AnotherTestConfig(BaseModel):
+        field: float
+
+    config = VirtualConfiguration(agent_id="0xabc", configuration={"text": "test", "number": 4})
+    bad_config = VirtualConfiguration(agent_id="0xabc", configuration={"text": "test", "number": "not a number"})
+
+    config.validate_schema(TestConfig)
+    assert config == VirtualConfiguration(agent_id="0xabc", configuration={"text": "test", "number": 4})
+
+    with pytest.raises(ValidationError):
+        config.validate_schema(AnotherTestConfig)
+
+    with pytest.raises(ValidationError):
+        bad_config.validate_schema(TestConfig)
 
 
 def test_agent_data_owner() -> None:
