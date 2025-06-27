@@ -88,7 +88,7 @@ def test_updating(agent_registry: AgentRegistry, user_manager: AgentManager) -> 
 
 @pytest.mark.order(7)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_system_tag(agent_registry: AgentRegistry, user_manager: DeployedAgentManager) -> None:
+def test_system_tag(agent_registry: AgentRegistry, user_manager: AgentManager) -> None:
     owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
     config = AgentDeploymentConfiguration.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
 
@@ -105,7 +105,7 @@ def test_system_tag(agent_registry: AgentRegistry, user_manager: DeployedAgentMa
 
 @pytest.mark.order(8)
 @pytest.mark.usefixtures("agent_flask_apps")
-def test_create_api_key(user_manager: DeployedAgentManager) -> None:
+def test_create_api_key(user_manager: AgentManager) -> None:
     expires_at = datetime.now(tz=timezone.utc) + timedelta(minutes=1)
     response = user_manager.create_api_key(expires_at)
 

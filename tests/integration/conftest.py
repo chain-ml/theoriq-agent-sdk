@@ -61,9 +61,9 @@ def user_messenger() -> Messenger:
 
 
 @pytest.fixture()
-def owner_manager(agent_registry: AgentRegistry) -> DeployedAgentManager:
+def owner_manager(agent_registry: AgentRegistry) -> AgentManager:
     owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
-    return DeployedAgentManager.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
+    return AgentManager.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
 
 
 @pytest.fixture()
