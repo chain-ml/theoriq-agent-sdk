@@ -58,3 +58,15 @@ def user_manager() -> DeployedAgentManager:
 @pytest.fixture()
 def user_messenger() -> Messenger:
     return Messenger.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
+
+
+@pytest.fixture()
+def owner_manager(agent_registry: AgentRegistry) -> DeployedAgentManager:
+    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
+    return DeployedAgentManager.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
+
+
+@pytest.fixture()
+def owner_messenger(agent_registry: AgentRegistry) -> Messenger:
+    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
+    return Messenger.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])

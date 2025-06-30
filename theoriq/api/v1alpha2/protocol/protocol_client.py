@@ -16,11 +16,14 @@ from theoriq.types import Metric
 from theoriq.utils import TTLCache, is_protocol_secured
 
 from ..agent import Agent
-from ..schemas.agent import AgentResponse
-from ..schemas.api import PublicKeyResponse
-from ..schemas.biscuit import BiscuitResponse
-from ..schemas.event_request import EventRequestBody
-from ..schemas.metrics import MetricsRequestBody
+from ..schemas import (
+    AgentResponse,
+    AgentWeb3Transaction,
+    BiscuitResponse,
+    EventRequestBody,
+    MetricsRequestBody,
+    PublicKeyResponse,
+)
 
 
 class ConfigureResponse(BaseModel):
@@ -73,6 +76,17 @@ class ProtocolClient:
             response.raise_for_status()
             return BiscuitResponse.model_validate(response.json())
 
+    def create_api_key(self, biscuit: TheoriqBiscuit, expires_at: datetime) -> Dict[str, Any]:
+        url = f"{self._uri}/auth/api-keys"
+        headers = biscuit.to_headers()
+
+        expiration_timestamp = int(expires_at.timestamp())
+        body = {"expiresAt": expiration_timestamp}
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, json=body, headers=headers)
+            response.raise_for_status()
+            return response.json()
+
     def get_agent(self, agent_id: str, biscuit: Optional[TheoriqBiscuit] = None) -> AgentResponse:
         headers = biscuit.to_headers() if biscuit is not None else None
         with httpx.Client(timeout=self._timeout) as client:
@@ -86,7 +100,7 @@ class ProtocolClient:
             response = client.get(url=f"{self._uri}/agents", headers=headers)
             response.raise_for_status()
             data = response.json()
-            return [AgentResponse(**item) for item in data["items"]]
+            return [AgentResponse.model_validate(item) for item in data["items"]]
 
     def post_agent(self, biscuit: TheoriqBiscuit, content: bytes) -> AgentResponse:
         url = f"{self._uri}/agents"
@@ -135,9 +149,10 @@ class ProtocolClient:
         if cached_response:
             return cached_response
 
+        url = f"{self._uri}/agents/{agent_address.address}/configuration"
         headers = request_biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
-            response = client.get(url=f"{self._uri}/agents/{agent_address.address}/configuration", headers=headers)
+            response = client.get(url=url, headers=headers)
             response.raise_for_status()
             configuration = response.json()
             if configuration is not None:
@@ -161,6 +176,28 @@ class ProtocolClient:
             response = client.post(url=url, headers=headers)
             response.raise_for_status()
             return AgentResponse.model_validate(response.json())
+
+    def delete_configure(self, biscuit: TheoriqBiscuit, to_addr: str) -> AgentResponse:
+        url = f'{self._uri}/agents/{to_addr.removeprefix("0x")}/configure'
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.delete(url=url, headers=headers)
+            response.raise_for_status()
+            return AgentResponse.model_validate(response.json())
+
+    def post_system_tag(self, biscuit: TheoriqBiscuit, *, agent_id: str, tag: str) -> None:
+        url = f"{self._uri}/agents/0x{agent_id.removeprefix('0x')}/system-tags/{tag}"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, headers=headers)
+            response.raise_for_status()
+
+    def delete_system_tag(self, biscuit: TheoriqBiscuit, *, agent_id: str, tag: str) -> None:
+        url = f"{self._uri}/agents/0x{agent_id.removeprefix('0x')}/system-tags/{tag}"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.delete(url=url, headers=headers)
+            response.raise_for_status()
 
     def post_request_success(self, theoriq_biscuit: TheoriqBiscuit, response: Optional[str], agent: Agent) -> None:
         self._post_request_complete(theoriq_biscuit, response, agent, RequestStatus.SUCCESS)
@@ -255,6 +292,56 @@ class ProtocolClient:
                             payload = message[6:]  # remove the "data: " prefix
                             if payload.strip() != ":":
                                 yield payload
+
+    def get_web3_transactions(
+        self,
+        biscuit: TheoriqBiscuit,
+        agent_id: Optional[str] = None,
+        chain_id: Optional[int] = None,
+        limit: Optional[int] = None,
+        signer: Optional[str] = None,
+        submitted_after: Optional[datetime] = None,
+        submitted_before: Optional[datetime] = None,
+    ) -> List[AgentWeb3Transaction]:
+        url = f"{self._uri}/web3/transactions"
+        headers = biscuit.to_headers()
+
+        params = {
+            "agentId": agent_id,
+            "chainId": chain_id,
+            "limit": limit,
+            "signer": signer,
+            "submittedAfter": submitted_after.isoformat() if submitted_after is not None else None,
+            "submittedBefore": submitted_before.isoformat() if submitted_before is not None else None,
+        }
+        params = {key: value for key, value in params.items() if value is not None}
+
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.get(url=url, headers=headers, params=params)
+            response.raise_for_status()
+            return [AgentWeb3Transaction.model_validate(item) for item in response.json()]
+
+    def get_web3_transaction(self, biscuit: TheoriqBiscuit, tx_hash: str) -> AgentWeb3Transaction:
+        url = f"{self._uri}/web3/transactions/{tx_hash}"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.get(url=url, headers=headers)
+            response.raise_for_status()
+            return AgentWeb3Transaction.model_validate(response.json())
+
+    def post_web3_transaction_by_hash(
+        self, biscuit: TheoriqBiscuit, tx_hash: str, chain_id: int, metadata: Optional[Dict[str, str]] = None
+    ) -> None:
+        url = f"{self._uri}/web3/transactions/{tx_hash}"
+        headers = biscuit.to_headers()
+
+        body: Dict[str, Any] = {"chainId": chain_id}
+        if metadata is not None:
+            body["metadata"] = metadata
+
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url=url, json=body, headers=headers)
+            response.raise_for_status()
 
     @classmethod
     def from_env(cls) -> ProtocolClient:
