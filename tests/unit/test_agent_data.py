@@ -1,6 +1,7 @@
 import os.path
 
 import pytest
+from pydantic import BaseModel, ValidationError, field_validator
 from tests import DATA_DIR
 
 from theoriq.types import (
@@ -83,6 +84,42 @@ def test_agent_configuration_validation() -> None:
             virtual=VirtualConfiguration(agent_id="0xabc", configuration={}),
         )
     assert "Exactly one of deployment or virtual must be provided" in str(e.value)
+
+
+def test_virtual_agent_configuration_validation() -> None:
+    class TestConfig(BaseModel):
+        text: str
+        number: int
+
+    class AnotherTestConfig(BaseModel):
+        field: float
+
+    config = VirtualConfiguration(agent_id="0xabc", configuration={"text": "test", "number": 4})
+    bad_config = VirtualConfiguration(agent_id="0xabc", configuration={"text": "test", "number": "not a number"})
+
+    config.validate_and_update(TestConfig)
+    assert config == VirtualConfiguration(agent_id="0xabc", configuration={"text": "test", "number": 4})
+
+    with pytest.raises(ValidationError):
+        config.validate_and_update(AnotherTestConfig)
+
+    with pytest.raises(ValidationError):
+        bad_config.validate_and_update(TestConfig)
+
+
+def test_virtual_agent_configuration_update() -> None:
+    class TestConfig(BaseModel):
+        text: str
+        number: int
+
+        @field_validator("number", mode="after")
+        @classmethod
+        def validate_number(cls, v: int) -> int:
+            return 42  # to illustrate reading from file, etc.
+
+    config = VirtualConfiguration(agent_id="0xabc", configuration={"text": "test", "number": 1})
+    config.validate_and_update(TestConfig)
+    assert config == VirtualConfiguration(agent_id="0xabc", configuration={"text": "test", "number": 42})
 
 
 def test_agent_data_owner() -> None:
