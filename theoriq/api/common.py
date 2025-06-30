@@ -25,6 +25,9 @@ class RequestSenderBase(abc.ABC):
         """
         pass
 
+    def send_text_request(self, *, message: str, to_addr: str) -> ExecuteResponse:
+        return self.send_request(blocks=[TextItemBlock(message)], to_addr=to_addr)
+
 
 class ExecuteContextBase(RequestSenderBase):
     """

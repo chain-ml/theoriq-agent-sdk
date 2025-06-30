@@ -11,7 +11,6 @@ from theoriq import AgentDeploymentConfiguration
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import DeployedAgentManager
 from theoriq.api.v1alpha2.message import Messenger
-from theoriq.dialog import TextItemBlock
 
 
 @pytest.mark.order(1)
@@ -63,10 +62,9 @@ def test_unminting(agent_map: Dict[str, AgentResponse], user_manager: DeployedAg
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_messenger(agent_map: Dict[str, AgentResponse], user_messenger: Messenger) -> None:
     message = "Hello from user"
-    blocks = [TextItemBlock(message)]
 
     for agent_id, agent in agent_map.items():
-        response = user_messenger.send_request(blocks=blocks, to_addr=agent_id)
+        response = user_messenger.send_text_request(message=message, to_addr=agent_id)
         actual = response.body.extract_last_text()
         expected = AgentRunner.get_echo_execute_output(message=message, agent_name=agent.metadata.name)
         assert actual == expected
