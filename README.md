@@ -26,6 +26,7 @@ The `ExecuteRequestBody` class represents the body of an execution request. It c
 
 ***Methods:***
 
+# TODO: need to update
 - `last_item`: Returns the last `DialogItem` based on the timestamp.
 - `last_item_from`: Filters and returns the last `DialogItem` from a specific source type: either the `user` or an `agent`.
 
