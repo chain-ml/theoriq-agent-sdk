@@ -17,6 +17,7 @@ from .router import RouteItem, RouterItemBlock
 from .runtime_error import ErrorItemBlock
 from .text import TextItemBlock
 from .web3 import Web3ProposedTxBlock, Web3SignedTxBlock
+from .actions import ActionItem, ActionsItemBlock
 
 BLOCK_CLASSES: Final[List[Type[ItemBlock]]] = [
     CodeItemBlock,
@@ -29,6 +30,7 @@ BLOCK_CLASSES: Final[List[Type[ItemBlock]]] = [
     TextItemBlock,
     Web3ProposedTxBlock,
     Web3SignedTxBlock,
+    ActionsItemBlock,
 ]
 BLOCK_CLASSES_MAP: Mapping[str, Type[ItemBlock]] = {block_cls.block_type(): block_cls for block_cls in BLOCK_CLASSES}
 
@@ -165,6 +167,12 @@ class DialogItem:
     @classmethod
     def new_route(cls, source: str, route: str, score: float) -> DialogItem:
         return DialogItem.new(source=source, blocks=[RouterItemBlock([RouteItem(route, score)])])
+
+    @classmethod
+    def new_actions(cls, source: str, actions: Sequence[ActionItem], key: Optional[str] = None) -> DialogItem:
+        """Create a DialogItem that proposes a list of actions to the user."""
+        block = ActionsItemBlock(actions, key=key)
+        return DialogItem.new(source=source, blocks=[block])
 
     def __str__(self) -> str:
         source_str = f"{self.source[:6]}...{self.source[-4:]}"
