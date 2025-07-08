@@ -115,7 +115,7 @@ dialog_commands_payload = {
                             {"name": "summarize", "arguments": {"compression_ratio": 0.5}},
                         ]
                     },
-                    "type": "command",
+                    "type": "commands",
                 }
             ],
         },

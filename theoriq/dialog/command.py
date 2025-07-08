@@ -40,7 +40,7 @@ class CommandsItemBlock(ItemBlock[Sequence[CommandItem]]):
 
     @staticmethod
     def block_type() -> str:
-        return "command"
+        return "commands"
 
     @staticmethod
     def is_valid(block_type: str) -> bool:
