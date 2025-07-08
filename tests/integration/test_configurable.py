@@ -37,7 +37,7 @@ def test_registration(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: AgentManager
 ) -> None:
     configurable_agent_data = agent_registry.get_first_agent_of_type(AgentType.CONFIGURABLE)
-    agent = user_manager.create_agent_from_data(configurable_agent_data)
+    agent = user_manager.create_agent_from_spec(configurable_agent_data.spec)
 
     assert agent.schemas.configuration is not None
     agent_map[agent.system.id] = agent
@@ -63,7 +63,7 @@ def test_incorrect_configuration(agent_map: Dict[str, AgentResponse], virtual_ma
     assert isinstance(e.value.original_exception, httpx.HTTPStatusError)
     assert e.value.original_exception.response.status_code == 502
 
-    virtual_manager.delete_agent(e.value.agent.system.id)
+    virtual_manager.delete_agent(e.value.agent_response.system.id)
 
 
 @pytest.mark.order(3)

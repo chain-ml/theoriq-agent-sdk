@@ -21,7 +21,7 @@ def test_registration_owner(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: AgentManager
 ) -> None:
     owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
-    agent = user_manager.create_agent_from_data(owner_agent_data)
+    agent = user_manager.create_agent_from_spec(owner_agent_data.spec)
     agent_map[agent.system.id] = agent
 
 
@@ -31,7 +31,7 @@ def test_registration_basic(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], owner_manager: AgentManager
 ) -> None:
     for basic_agent_data in agent_registry.get_agents_of_type(AgentType.BASIC):
-        agent = owner_manager.create_agent_from_data(basic_agent_data)
+        agent = owner_manager.create_agent_from_spec(basic_agent_data.spec)
         agent_map[agent.system.id] = agent
 
 

@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 from typing_extensions import Self
 
 from ...biscuit import TheoriqRequest
-from ...types import AgentConfiguration, AgentDataObject, AgentMetadata
+from ...types import AgentConfiguration, AgentMetadata, AgentSpec
 from .protocol import ProtocolClient
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 from .schemas import AgentResponse, AgentWeb3Transaction
@@ -50,8 +50,8 @@ class AgentManager:
         # virtual agent
         return self._try_configure_agent(agent, f"Agent {agent.system.id} created but failed to configure")
 
-    def create_agent_from_data(self, agent_data: AgentDataObject) -> AgentResponse:
-        return self.create_agent(agent_data.spec.metadata, agent_data.spec.configuration)
+    def create_agent_from_spec(self, agent_spec: AgentSpec) -> AgentResponse:
+        return self.create_agent(agent_spec.metadata, agent_spec.configuration)
 
     def _create_agent(self, metadata: AgentMetadata, configuration: AgentConfiguration) -> AgentResponse:
         payload_dict = {"metadata": metadata.to_dict(), "configuration": configuration.to_dict()}
@@ -74,7 +74,7 @@ class AgentManager:
                 agent_id=agent.system.id, configuration_hash=agent.configuration.ensure_virtual.configuration_hash
             )
         except Exception as e:
-            raise AgentConfigurationError(message=error_message, agent=agent, original_exception=e) from e
+            raise AgentConfigurationError(message=error_message, agent_response=agent, original_exception=e)
 
     def update_agent(
         self,
@@ -89,10 +89,8 @@ class AgentManager:
         # virtual agent
         return self._try_configure_agent(agent, f"Agent {agent.system.id} updated but failed to configure")
 
-    def update_agent_from_data(self, agent_id: str, agent_data: AgentDataObject) -> AgentResponse:
-        return self.update_agent(
-            agent_id, metadata=agent_data.spec.metadata, configuration=agent_data.spec.maybe_configuration
-        )
+    def update_agent_from_spec(self, agent_id: str, agent_spec: AgentSpec) -> AgentResponse:
+        return self.update_agent(agent_id, metadata=agent_spec.metadata, configuration=agent_spec.maybe_configuration)
 
     def _update_agent(
         self,

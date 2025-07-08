@@ -43,7 +43,7 @@ def test_registration(
 ) -> None:
     agent_data_objs = agent_registry.get_agents_of_types([AgentType.OWNER, AgentType.BASIC])
     for agent_data in agent_data_objs:
-        agent = user_manager.create_agent_from_data(agent_data)
+        agent = user_manager.create_agent_from_spec(agent_data.spec)
         agent_map[agent.system.id] = agent
 
 
