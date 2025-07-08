@@ -15,9 +15,9 @@ from .schemas import AgentResponse, AgentWeb3Transaction
 
 
 class AgentConfigurationError(Exception):
-    def __init__(self, message: str, agent: AgentResponse, original_exception: Exception) -> None:
+    def __init__(self, message: str, agent_response: AgentResponse, original_exception: Exception) -> None:
         self.message = message
-        self.agent = agent
+        self.agent_response = agent_response
         self.original_exception = original_exception
 
     def __str__(self) -> str:
