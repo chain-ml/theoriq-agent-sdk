@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Optional
 
 from theoriq.dialog import BaseData, ItemBlock
 
@@ -24,24 +24,21 @@ class CommandItem(BaseData):
         return f"CommandItem(name={self.name}, arguments={self.arguments})"
 
 
-class CommandsItemBlock(ItemBlock[Sequence[CommandItem]]):
-    def __init__(
-        self, commands: Sequence[CommandItem], key: Optional[str] = None, reference: Optional[str] = None
-    ) -> None:
-        super().__init__(block_type=self.block_type(), data=commands, key=key, reference=reference)
+class CommandItemBlock(ItemBlock[CommandItem]):
+    def __init__(self, command: CommandItem, key: Optional[str] = None, reference: Optional[str] = None) -> None:
+        super().__init__(block_type=self.block_type(), data=command, key=key, reference=reference)
 
     @classmethod
     def from_dict(
         cls, data: Dict[str, Any], block_type: str, block_key: Optional[str] = None, block_ref: Optional[str] = None
-    ) -> CommandsItemBlock:
+    ) -> CommandItemBlock:
         cls.raise_if_not_valid(block_type=block_type, expected=cls.block_type())
-        items = data.get("items", [])
-        return cls(commands=[CommandItem.from_dict(item) for item in items], key=block_key, reference=block_ref)
+        return cls(command=CommandItem.from_dict(data), key=block_key, reference=block_ref)
 
     @staticmethod
     def block_type() -> str:
-        return "commands"
+        return "command"
 
     @staticmethod
     def is_valid(block_type: str) -> bool:
-        return block_type.startswith(CommandsItemBlock.block_type())
+        return block_type.startswith(CommandItemBlock.block_type())

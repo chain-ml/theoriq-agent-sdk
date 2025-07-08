@@ -4,7 +4,7 @@ from uuid import uuid4
 from theoriq.biscuit import AgentAddress
 from theoriq.dialog import (
     CodeItemBlock,
-    CommandsItemBlock,
+    CommandItemBlock,
     DataItemBlock,
     Dialog,
     DialogItem,
@@ -109,14 +109,13 @@ dialog_commands_payload = {
             "timestamp": "2024-11-04T20:00:39Z",
             "blocks": [
                 {
-                    "data": {
-                        "items": [
-                            {"name": "search", "arguments": {"query": "Trending tokens in the last 24 hours"}},
-                            {"name": "summarize", "arguments": {"compression_ratio": 0.5}},
-                        ]
-                    },
-                    "type": "commands",
-                }
+                    "data": {"name": "search", "arguments": {"query": "Trending tokens in the last 24 hours"}},
+                    "type": "command",
+                },
+                {
+                    "data": {"name": "summarize", "arguments": {"compression_ratio": 0.5}},
+                    "type": "command",
+                },
             ],
         },
         {
@@ -148,17 +147,16 @@ def test_web3_dialog() -> None:
 
 def test_commands_dialog() -> None:
     d: Dialog = Dialog.model_validate(dialog_commands_payload)
-    commands_block = d.items[0].blocks[0]
+    search_command_block, summarize_command_block = d.items[0].blocks[0], d.items[0].blocks[1]
 
-    assert isinstance(commands_block, CommandsItemBlock)
-    assert len(commands_block.data) == 2
+    assert isinstance(search_command_block, CommandItemBlock)
+    assert isinstance(summarize_command_block, CommandItemBlock)
 
-    search_command, summarize_command = commands_block.data[0], commands_block.data[1]
-    assert search_command.name == "search"
-    assert search_command.arguments == {"query": "Trending tokens in the last 24 hours"}
+    assert search_command_block.data.name == "search"
+    assert search_command_block.data.arguments == {"query": "Trending tokens in the last 24 hours"}
 
-    assert summarize_command.name == "summarize"
-    assert summarize_command.arguments == {"compression_ratio": 0.5}
+    assert summarize_command_block.data.name == "summarize"
+    assert summarize_command_block.data.arguments == {"compression_ratio": 0.5}
 
 
 def test_format_source() -> None:

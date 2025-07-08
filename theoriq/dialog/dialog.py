@@ -8,7 +8,7 @@ from pydantic import BaseModel, field_serializer, field_validator
 
 from ..types import SourceType
 from .code import CodeItemBlock
-from .command import CommandsItemBlock
+from .command import CommandItemBlock
 from .custom import CustomItemBlock
 from .data import DataItemBlock
 from .image import ImageItemBlock
@@ -21,7 +21,7 @@ from .web3 import Web3ProposedTxBlock, Web3SignedTxBlock
 
 BLOCK_CLASSES: Final[List[Type[ItemBlock]]] = [
     CodeItemBlock,
-    CommandsItemBlock,
+    CommandItemBlock,
     CustomItemBlock,
     DataItemBlock,
     ErrorItemBlock,
