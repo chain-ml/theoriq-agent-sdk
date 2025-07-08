@@ -1,5 +1,6 @@
 from .item_block import BaseData, ItemBlock
 from .code import CodeItem, CodeItemBlock
+from .command import CommandItem, CommandsItemBlock
 from .custom import CustomData, CustomItemBlock
 from .data import DataItem, DataItemBlock
 from .error_message import ErrorMessageItem, ErrorMessageItemBlock
