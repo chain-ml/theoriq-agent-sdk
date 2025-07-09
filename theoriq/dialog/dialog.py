@@ -204,7 +204,7 @@ class Dialog(BaseModel):
         """
         if len(self.items) == 0:
             return None
-        # Finds and returns the dialog item with the latest timestamp.
+
         return max(self.items, key=lambda obj: obj.timestamp)
 
     @property
@@ -235,7 +235,7 @@ class Dialog(BaseModel):
             Optional[DialogItem]: The dialog item with the most recent timestamp from the specified source type,
                                   or None if no items match the source type.
         """
-        # Filters items by source type and finds the one with the latest timestamp.
+
         return self.last_item_predicate(lambda item: item.source_type == source_type)
 
     def last_item_predicate(self, predicate: DialogItemPredicate) -> Optional[DialogItem]:
@@ -250,7 +250,6 @@ class Dialog(BaseModel):
                                        or None if no items match the predicate.
         """
 
-        # Filters items matching the given predicate and finds the one with the latest timestamp.
         items = (item for item in self.items if predicate(item))
         return max(items, key=lambda obj: obj.timestamp) if items else None
 

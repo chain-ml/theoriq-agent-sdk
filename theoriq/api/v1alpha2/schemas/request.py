@@ -32,3 +32,17 @@ class ExecuteRequestBody(BaseModel):
 
     configuration: Optional[Configuration] = None
     dialog: Dialog
+
+    @property
+    def last_item(self) -> Optional[DialogItem]:
+        return self.dialog.last_item
+
+    @property
+    def last_text(self) -> str:
+        return self.dialog.last_text
+
+    def last_item_from(self, source_type: SourceType) -> Optional[DialogItem]:
+        return self.dialog.last_item_from(source_type)
+
+    def last_item_predicate(self, predicate: DialogItemPredicate) -> Optional[DialogItem]:
+        return self.dialog.last_item_predicate(predicate)
