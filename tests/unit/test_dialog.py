@@ -4,6 +4,7 @@ from uuid import uuid4
 from theoriq.biscuit import AgentAddress
 from theoriq.dialog import (
     CodeItemBlock,
+    CommandItemBlock,
     DataItemBlock,
     Dialog,
     DialogItem,
@@ -100,6 +101,32 @@ dialog_web3_payload = {
     ]
 }
 
+dialog_commands_payload = {
+    "items": [
+        {
+            "sourceType": str(SourceType.User),
+            "source": USER_ADDRESS,
+            "timestamp": "2024-11-04T20:00:39Z",
+            "blocks": [
+                {
+                    "data": {"name": "search", "arguments": {"query": "Trending tokens in the last 24 hours"}},
+                    "type": "command",
+                },
+                {
+                    "data": {"name": "summarize", "arguments": {"compression_ratio": 0.5}},
+                    "type": "command",
+                },
+            ],
+        },
+        {
+            "sourceType": str(SourceType.Agent),
+            "source": RANDOM_AGENT_ADDRESS,
+            "timestamp": "2024-11-27T00:57:29.725500Z",
+            "blocks": [{"data": {"text": "The trending tokens in the last 24 hours are ...."}, "type": "text"}],
+        },
+    ]
+}
+
 
 def test_dialog_deserialization() -> None:
     d: Dialog = Dialog.model_validate(dialog_payload)
@@ -116,6 +143,20 @@ def test_web3_dialog() -> None:
     assert isinstance(d, Dialog)
     assert isinstance(d.items[1].blocks[0], Web3ProposedTxBlock)
     assert isinstance(d.items[2].blocks[1], Web3SignedTxBlock)
+
+
+def test_commands_dialog() -> None:
+    d: Dialog = Dialog.model_validate(dialog_commands_payload)
+    search_command_block, summarize_command_block = d.items[0].blocks[0], d.items[0].blocks[1]
+
+    assert isinstance(search_command_block, CommandItemBlock)
+    assert isinstance(summarize_command_block, CommandItemBlock)
+
+    assert search_command_block.data.name == "search"
+    assert search_command_block.data.arguments == {"query": "Trending tokens in the last 24 hours"}
+
+    assert summarize_command_block.data.name == "summarize"
+    assert summarize_command_block.data.arguments == {"compression_ratio": 0.5}
 
 
 def test_format_source() -> None:
