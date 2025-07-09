@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type
 
+from jsonschema import ValidationError
+from jsonschema.validators import Draft7Validator
 from pydantic import BaseModel
 
 
@@ -16,6 +18,10 @@ class ExecuteSchema(BaseModel):
 
     request: Dict[str, Any]
     response: Dict[str, Any]
+
+    @classmethod
+    def from_base_models(cls, *, request: Type[BaseModel], response: Type[BaseModel]) -> ExecuteSchema:
+        return cls(request=request.model_json_schema(), response=response.model_json_schema())
 
 
 class AgentSchemas(BaseModel):
@@ -35,3 +41,13 @@ class AgentSchemas(BaseModel):
     @classmethod
     def empty(cls) -> AgentSchemas:
         return AgentSchemas(configuration=None, notification=None, execute=None)
+
+
+def validate_against_schema(*, values: Dict[str, Any], schema: Dict[str, Any]) -> None:
+    """Validate the given values against the given schema."""
+    validator = Draft7Validator(schema)
+    try:
+        validator.validate(values)
+    except ValidationError as e:
+        # move from agent.py or introduce another one / raise original
+        raise AgentSchemaError(f"ValidationError for agent configuration: {e.message}") from e
