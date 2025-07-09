@@ -114,8 +114,16 @@ class DialogItem:
                     yield block
         return
 
-    def find_blocks_of_type_as_list(self, block_type: str) -> List[ItemBlock[Any]]:
+    def find_all_blocks_of_type(self, block_type: str) -> List[ItemBlock[Any]]:
         return list(self.find_blocks_of_type(block_type))
+
+    def find_first_block_of_type(self, block_type: str) -> Optional[ItemBlock[Any]]:
+        blocks = self.find_all_blocks_of_type(block_type)
+        return blocks[0] if len(blocks) > 0 else None
+
+    def find_last_block_of_type(self, block_type: str) -> Optional[ItemBlock[Any]]:
+        blocks = self.find_all_blocks_of_type(block_type)
+        return blocks[-1] if len(blocks) > 0 else None
 
     def extract_last_text(self) -> str:
         """
