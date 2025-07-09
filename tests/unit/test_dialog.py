@@ -119,7 +119,7 @@ def test_web3_dialog() -> None:
     d: Dialog = Dialog.model_validate(dialog_web3_payload)
     assert isinstance(d, Dialog)
     assert isinstance(d.items[1].blocks[0], Web3ProposedTxBlock)
-    assert isinstance(d.items[2].blocks[1], Web3SignedTxBlock)
+    assert isinstance(d.items[2].blocks[-1], Web3SignedTxBlock)
 
 
 def test_find_blocks_of_type() -> None:
