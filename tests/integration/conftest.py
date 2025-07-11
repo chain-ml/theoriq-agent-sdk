@@ -8,7 +8,7 @@ from tests.integration.agent_registry import AgentRegistry, AgentType
 from tests.integration.agent_runner import AgentRunner, TestConfig
 
 from theoriq.api.v1alpha2 import AgentResponse
-from theoriq.api.v1alpha2.manage import DeployedAgentManager
+from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
 
 dotenv.load_dotenv()
@@ -51,8 +51,8 @@ def agent_map() -> Generator[Dict[str, AgentResponse], None, None]:
 
 
 @pytest.fixture()
-def user_manager() -> DeployedAgentManager:
-    return DeployedAgentManager.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
+def user_manager() -> AgentManager:
+    return AgentManager.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
 
 
 @pytest.fixture()
@@ -61,9 +61,9 @@ def user_messenger() -> Messenger:
 
 
 @pytest.fixture()
-def owner_manager(agent_registry: AgentRegistry) -> DeployedAgentManager:
+def owner_manager(agent_registry: AgentRegistry) -> AgentManager:
     owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
-    return DeployedAgentManager.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
+    return AgentManager.from_env(env_prefix=owner_agent_data.metadata.labels["env_prefix"])
 
 
 @pytest.fixture()
