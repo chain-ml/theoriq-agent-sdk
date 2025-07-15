@@ -36,10 +36,13 @@ class Messenger(RequestSenderBase):
         execute_request_body = ExecuteRequestBody(dialog=dialog)
         body = execute_request_body.model_dump_json().encode("utf-8")
 
+        request_id = uuid.uuid4()
         theoriq_request = TheoriqRequest.from_body(body=body, from_addr=self._biscuit_provider.address, to_addr=to_addr)
-        theoriq_biscuit = self._biscuit_provider.get_request_biscuit(request_id=uuid.uuid4(), facts=[theoriq_request])
+        theoriq_biscuit = self._biscuit_provider.get_request_biscuit(request_id=request_id, facts=[theoriq_request])
         response = self._client.post_request(request_biscuit=theoriq_biscuit, content=body, to_addr=to_addr)
-        return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
+        return ExecuteResponse.from_protocol_response(
+            data={"dialog_item": response}, request_id=request_id, status_code=200
+        )
 
     @classmethod
     def from_api_key(cls, api_key: str) -> Messenger:
