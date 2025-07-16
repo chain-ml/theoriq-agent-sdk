@@ -138,6 +138,10 @@ def test_deployment_configuration_from_env() -> None:
         data = {"url": {"fromEnv": "URL_NOT_SET"}, "headers": []}
         DeploymentConfiguration.model_validate(data)
 
+    with pytest.raises(ValueError, match="`url` must be either a string or a dict with 'fromEnv' key"):
+        data = {"url": {"incorrect": "format"}, "headers": []}
+        DeploymentConfiguration.model_validate(data)
+
 
 def test_virtual_configuration_from_env() -> None:
     with OsEnviron("AGENT_ID", RANDOM_AGENT_ID):
@@ -152,6 +156,10 @@ def test_virtual_configuration_from_env() -> None:
 
     with OsEnviron("INVALID_AGENT_ID", "0xabc"), pytest.raises(TypeError):
         data = {"agent_id": {"fromEnv": "INVALID_AGENT_ID"}, "configuration": {"key": "value"}}
+        VirtualConfiguration.model_validate(data)
+
+    with pytest.raises(ValueError, match="`agent_id` must be either a string or a dict with 'fromEnv' key"):
+        data = {"agent_id": {"incorrect": "format"}, "configuration": {"key": "value"}}
         VirtualConfiguration.model_validate(data)
 
 
