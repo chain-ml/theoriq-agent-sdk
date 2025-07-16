@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import Annotated, Generic, List, Optional, TypeVar, Union, Literal, Any
-from pydantic import BaseModel, Field, field_validator
+from typing import List, Any, Optional
+from pydantic import BaseModel, field_validator
 from enum import Enum
 
-from typing_extensions import Self
+from .items import RouterBlock, TextBlock, CodeBlock, MetricsBlock, BlockBase
 
 
 class SourceType(str, Enum):
@@ -11,96 +11,8 @@ class SourceType(str, Enum):
     SYSTEM = "system"
     AGENT = "agent"
 
-T_Data = TypeVar("T_Data", bound=Union[BaseModel, dict[str, Any]])
-T_Type = TypeVar("T_Type", bound=str)
-
-class BlockBase(BaseModel, Generic[T_Data, T_Type]):
-    ref: Annotated[Optional[str], Field(default=None)] = None
-    key: Annotated[Optional[str], Field(default=None)] = None
-    block_type: Annotated[T_Type, Field(alias="type")]
-    data: T_Data
-
-    class Config:
-        populate_by_name = True
-
-    def model_dump_json(self, **kwargs):
-        """Override to ensure proper JSON serialization"""
-        # Set default serialization options
-        kwargs.setdefault('by_alias', True)
-        kwargs.setdefault('exclude_none', True)
-        kwargs.setdefault('exclude_defaults', True)
-        kwargs.setdefault('exclude_unset', True)
-        return super().model_dump_json(**kwargs)
 
 UnknownBlock = BlockBase[dict[str, Any], str]
-
-# Router Block Data Models
-class RouterItem(BaseModel):
-    name: str
-    score: float
-    reason: Optional[str] = None
-
-
-class RouterData(BaseModel):
-    items: List[RouterItem]
-
-
-# Text Block Data Model
-class TextData(BaseModel):
-    text: str
-
-
-# Code Block Data Model
-class CodeData(BaseModel):
-    code: str
-
-
-# Metrics Block Data Models
-class MetricItem(BaseModel):
-    name: str
-    value: float
-    trendPercentage: float
-
-
-class MetricsData(BaseModel):
-    items: List[MetricItem]
-
-
-# Block Models
-class RouterBlock(BlockBase[RouterData, Literal["router"]]):
-    pass
-    # type: Literal["router"]
-    # data: RouterData
-
-
-class TextBlock(BlockBase[TextData, Literal["text", "text:markdown"]]):
-    # type: str
-    # data: TextData
-
-    @classmethod
-    def from_text(cls, text: str, block_type: Literal["text"] = "text") -> Self:
-        return TextBlock(block_type=block_type, data=TextData(text=text))
-
-class CodeBlock(BlockBase[CodeData, Literal["code"]]):
-    pass
-    # type: str  # This will match patterns like "code:python", "code:javascript", etc.
-    # data: CodeData
-
-    # @field_validator('type')
-    # def validate_code_type(cls, v):
-    #     if not v.startswith("code:"):
-    #         raise ValueError("Code block type must start with 'code:'")
-    #     return v
-
-
-class MetricsBlock(BlockBase[MetricsData, Literal["metrics"]]):
-    pass
-    # type: Literal["metrics"]
-    # data: MetricsData
-
-
-# Union type for all possible blocks
-Block = Union[RouterBlock, TextBlock, CodeBlock, MetricsBlock, UnknownBlock]
 
 
 # Main data model
@@ -108,9 +20,9 @@ class DialogItem(BaseModel):
     timestamp: datetime
     sourceType: SourceType
     source: str
-    blocks: List[Block]
+    blocks: List[BlockBase]
 
-    @field_validator('source')
+    @field_validator("source")
     def validate_source(cls, v):
         # Basic validation for hex string
         if not v.startswith("0x"):
@@ -120,20 +32,21 @@ class DialogItem(BaseModel):
     def model_dump_json(self, **kwargs):
         """Override to ensure proper JSON serialization"""
         # Set default serialization options
-        kwargs.setdefault('by_alias', True)
-        kwargs.setdefault('exclude_none', True)
-        kwargs.setdefault('exclude_defaults', True)
-        kwargs.setdefault('exclude_unset', True)
+        kwargs.setdefault("by_alias", True)
+        kwargs.setdefault("exclude_none", True)
+        kwargs.setdefault("exclude_defaults", True)
+        kwargs.setdefault("exclude_unset", True)
         return super().model_dump_json(**kwargs)
 
-    @field_validator('blocks', mode='before')
+    @field_validator("blocks", mode="before")
     def parse_blocks(cls, v):
         if isinstance(v, list):
             return [parse_block(block) if isinstance(block, dict) else block for block in v]
         return v
 
+
 # Factory function to parse blocks with unknown type handling
-def parse_block(block_data: dict) -> Block:
+def parse_block(block_data: dict) -> BlockBase:
     """Parse a block dictionary into the appropriate Block type."""
     block_type = block_data.get("type", "")
 
@@ -147,10 +60,8 @@ def parse_block(block_data: dict) -> Block:
         return MetricsBlock(**block_data)
     else:
         # For unknown types, use UnknownBlock
-        return UnknownBlock(
-            block_type=block_type,
-            data=block_data.get("data", {})
-        )
+        return UnknownBlock(block_type=block_type, data=block_data.get("data", {}))
+
 
 class Dialog(BaseModel):
     items: List[DialogItem]
@@ -158,8 +69,38 @@ class Dialog(BaseModel):
     def model_dump_json(self, **kwargs):
         """Override to ensure proper JSON serialization"""
         # Set default serialization options
-        kwargs.setdefault('by_alias', True)
-        kwargs.setdefault('exclude_none', True)
-        kwargs.setdefault('exclude_defaults', True)
-        kwargs.setdefault('exclude_unset', True)
+        kwargs.setdefault("by_alias", True)
+        kwargs.setdefault("exclude_none", True)
+        kwargs.setdefault("exclude_defaults", True)
+        kwargs.setdefault("exclude_unset", True)
         return super().model_dump_json(**kwargs)
+
+    @property
+    def last_item(self) -> Optional[DialogItem]:
+        """
+        Returns the last dialog item contained in the request based on the timestamp.
+
+        Returns:
+            Optional[DialogItem]: The dialog item with the most recent timestamp, or None if there are no items.
+        """
+        if len(self.items) == 0:
+            return None
+
+        return max(self.items, key=lambda obj: obj.timestamp)
+
+    @property
+    def last_text(self) -> str:
+        """
+        Returns the last text item from the dialog.
+
+        Returns:
+            str: The last text item from the dialog.
+
+        Raises:
+            RuntimeError: If the dialog is empty or no text blocks are found in the last dialog item.
+        """
+        last_item = self.last_item
+        if last_item is None:
+            raise RuntimeError("Got empty dialog")
+
+        return last_item.extract_last_text()

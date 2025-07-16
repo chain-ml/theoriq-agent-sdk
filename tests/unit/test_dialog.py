@@ -2,6 +2,7 @@ import json
 from typing import Final, Sequence, Tuple
 from uuid import uuid4
 
+import theoriq.dialogv2.items
 from theoriq import dialogv2
 from theoriq.biscuit import AgentAddress
 from theoriq.dialog import (
@@ -276,20 +277,24 @@ def test_format_md() -> None:
         ]
     )
 
+
 def test_text_block_item() -> None:
     item = TextItemBlock(text="Some text")
     json = item.to_dict()
     print(json)
+
 
 def test_dialog_v2() -> None:
     for dialog in [dialog_payload, dialog_commands_payload, dialog_web3_payload]:
         dialog = dialogv2.Dialog(**dialog)
         print(dialog.model_dump_json(indent=2))
 
+
 def test_dialog_v2_schema() -> None:
-    print(json.dumps(dialogv2.TextBlock.model_json_schema(), indent=2))
+    print(json.dumps(theoriq.dialogv2.items.TextBlock.model_json_schema(), indent=2))
+
 
 def test_dialog_v2_text_item() -> None:
     # item = dialogv2.TextBlock(type="text", data=dialogv2.TextData(text="some text"), key=None)
-    item  = dialogv2.TextBlock.from_text("some text")
+    item = theoriq.dialogv2.items.TextBlock.from_text("some text")
     print(item.model_dump_json(indent=2))

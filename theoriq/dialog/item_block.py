@@ -40,8 +40,16 @@ class ItemBlock(BaseModel, Generic[T_Data]):
     key and reference attributes.
     """
 
-    def __init__(self, /, *, block_type: str, data: T_Data, key: Optional[str] = None, reference: Optional[str] = None,
-                 **py_data: Any) -> None:
+    def __init__(
+        self,
+        /,
+        *,
+        block_type: str,
+        data: T_Data,
+        key: Optional[str] = None,
+        reference: Optional[str] = None,
+        **py_data: Any,
+    ) -> None:
         """
         Initializes the ItemBlock instance with block type, data, key, and reference.
 
