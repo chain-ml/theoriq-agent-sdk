@@ -1,9 +1,11 @@
 import os.path
+from typing import Final
 
 import pytest
 from pydantic import BaseModel, ValidationError, field_validator
-from tests import DATA_DIR
+from tests import DATA_DIR, OsEnviron
 
+from theoriq.biscuit import AgentAddress
 from theoriq.types import (
     AgentConfiguration,
     AgentDataObject,
@@ -12,6 +14,9 @@ from theoriq.types import (
     Header,
     VirtualConfiguration,
 )
+from theoriq.utils import MissingEnvVariableException
+
+RANDOM_AGENT_ID: Final[str] = str(AgentAddress.random())
 
 
 def test_metadata_camel_snake_case() -> None:
@@ -64,12 +69,12 @@ def test_agent_configuration() -> None:
     assert dict_output["deployment"]["headers"][0]["name"] == "test"
     assert dict_output["deployment"]["headers"][0]["value"] == "value"
 
-    config = AgentConfiguration(virtual=VirtualConfiguration(agent_id="0xabc", configuration={"key": "value"}))
+    config = AgentConfiguration(virtual=VirtualConfiguration(agent_id=RANDOM_AGENT_ID, configuration={"key": "value"}))
 
     dict_output = config.to_dict()
     assert "deployment" not in dict_output
     assert "virtual" in dict_output
-    assert dict_output["virtual"]["agentId"] == "0xabc"
+    assert dict_output["virtual"]["agentId"] == RANDOM_AGENT_ID
     assert dict_output["virtual"]["configuration"] == {"key": "value"}
 
 
@@ -81,7 +86,7 @@ def test_agent_configuration_validation() -> None:
     with pytest.raises(ValueError):
         AgentConfiguration(
             deployment=DeploymentConfiguration(url="http://example.com"),
-            virtual=VirtualConfiguration(agent_id="0xabc", configuration={}),
+            virtual=VirtualConfiguration(agent_id=RANDOM_AGENT_ID, configuration={}),
         )
     assert "Exactly one of deployment or virtual must be provided" in str(e.value)
 
@@ -94,11 +99,11 @@ def test_virtual_agent_configuration_validation() -> None:
     class AnotherTestConfig(BaseModel):
         field: float
 
-    config = VirtualConfiguration(agent_id="0xabc", configuration={"text": "test", "number": 4})
-    bad_config = VirtualConfiguration(agent_id="0xabc", configuration={"text": "test", "number": "not a number"})
+    config = VirtualConfiguration(agent_id=RANDOM_AGENT_ID, configuration={"text": "test", "number": 4})
+    bad_config = VirtualConfiguration(agent_id=RANDOM_AGENT_ID, configuration={"text": "t", "number": "not a number"})
 
     config.validate_and_update(TestConfig)
-    assert config == VirtualConfiguration(agent_id="0xabc", configuration={"text": "test", "number": 4})
+    assert config == VirtualConfiguration(agent_id=RANDOM_AGENT_ID, configuration={"text": "test", "number": 4})
 
     with pytest.raises(ValidationError):
         config.validate_and_update(AnotherTestConfig)
@@ -117,9 +122,37 @@ def test_virtual_agent_configuration_update() -> None:
         def validate_number(cls, v: int) -> int:
             return 42  # to illustrate reading from file, etc.
 
-    config = VirtualConfiguration(agent_id="0xabc", configuration={"text": "test", "number": 1})
+    config = VirtualConfiguration(agent_id=RANDOM_AGENT_ID, configuration={"text": "test", "number": 1})
     config.validate_and_update(TestConfig)
-    assert config == VirtualConfiguration(agent_id="0xabc", configuration={"text": "test", "number": 42})
+    assert config == VirtualConfiguration(agent_id=RANDOM_AGENT_ID, configuration={"text": "test", "number": 42})
+
+
+def test_deployment_configuration_from_env() -> None:
+    with OsEnviron("URL", "http://test_url"):
+        data = {"url": {"fromEnv": "URL"}, "headers": []}
+        deployment = DeploymentConfiguration.model_validate(data)
+
+    assert deployment.url == "http://test_url"
+
+    with pytest.raises(MissingEnvVariableException):
+        data = {"url": {"fromEnv": "URL_NOT_SET"}, "headers": []}
+        DeploymentConfiguration.model_validate(data)
+
+
+def test_virtual_configuration_from_env() -> None:
+    with OsEnviron("AGENT_ID", RANDOM_AGENT_ID):
+        data = {"agent_id": {"fromEnv": "AGENT_ID"}, "configuration": {"key": "value"}}
+        virtual = VirtualConfiguration.model_validate(data)
+
+    assert virtual.agent_id == RANDOM_AGENT_ID
+
+    with pytest.raises(MissingEnvVariableException):
+        data = {"agent_id": {"fromEnv": "AGENT_ID_NOT_SET"}, "configuration": {"key": "value"}}
+        VirtualConfiguration.model_validate(data)
+
+    with OsEnviron("INVALID_AGENT_ID", "0xabc"), pytest.raises(TypeError):
+        data = {"agent_id": {"fromEnv": "INVALID_AGENT_ID"}, "configuration": {"key": "value"}}
+        VirtualConfiguration.model_validate(data)
 
 
 def test_agent_data_owner() -> None:
