@@ -11,13 +11,17 @@ class SourceType(str, Enum):
     SYSTEM = "system"
     AGENT = "agent"
 
-T_Data = TypeVar("T_Data", bound=BaseModel)
+T_Data = TypeVar("T_Data", bound=Union[BaseModel, dict[str, Any]])
+T_Type = TypeVar("T_Type", bound=str)
 
-class BlockBase(BaseModel, Generic[T_Data]):
-    ref: Annotated[Optional[str], Field(default=None)]
-    key: Annotated[Optional[str], Field(default=None)]
-    type: str
+class BlockBase(BaseModel, Generic[T_Data, T_Type]):
+    ref: Annotated[Optional[str], Field(default=None)] = None
+    key: Annotated[Optional[str], Field(default=None)] = None
+    block_type: Annotated[T_Type, Field(alias="type")]
     data: T_Data
+
+    class Config:
+        populate_by_name = True
 
     def model_dump_json(self, **kwargs):
         """Override to ensure proper JSON serialization"""
@@ -62,21 +66,21 @@ class MetricsData(BaseModel):
 
 
 # Block Models
-class RouterBlock(BlockBase[RouterData]):
+class RouterBlock(BlockBase[RouterData, Literal["router"]]):
     pass
     # type: Literal["router"]
     # data: RouterData
 
 
-class TextBlock(BlockBase[TextData]):
+class TextBlock(BlockBase[TextData, Literal["text", "text:markdown"]]):
     # type: str
     # data: TextData
 
-    @staticmethod
-    def from_text(text: str, type: Optional[Literal["text"]] = "text") -> Self:
-        return TextBlock(type=type, data=TextData(text=text), ref=None, key=None)
+    @classmethod
+    def from_text(cls, text: str, block_type: Literal["text"] = "text") -> Self:
+        return TextBlock(block_type=block_type, data=TextData(text=text))
 
-class CodeBlock(BlockBase[CodeData]):
+class CodeBlock(BlockBase[CodeData, Literal["code"]]):
     pass
     # type: str  # This will match patterns like "code:python", "code:javascript", etc.
     # data: CodeData
@@ -88,13 +92,13 @@ class CodeBlock(BlockBase[CodeData]):
     #     return v
 
 
-class MetricsBlock(BlockBase[MetricsData]):
+class MetricsBlock(BlockBase[MetricsData, Literal["metrics"]]):
     pass
     # type: Literal["metrics"]
     # data: MetricsData
 
 
-class UnknownBlock(BlockBase[dict[str, Any]]):
+class UnknownBlock(BlockBase[dict[str, Any], str]):
     pass
     # type: str
     # data: dict[str, Any] = Field(default_factory=dict)
@@ -149,7 +153,7 @@ def parse_block(block_data: dict) -> Block:
     else:
         # For unknown types, use UnknownBlock
         return UnknownBlock(
-            type=block_type,
+            block_type=block_type,
             data=block_data.get("data", {})
         )
 
