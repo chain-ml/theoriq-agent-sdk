@@ -1,5 +1,5 @@
 from theoriq.api.v1alpha2 import AgentResponse, ProtocolClient
-from theoriq.api.v1alpha2.manage import DeployedAgentManager
+from theoriq.api.v1alpha2.manage import AgentManager
 
 
 def test_get_agents_with_client() -> None:
@@ -12,7 +12,7 @@ def test_get_agents_with_client() -> None:
         assert agent.configuration.is_empty
 
 
-def test_get_agents_with_manager(user_manager: DeployedAgentManager) -> None:
+def test_get_agents_with_manager(user_manager: AgentManager) -> None:
     user_address = user_manager._biscuit_provider.address
 
     agents = user_manager.get_agents()
