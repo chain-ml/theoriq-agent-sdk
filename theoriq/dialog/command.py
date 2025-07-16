@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from dataclasses import Field
 from typing import Any, Dict, Optional
 
 from theoriq.dialog import BaseData, ItemBlock
 
 
 class CommandItem(BaseData):
+    name : Annotated[str, Field(alias="name")]
+    arguments: Annotated[Dict[str, Any], Field(alias="arguments", default_factory=dict)]
+
     def __init__(self, name: str, arguments: Dict[str, Any]) -> None:
         self.name = name
         self.arguments = arguments

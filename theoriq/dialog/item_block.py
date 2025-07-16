@@ -7,12 +7,13 @@ This module contains the schemas used by the Theoriq endpoint.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, Optional, Sequence, Type, TypeVar, Union
+from typing import Any, Dict, Generic, Optional, Sequence, Type, TypeVar, Union, Annotated
 
+from pydantic import BaseModel, Field
 from typing_extensions import Self
 
 
-class BaseData(ABC):
+class BaseData(BaseModel, ABC):
     @abstractmethod
     def to_dict(self) -> Dict[str, Any]:
         pass
@@ -28,16 +29,19 @@ class BaseData(ABC):
 T_Data = TypeVar("T_Data", bound=Union[BaseData, Sequence[BaseData]])
 
 
-class ItemBlock(Generic[T_Data]):
+class ItemBlock(BaseModel, Generic[T_Data]):
+    _block_type: Annotated[str, Field(alias="type")]
+    key: Annotated[Optional[str], Field(alias="key")] = None
+    reference: Annotated[Optional[str], Field(alias="ref")] = None
+    data: Annotated[T_Data, Field(alias="data")]
     """
     ItemBlock is a generic class that encapsulates a block of data, identified by a
     specific block type. It can hold any data type (T_Data), and includes optional
     key and reference attributes.
     """
 
-    def __init__(
-        self, *, block_type: str, data: T_Data, key: Optional[str] = None, reference: Optional[str] = None
-    ) -> None:
+    def __init__(self, /, *, block_type: str, data: T_Data, key: Optional[str] = None, reference: Optional[str] = None,
+                 **py_data: Any) -> None:
         """
         Initializes the ItemBlock instance with block type, data, key, and reference.
 
@@ -47,6 +51,7 @@ class ItemBlock(Generic[T_Data]):
             key (Optional[str]): An optional key to uniquely identify the block.
             reference (Optional[str]): An optional reference to external data.
         """
+        super().__init__(**py_data)
         self._block_type = block_type
         self.data = data
         self.key = key
@@ -123,7 +128,7 @@ class ItemBlock(Generic[T_Data]):
         """
         Abstract method to return the block type string identifier.
 
-        Raises:
+        Raises:dqsADSaadadadAsc
             NotImplementedError: This method should be implemented in a subclass.
         """
         raise NotImplementedError
