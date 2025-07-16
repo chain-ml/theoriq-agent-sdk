@@ -32,6 +32,7 @@ class BlockBase(BaseModel, Generic[T_Data, T_Type]):
         kwargs.setdefault('exclude_unset', True)
         return super().model_dump_json(**kwargs)
 
+UnknownBlock = BlockBase[dict[str, Any], str]
 
 # Router Block Data Models
 class RouterItem(BaseModel):
@@ -96,12 +97,6 @@ class MetricsBlock(BlockBase[MetricsData, Literal["metrics"]]):
     pass
     # type: Literal["metrics"]
     # data: MetricsData
-
-
-class UnknownBlock(BlockBase[dict[str, Any], str]):
-    pass
-    # type: str
-    # data: dict[str, Any] = Field(default_factory=dict)
 
 
 # Union type for all possible blocks
