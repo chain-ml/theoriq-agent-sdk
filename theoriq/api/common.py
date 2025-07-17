@@ -4,7 +4,7 @@ import abc
 from typing import Any, Dict, Optional, Sequence
 
 from ..biscuit import RequestBiscuit, ResponseBiscuit
-from ..dialog import DialogItem, ErrorItemBlock, ItemBlock, TextItemBlock
+from ..dialog import DialogItem, BlockBase
 from ..types import AgentMetadata, SourceType
 from ..utils import TTLCache
 from .v1alpha2.agent import Agent
@@ -12,7 +12,7 @@ from .v1alpha2.agent import Agent
 
 class RequestSenderBase(abc.ABC):
     @abc.abstractmethod
-    def send_request(self, blocks: Sequence[ItemBlock], to_addr: str) -> ExecuteResponse:
+    def send_request(self, blocks: Sequence[BlockBase], to_addr: str) -> ExecuteResponse:
         """
         Sends a request to another address, attenuating the biscuit for the request and handling the response.
 
