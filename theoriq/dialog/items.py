@@ -10,23 +10,6 @@ class TextData(BaseModel):
     text: str
 
 
-class CommandData(BaseModel):
-    name: str
-    arguments: dict[str, Any]
-
-    def to_str(self) -> str:
-        return f"- `{self.name}` command with arguments `{self.arguments}`"
-
-    def __str__(self) -> str:
-        return f"CommandItem(name={self.name}, arguments={self.arguments})"
-
-
-class CommandBlock(BlockBase[CommandData, Literal["command"]]):
-    @classmethod
-    def from_command(cls, command: CommandData) -> CommandBlock:
-        return cls(block_type="command", data=command)
-
-
 class MetricItem(BaseModel):
     name: str
     value: float

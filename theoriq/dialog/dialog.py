@@ -6,6 +6,7 @@ from pydantic import BaseModel, field_validator, Field
 
 from .items import RouterBlock, TextBlock, CodeBlock, MetricsBlock
 from .bloc import BlockBase
+from .web3.commands import CommandBlock
 from ..types import SourceType
 
 UnknownBlock = BlockBase[dict[str, Any], str]
@@ -91,6 +92,8 @@ def parse_block(block_data: dict) -> BlockBase:
         return CodeBlock(**block_data)
     elif block_type == "metrics":
         return MetricsBlock(**block_data)
+    elif block_type == "command":
+        return CommandBlock(**block_data)
     else:
         # For unknown types, use UnknownBlock
         return UnknownBlock(block_type=block_type, data=block_data.get("data", {}))
