@@ -6,6 +6,7 @@ Types and functions used by an Agent when executing a Theoriq request
 
 from __future__ import annotations
 
+import uuid
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from theoriq.biscuit import AgentAddress, RequestBiscuit, ResponseBiscuit, TheoriqBiscuit
@@ -87,10 +88,14 @@ class ExecuteContext(ExecuteContextBase):
             dialog=Dialog(items=[DialogItem.new(source=self.agent_address, blocks=blocks)])
         )
         body = execute_request_body.model_dump_json().encode("utf-8")
+
+        request_id = uuid.uuid4()
         theoriq_request = TheoriqRequest.from_body(body=body, from_addr=config.address, to_addr=to_addr)
-        request_biscuit = self._request_biscuit.attenuate_for_request(theoriq_request, config.private_key)
+        request_biscuit = self._request_biscuit.attenuate_for_request(theoriq_request, config.private_key, request_id)
         response = self._protocol_client.post_request(request_biscuit=request_biscuit, content=body, to_addr=to_addr)
-        return ExecuteResponse.from_protocol_response({"dialog_item": response}, 200)
+        return ExecuteResponse.from_protocol_response(
+            data={"dialog_item": response}, request_id=request_id, status_code=200
+        )
 
     def complete_request(self, response_biscuit: ResponseBiscuit, body: bytes) -> None:
         biscuit = TheoriqBiscuit(response_biscuit.biscuit)
