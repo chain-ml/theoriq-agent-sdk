@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime, timezone
-from typing import List, Any, Optional, Iterable, Callable, Sequence, Annotated
+from typing import List, Any, Optional, Iterable, Callable, Sequence, Annotated, Type, Tuple
 from pydantic import BaseModel, field_validator, Field
 
 
@@ -25,6 +25,9 @@ class DialogItem(BaseModel):
         if not v.startswith("0x"):
             raise ValueError("Source must start with '0x'")
         return v
+
+    class Config:
+        populate_by_name = True
 
     def model_dump_json(self, **kwargs):
         """Override to ensure proper JSON serialization"""
@@ -97,6 +100,15 @@ def parse_block(block_data: dict) -> BlockBase:
     else:
         # For unknown types, use UnknownBlock
         return UnknownBlock(block_type=block_type, data=block_data.get("data", {}))
+
+
+def format_source_and_blocks(
+    item: DialogItem, with_address: bool = True, block_types_to_format: Optional[Sequence[Type[BlockBase]]] = None
+) -> Tuple[str, str]:
+    """Format the source and blocks of a dialog item. Helper function to use with Dialog.map()."""
+    source_str = item.format_source(with_address=with_address)
+    blocks_str = "\n\n".join(item.format_blocks(block_types_to_format=block_types_to_format))
+    return source_str, blocks_str
 
 
 class Dialog(BaseModel):

@@ -8,6 +8,7 @@ from theoriq.dialog import (
     DialogItem,
     TextBlock,
 )
+from theoriq.dialog.items import Web3ProposedTxBlock, Web3SignedTxBlock
 from theoriq.types import SourceType
 
 USER_ADDRESS: Final[str] = "0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379f"
@@ -144,9 +145,9 @@ def test_web3_dialog() -> None:
 
 
 def test_find_blocks_of_type() -> None:
-    d: Dialog = Dialog.model_validate(dialog_web3_payload)
+    dialog: Dialog = Dialog.model_validate(dialog_web3_payload)
 
-    agent_item, user_item = d.items[1], d.items[2]
+    agent_item, user_item = dialog.items[1], dialog.items[2]
 
     assert len(agent_item.find_all_blocks_of_type("text")) == 0
     assert len(agent_item.find_all_blocks_of_type("text:markdown")) == 0
