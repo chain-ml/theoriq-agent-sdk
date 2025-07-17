@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 from theoriq.biscuit import AgentAddress, PayloadHash, RequestBiscuit, RequestFact, ResponseFact, TheoriqBiscuit
 from theoriq.biscuit.authentication_biscuit import AuthenticationBiscuit
-from theoriq.types import Metric
+from theoriq.types import Metric, SourceType
 from theoriq.utils import TTLCache, is_protocol_secured
 
 from ..agent import Agent
@@ -227,6 +227,40 @@ class ProtocolClient:
         with httpx.Client(timeout=self._timeout) as client:
             r = client.post(url=url, content=body, headers=headers)
             r.raise_for_status()
+
+    def get_requests(
+        self,
+        biscuit: TheoriqBiscuit,
+        limit: int = 100,
+        source: Optional[str] = None,
+        source_type: Optional[SourceType] = None,
+        started_after: Optional[datetime] = None,
+        started_before: Optional[datetime] = None,
+        target_agent: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        url = f"{self._uri}/requests"
+        headers = biscuit.to_headers()
+        params = {
+            "limit": limit,
+            "source": source,
+            "sourceType": source_type.value if source_type is not None else None,
+            "startedAfter": started_after.isoformat() if started_after is not None else None,
+            "startedBefore": started_before.isoformat() if started_before is not None else None,
+            "targetAgent": target_agent,
+        }
+        params = {key: value for key, value in params.items() if value is not None}
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.get(url=url, headers=headers, params=params)
+            response.raise_for_status()
+            return response.json()
+
+    def get_request_audit(self, biscuit: TheoriqBiscuit, request_id: UUID) -> Dict[str, Any]:
+        url = f"{self._uri}/requests/{request_id}/audit"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.get(url=url, headers=headers)
+            response.raise_for_status()
+            return response.json()
 
     def post_event(self, request_biscuit: RequestBiscuit, message: str) -> None:
         retry_delay = 1

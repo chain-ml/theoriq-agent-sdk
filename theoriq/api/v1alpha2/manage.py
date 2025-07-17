@@ -3,12 +3,13 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
+from uuid import UUID
 
 from typing_extensions import Self
 
 from ...biscuit import TheoriqRequest
-from ...types import AgentConfiguration, AgentMetadata, AgentSpec
+from ...types import AgentConfiguration, AgentMetadata, AgentSpec, SourceType
 from .protocol import ProtocolClient
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 from .schemas import AgentResponse, AgentWeb3Transaction
@@ -149,6 +150,29 @@ class AgentManager:
 
     def get_web3_transaction(self, tx_hash: str) -> AgentWeb3Transaction:
         return self._client.get_web3_transaction(self._biscuit_provider.get_biscuit(), tx_hash=tx_hash)
+
+    def get_requests(
+        self,
+        limit: int = 100,
+        source: Optional[str] = None,
+        source_type: Optional[SourceType] = None,
+        started_after: Optional[datetime] = None,
+        started_before: Optional[datetime] = None,
+        target_agent: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        return self._client.get_requests(
+            self._biscuit_provider.get_biscuit(),
+            limit=limit,
+            source=source,
+            source_type=source_type,
+            started_after=started_after,
+            started_before=started_before,
+            target_agent=target_agent,
+        )
+
+    def get_request_audit(self, request_id: Union[str, UUID]) -> Dict[str, Any]:
+        req_id = request_id if isinstance(request_id, UUID) else UUID(request_id)
+        return self._client.get_request_audit(self._biscuit_provider.get_biscuit(), request_id=req_id)
 
     @classmethod
     def from_api_key(cls, api_key: str) -> Self:
