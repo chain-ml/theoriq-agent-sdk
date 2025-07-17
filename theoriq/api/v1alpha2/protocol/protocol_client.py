@@ -23,6 +23,8 @@ from ..schemas import (
     EventRequestBody,
     MetricsRequestBody,
     PublicKeyResponse,
+    RequestAudit,
+    RequestItem,
 )
 
 
@@ -237,7 +239,7 @@ class ProtocolClient:
         started_after: Optional[datetime] = None,
         started_before: Optional[datetime] = None,
         target_agent: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> List[RequestItem]:
         url = f"{self._uri}/requests"
         headers = biscuit.to_headers()
         params = {
@@ -252,15 +254,16 @@ class ProtocolClient:
         with httpx.Client(timeout=self._timeout) as client:
             response = client.get(url=url, headers=headers, params=params)
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+            return [RequestItem.model_validate(item) for item in data["items"]]
 
-    def get_request_audit(self, biscuit: TheoriqBiscuit, request_id: UUID) -> Dict[str, Any]:
+    def get_request_audit(self, biscuit: TheoriqBiscuit, request_id: UUID) -> RequestAudit:
         url = f"{self._uri}/requests/{request_id}/audit"
         headers = biscuit.to_headers()
         with httpx.Client(timeout=self._timeout) as client:
             response = client.get(url=url, headers=headers)
             response.raise_for_status()
-            return response.json()
+            return RequestAudit.model_validate(response.json())
 
     def post_event(self, request_biscuit: RequestBiscuit, message: str) -> None:
         retry_delay = 1

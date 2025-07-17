@@ -12,7 +12,7 @@ from ...biscuit import TheoriqRequest
 from ...types import AgentConfiguration, AgentMetadata, AgentSpec, SourceType
 from .protocol import ProtocolClient
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
-from .schemas import AgentResponse, AgentWeb3Transaction
+from .schemas import AgentResponse, AgentWeb3Transaction, RequestAudit, RequestItem
 
 
 class AgentConfigurationError(Exception):
@@ -159,7 +159,7 @@ class AgentManager:
         started_after: Optional[datetime] = None,
         started_before: Optional[datetime] = None,
         target_agent: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> List[RequestItem]:
         return self._client.get_requests(
             self._biscuit_provider.get_biscuit(),
             limit=limit,
@@ -170,7 +170,7 @@ class AgentManager:
             target_agent=target_agent,
         )
 
-    def get_request_audit(self, request_id: Union[str, UUID]) -> Dict[str, Any]:
+    def get_request_audit(self, request_id: Union[str, UUID]) -> RequestAudit:
         req_id = request_id if isinstance(request_id, UUID) else UUID(request_id)
         return self._client.get_request_audit(self._biscuit_provider.get_biscuit(), request_id=req_id)
 
