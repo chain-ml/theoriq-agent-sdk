@@ -145,31 +145,31 @@ class ItemBlock(Generic[T_Data]):
             raise ValueError(f"Data type must be subtype of {expected}, not {block_type}")
 
     @staticmethod
-    def sub_type(bloc_type: str) -> Optional[str]:
+    def sub_type(block_type: str) -> Optional[str]:
         """
         Extracts the subtype from a block type string.
 
         Args:
-            bloc_type (str): The block type string (e.g., "custom:subtype").
+            block_type (str): The block type string (e.g., "custom:subtype").
 
         Returns:
             str: The subtype part of the block type.
         """
-        parts = bloc_type.split(":", 1)
+        parts = block_type.split(":", 1)
         return parts[1] if len(parts) > 1 else None
 
     @staticmethod
-    def root_type(bloc_type: str) -> str:
+    def root_type(block_type: str) -> str:
         """
         Extracts the root type from a block type string.
 
         Args:
-            bloc_type (str): The block type string (e.g., "custom:subtype").
+            block_type (str): The block type string (e.g., "custom:subtype").
 
         Returns:
             str: The root type of the block (e.g., "custom").
         """
-        return bloc_type.split(":", 1)[0]
+        return block_type.split(":", 1)[0]
 
     def __str__(self) -> str:
         """
