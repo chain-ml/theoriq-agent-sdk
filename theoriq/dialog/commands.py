@@ -1,9 +1,10 @@
 from __future__ import annotations
+
 from typing import Any, Generic, Literal, TypeVar, Union
 
 from pydantic import BaseModel, field_validator
 
-from theoriq.dialog.bloc import BlockBase
+from .block import BlockBase
 
 T_Args = TypeVar("T_Args", bound=Union[BaseModel, dict[str, Any]])
 T_Name = TypeVar("T_Name", bound=str)
@@ -25,6 +26,9 @@ UnknownCommandData = CommandData[dict[str, Any], str]
 
 class SearchArgs(BaseModel):
     query: str
+
+    def __str__(self) -> str:
+        return self.model_dump_json()
 
 
 class SearchCommandData(CommandData[SearchArgs, Literal["search"]]):

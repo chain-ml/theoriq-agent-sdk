@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from theoriq.biscuit import AgentAddress, RequestBiscuit, ResponseBiscuit, TheoriqBiscuit
 from theoriq.biscuit.facts import TheoriqRequest
-from theoriq.dialog import Dialog, DialogItem, BlockBase
+from theoriq.dialog import BlockBase, Dialog, DialogItem
 from theoriq.types import AgentMetadata, Metric
 
 from ..common import ExecuteContextBase, ExecuteResponse

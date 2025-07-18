@@ -1,7 +1,5 @@
 from theoriq.api.v1alpha2.schemas import ExecuteRequestBody
-from theoriq.dialog import Dialog, DialogItem, TextBlock
-from theoriq.dialog.bloc import filter_blocks
-from theoriq.types import SourceType
+from theoriq.dialog import Dialog, DialogItem, TextBlock, filter_blocks
 
 
 def test_schemas():

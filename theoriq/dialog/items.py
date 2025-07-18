@@ -1,9 +1,10 @@
 from __future__ import annotations
-from typing import Optional, List, Literal, Any, Dict, Annotated
 
-from pydantic import BaseModel, field_validator, model_validator, Field
+from typing import Annotated, Any, Dict, List, Literal, Optional
 
-from .bloc import BlockBase
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from .block import BlockBase
 
 
 class CodeData(BaseModel):

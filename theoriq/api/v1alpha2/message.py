@@ -5,7 +5,7 @@ from typing import Optional, Sequence
 
 from theoriq import ExecuteResponse
 from theoriq.biscuit import TheoriqRequest
-from theoriq.dialog import Dialog, DialogItem, BlockBase
+from theoriq.dialog import BlockBase, Dialog, DialogItem
 
 from ..common import RequestSenderBase
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory

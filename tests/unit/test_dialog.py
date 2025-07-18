@@ -3,15 +3,8 @@ from typing import Final, Sequence, Tuple
 from uuid import uuid4
 
 from theoriq.biscuit import AgentAddress
-from theoriq.dialog import (
-    Dialog,
-    DialogItem,
-    TextBlock,
-    CommandBlock,
-    format_source_and_blocks,
-    BlockBase,
-)
-from theoriq.dialog.items import Web3ProposedTxBlock, Web3SignedTxBlock, CodeBlock, DataBlock
+from theoriq.dialog import BlockBase, CommandBlock, Dialog, DialogItem, TextBlock, format_source_and_blocks
+from theoriq.dialog.items import CodeBlock, DataBlock, Web3ProposedTxBlock, Web3SignedTxBlock
 from theoriq.types import SourceType
 
 USER_ADDRESS: Final[str] = "0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379f"

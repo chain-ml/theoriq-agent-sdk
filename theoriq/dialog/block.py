@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypeVar, Union, Any, Generic, Annotated, Optional, Sequence, Type
+from typing import Annotated, Any, Generic, Optional, Sequence, Type, TypeVar, Union
 
 from pydantic import BaseModel, Field
 
