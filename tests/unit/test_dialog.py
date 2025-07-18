@@ -179,10 +179,10 @@ def test_commands_dialog() -> None:
     assert isinstance(summarize_command_block, CommandBlock)
 
     assert search_command_block.data.name == "search"
-    assert search_command_block.data.arguments == {"query": "Trending tokens in the last 24 hours"}
+    assert search_command_block.data.arguments.query == "Trending tokens in the last 24 hours"
 
     assert summarize_command_block.data.name == "summarize"
-    assert summarize_command_block.data.arguments == {"compression_ratio": 0.5}
+    assert summarize_command_block.data.arguments["compression_ratio"] == 0.5
 
 
 def test_format_source() -> None:

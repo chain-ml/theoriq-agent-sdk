@@ -165,7 +165,7 @@ def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse
     # Wrapping the result into an `ExecuteResponse` with some helper functions on the Context
     return context.new_response(
         blocks=[
-            TextItemBlock(text=agent_result),
+            TextBlock.from_text(text=agent_result),
         ],
     )
 ```
