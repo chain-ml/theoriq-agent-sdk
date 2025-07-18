@@ -8,7 +8,7 @@ from .block import BaseData, BlockBase
 
 
 class MetricItem(BaseModel):
-    name: str
+    name: Annotated[str, Field(min_length=1, description="Metric name")]
     value: float
     trend_percentage: Annotated[float, Field(alias="trendPercentage")]
 

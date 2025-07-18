@@ -8,7 +8,7 @@ from typing import Annotated, Any, Callable, Iterable, List, Optional, Sequence,
 from pydantic import BaseModel, Field, field_serializer, field_validator
 
 from ..types import SourceType
-from .block import BlockBase
+from .block import BaseData, BlockBase
 from .code_items import CodeBlock
 from .commands import CommandBlock
 from .metrics_items import MetricsBlock
@@ -20,10 +20,10 @@ UnknownBlock = BlockBase[dict[str, Any], str]
 
 
 # Main data model
-class DialogItem(BaseModel):
+class DialogItem(BaseData):
     timestamp: datetime = Field(..., description="ISO format timestamp")
-    source_type: Annotated[SourceType, Field(alias="sourceType")]
-    source: str
+    source_type: Annotated[SourceType, Field(description="Source type")]
+    source: Annotated[str, Field(pattern="0x[a-fA-F0-9]{40}([a-fA-F0-9]{24})?", description="Source")]
     blocks: List[BlockBase]
 
     @field_validator("timestamp", mode="before")
@@ -57,14 +57,6 @@ class DialogItem(BaseModel):
         except ValueError:
             result = datetime.fromisoformat(value)
         return result.replace(tzinfo=timezone.utc) if result.tzinfo is None else result
-
-    def _set_dump_defaults(self, kwargs):
-        """Set default serialization options"""
-        kwargs.setdefault("by_alias", True)
-        kwargs.setdefault("exclude_none", True)
-        kwargs.setdefault("exclude_defaults", True)
-        kwargs.setdefault("exclude_unset", True)
-        return kwargs
 
     def model_dump_json(self, **kwargs):
         """Override to ensure proper JSON serialization"""

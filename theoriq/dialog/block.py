@@ -29,6 +29,14 @@ class BaseData(BaseModel):
         populate_by_name = True
         alias_generator = to_camel
 
+    def _set_dump_defaults(self, kwargs):
+        """Set default serialization options"""
+        kwargs.setdefault("by_alias", True)
+        kwargs.setdefault("exclude_none", True)
+        kwargs.setdefault("exclude_defaults", True)
+        kwargs.setdefault("exclude_unset", True)
+        return kwargs
+
 
 T_Data = TypeVar("T_Data", bound=Union[BaseData, dict[str, Any]])
 T_Type = TypeVar("T_Type", bound=str)
