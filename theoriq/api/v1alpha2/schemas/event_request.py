@@ -16,5 +16,5 @@ class EventRequestBody:
             "message": self.message,
         }
         if self.obj is not None:
-            result["object"] = self.obj.to_dict()
+            result["object"] = self.obj.model_dump()
         return result

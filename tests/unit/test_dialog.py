@@ -278,7 +278,7 @@ def test_format_md() -> None:
 
 def test_dialog() -> None:
     for dialog in [dialog_payload, dialog_commands_payload, dialog_web3_payload]:
-        dialog = Dialog(**dialog)
+        dialog = Dialog.model_validate(dialog)
         print(dialog.model_dump_json(indent=2))
 
 

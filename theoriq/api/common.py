@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional, Sequence
 
 from ..biscuit import RequestBiscuit, ResponseBiscuit
 from ..dialog import DialogItem, BlockBase, TextBlock
+from ..dialog.items import ErrorBlock
 from ..types import AgentMetadata, SourceType
 from ..utils import TTLCache
 from .v1alpha2.agent import Agent
@@ -105,7 +106,7 @@ class ExecuteContextBase(RequestSenderBase):
         Returns:
             ExecuteResponse: The response object encapsulating the error.
         """
-        return self.new_response(blocks=[ErrorBlock.new(err=err.err, message=err.message)])
+        return self.new_response(blocks=[ErrorBlock.from_error(err=err.err, message=err.message)])
 
     @property
     def agent_address(self) -> str:

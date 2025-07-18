@@ -106,6 +106,17 @@ class ErrorData(BaseModel):
         return "\n".join(result)
 
 
+class ErrorBlock(BlockBase[ErrorData, Annotated[str, Literal["error"]]]):
+
+    @classmethod
+    def from_error(cls, err: str, message: Optional[str] = None) -> ErrorBlock:
+        return ErrorBlock(block_type="error", data=ErrorData(err=err, message=message))
+
+    @classmethod
+    def from_exception(cls, e: Exception) -> ErrorBlock:
+        return ErrorBlock(block_type="error", data=ErrorData(err=str(e), message=None))
+
+
 class MetricItem(BaseModel):
     name: str
     value: float

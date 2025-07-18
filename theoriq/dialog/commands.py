@@ -32,7 +32,7 @@ class SearchCommandData(CommandData[SearchArgs, Literal["search"]]):
 
 
 def parse_command_data(command_data: dict) -> CommandData:
-    command_name = command_data.get("name")
+    command_name = command_data.get("name", "unknown")
     if command_name == "search":
         return SearchCommandData(**command_data)
     return UnknownCommandData(name=command_name, arguments=command_data.get("arguments", {}))
