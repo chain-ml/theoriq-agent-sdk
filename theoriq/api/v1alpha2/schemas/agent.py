@@ -36,8 +36,8 @@ class Metadata(BaseModel):
             parts.append(f"Cost card: {self.cost_card}")
         return "\n".join(parts)
 
-    def format_with_id(self, id: str) -> str:
-        return f"Agent address: {id}\n" + self.format()
+    def format_with_id(self, agent_id: str) -> str:
+        return f"Agent address: {agent_id}\n" + self.format()
 
 
 class Virtual(BaseModel):

@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any
 
 
-class SourceType(Enum):
+class SourceType(str, Enum):
     """
     An enumeration that defines two possible source types: 'User' and 'Agent'.
     This is used to categorize the source of certain actions or data.

@@ -130,7 +130,8 @@ def execute_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Resp
             except ExecuteRuntimeError as err:
                 execute_response = execute_context.runtime_error_response(err)
 
-            response = jsonify(execute_response.body.to_dict())
+            dump = execute_response.body.model_dump()
+            response = jsonify(dump)
             response_biscuit = execute_context.new_response_biscuit(response.get_data())
             response = add_biscuit_to_response(response, response_biscuit)
             return response
@@ -178,7 +179,7 @@ def _execute_async(
         except ExecuteRuntimeError as err:
             execute_response = execute_context.runtime_error_response(err)
 
-        response_payload = {"response": execute_response.body.to_dict()}
+        response_payload = {"response": execute_response.body.model_dump()}
         response = Response(response=json.dumps(response_payload), content_type="application/json")
         response_biscuit = execute_context.new_response_biscuit(response.get_data())
 

@@ -4,12 +4,11 @@ GIT_ROOT ?= $(shell git rev-parse --show-toplevel)
 
 format:
 	poetry run black .
+	poetry run isort .
 
-dev-lint:
-	poetry run black .
+dev-lint: format
 	poetry run mypy .
 	poetry run ruff check . --fix
-	poetry run isort .
 	poetry run pylint theoriq/. --max-line-length 120 --disable=R,C,I  --fail-under=9
 
 lint:
