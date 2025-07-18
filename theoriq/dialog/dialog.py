@@ -9,8 +9,12 @@ from pydantic import BaseModel, Field, field_serializer, field_validator
 
 from ..types import SourceType
 from .block import BlockBase
+from .code_items import CodeBlock
 from .commands import CommandBlock
-from .items import CodeBlock, MetricsBlock, RouterBlock, TextBlock, Web3ProposedTxBlock, Web3SignedTxBlock
+from .metrics_items import MetricsBlock
+from .router_items import RouterBlock
+from .text_items import TextBlock
+from .web3_items import Web3ProposedTxBlock, Web3SignedTxBlock
 
 UnknownBlock = BlockBase[dict[str, Any], str]
 

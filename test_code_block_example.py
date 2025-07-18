@@ -3,7 +3,7 @@
 Example demonstrating the new CodeBlock functionality with language support.
 """
 
-from theoriq.dialog.items import CodeBlock
+from theoriq.dialog import CodeBlock
 
 
 def main():

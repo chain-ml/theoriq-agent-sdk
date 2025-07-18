@@ -4,8 +4,7 @@ import abc
 from typing import Any, Dict, Optional, Sequence
 
 from ..biscuit import RequestBiscuit, ResponseBiscuit
-from ..dialog import BlockBase, DialogItem, TextBlock
-from ..dialog.items import ErrorBlock
+from ..dialog import BlockBase, DialogItem, ErrorBlock, TextBlock
 from ..types import AgentMetadata, SourceType
 from ..utils import TTLCache
 from .v1alpha2.agent import Agent

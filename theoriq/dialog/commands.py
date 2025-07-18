@@ -4,13 +4,13 @@ from typing import Any, Generic, Literal, TypeVar, Union
 
 from pydantic import BaseModel, field_validator
 
-from .block import BlockBase
+from .block import BaseData, BlockBase
 
 T_Args = TypeVar("T_Args", bound=Union[BaseModel, dict[str, Any]])
 T_Name = TypeVar("T_Name", bound=str)
 
 
-class CommandData(BaseModel, Generic[T_Args, T_Name]):
+class CommandData(BaseData, Generic[T_Args, T_Name]):
     name: T_Name
     arguments: T_Args
 
