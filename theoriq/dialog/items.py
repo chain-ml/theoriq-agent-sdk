@@ -15,7 +15,7 @@ class CodeData(BaseModel):
         if self.language:
             result = [f"```{self.language}", self.code, "```"]
         else:
-            result = [f"```", self.code, "```"]
+            result = ["```", self.code, "```"]
         return "\n".join(result)
 
     def __str__(self) -> str:
