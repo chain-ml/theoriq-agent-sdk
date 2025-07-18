@@ -55,4 +55,4 @@ def test_last_item_from() -> None:
     e: ExecuteRequestBody = ExecuteRequestBody.model_validate(request_payload)
     li = e.last_item_from(SourceType.Agent)
     assert li is not None
-    assert li.source == "a271094f9b32aa6fb20c8de5e6cdb06e41603415fc749c7a43e46d5875f93c9f"
+    assert li.source == "0xa271094f9b32aa6fb20c8de5e6cdb06e41603415fc749c7a43e46d5875f93c9f"

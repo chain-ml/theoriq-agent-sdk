@@ -6,7 +6,7 @@ from typing import List, Any, Optional, Iterable, Callable, Sequence, Annotated,
 from pydantic import BaseModel, field_validator, Field, field_serializer
 
 
-from .items import RouterBlock, TextBlock, CodeBlock, MetricsBlock
+from .items import RouterBlock, TextBlock, CodeBlock, MetricsBlock, Web3ProposedTxBlock, Web3SignedTxBlock
 from .bloc import BlockBase
 from .commands import CommandBlock
 from ..types import SourceType
@@ -158,24 +158,35 @@ DialogItemPredicate = Callable[[DialogItem], bool]
 DialogItemTransformer = Callable[[DialogItem], Any]
 
 
+# Block type mapping for factory function
+BLOCK_TYPE_MAP = {
+    "router": RouterBlock,
+    "text": TextBlock,
+    "code": CodeBlock,
+    "metrics": MetricsBlock,
+    "command": CommandBlock,
+    "web3:proposedTx": Web3ProposedTxBlock,
+    "web3:signedTx": Web3SignedTxBlock,
+}
+
+
 # Factory function to parse blocks with unknown type handling
 def parse_block(block_data: dict) -> BlockBase:
     """Parse a block dictionary into the appropriate Block type."""
     block_type = block_data.get("type", "")
 
-    if block_type == "router":
-        return RouterBlock(**block_data)
-    elif block_type == "text" or block_type.startswith("text:"):
+    # Check exact match first
+    if block_type in BLOCK_TYPE_MAP:
+        return BLOCK_TYPE_MAP[block_type](**block_data)
+
+    # Check for prefix matches
+    if block_type.startswith("text:"):
         return TextBlock(**block_data)
-    elif block_type == "code" or block_type.startswith("code:"):
+    elif block_type.startswith("code:"):
         return CodeBlock(**block_data)
-    elif block_type == "metrics":
-        return MetricsBlock(**block_data)
-    elif block_type == "command":
-        return CommandBlock(**block_data)
-    else:
-        # For unknown types, use UnknownBlock
-        return UnknownBlock(block_type=block_type, data=block_data.get("data", {}))
+
+    # For unknown types, use UnknownBlock
+    return UnknownBlock(block_type=block_type, data=block_data.get("data", {}))
 
 
 def format_source_and_blocks(
@@ -219,6 +230,35 @@ class Dialog(BaseModel):
             raise RuntimeError("Got empty dialog")
 
         return last_item.extract_last_text()
+
+    def last_item_from(self, source_type: SourceType) -> Optional[DialogItem]:
+        """
+        Returns the last dialog item from a specific source type based on the timestamp.
+
+        Args:
+            source_type (SourceType): The source type to filter the dialog items.
+
+        Returns:
+            Optional[DialogItem]: The dialog item with the most recent timestamp from the specified source type,
+                                  or None if no items match the source type.
+        """
+
+        return self.last_item_predicate(lambda item: item.source_type == source_type)
+
+    def last_item_predicate(self, predicate: DialogItemPredicate) -> Optional[DialogItem]:
+        """
+        Returns the last dialog item that matches the given predicate based on the timestamp.
+
+        Args:
+            predicate (DialogItemPredicate): A function that takes a DialogItem and returns a boolean.
+
+            Returns:
+                Optional[DialogItem]: The dialog item that matches the predicate and has the latest timestamp,
+                                       or None if no items match the predicate.
+        """
+
+        items = (item for item in self.items if predicate(item))
+        return max(items, key=lambda obj: obj.timestamp) if items else None
 
     def map(self, func: DialogItemTransformer) -> List[Any]:
         """Apply a function to each item in the dialog."""

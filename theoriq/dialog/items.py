@@ -189,12 +189,12 @@ class MetricsBlock(BlockBase[MetricsData, Literal["metrics"]]):
 class Web3ProposedTxData(BaseModel):
     abi: Dict[str, Any]
     description: str
-    known_addresses: Dict[str, str]
-    tx_chain_id: int
-    tx_to: str
-    tx_gas_limit: str
-    tx_data: str
-    tx_nonce: int
+    known_addresses: Annotated[Dict[str, str], Field(alias="knownAddresses")]
+    tx_chain_id: Annotated[int, Field(alias="txChainId")]
+    tx_to: Annotated[str, Field(alias="txTo")]
+    tx_gas_limit: Annotated[int, Field(alias="txGasLimit")]
+    tx_data: Annotated[str, Field(alias="txData")]
+    tx_nonce: Annotated[int, Field(alias="txNonce")]
 
 
 class Web3ProposedTxBlock(BlockBase[Web3ProposedTxData, Literal["web3:proposedTx"]]):
@@ -202,8 +202,8 @@ class Web3ProposedTxBlock(BlockBase[Web3ProposedTxData, Literal["web3:proposedTx
 
 
 class Web3SignedTxData(BaseModel):
-    chain_id: int
-    tx_hash: str
+    chain_id: Annotated[int, Field(alias="chainId")]
+    tx_hash: Annotated[str, Field(alias="txHash")]
 
 
 class Web3SignedTxBlock(BlockBase[Web3SignedTxData, Literal["web3:signedTx"]]):
