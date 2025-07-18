@@ -9,7 +9,6 @@ from theoriq.dialog import (
     Web3ProposedTxData,
     Web3SignedTxData,
 )
-
 from theoriq.dialog.commands import UnknownCommandData
 
 
@@ -79,6 +78,8 @@ def test_web3_proposed_tx_to_str():
 
 
 def test_web3_signed_tx_to_str():
-    web3_signed_tx_data = Web3SignedTxData(chain_id=1, tx_hash="0xa43da2004cf4131acc2bd14ef6fb68ff47752d0df9036b5b4a145b3b886bc75b", status=1)
+    web3_signed_tx_data = Web3SignedTxData(
+        chain_id=1, tx_hash="0xa43da2004cf4131acc2bd14ef6fb68ff47752d0df9036b5b4a145b3b886bc75b", status=1
+    )
     str_repr = web3_signed_tx_data.to_str()
     print(str_repr)

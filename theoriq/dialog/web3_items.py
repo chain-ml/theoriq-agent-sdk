@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from typing import Annotated, Any, Dict, Literal
-from typing_extensions import Self
 
 from pydantic import Field
+from typing_extensions import Self
 
 from .block import BaseData, BlockBase
 
