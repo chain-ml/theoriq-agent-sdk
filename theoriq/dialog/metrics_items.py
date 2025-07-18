@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import Annotated, List, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from .block import BaseData, BlockBase
 
 
-class MetricItem(BaseModel):
+class MetricItem(BaseData):
     name: Annotated[str, Field(min_length=1, description="Metric name")]
     value: float
     trend_percentage: Annotated[float, Field(alias="trendPercentage")]

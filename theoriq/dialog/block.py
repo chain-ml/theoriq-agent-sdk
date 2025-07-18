@@ -13,11 +13,28 @@ class BaseData(BaseModel):
     """
 
     def to_str(self) -> str:
-        """
-        Converts the data item to a string representation.
-        This method should be overridden in subclasses.
-        """
-        raise NotImplementedError("Subclasses must implement this method.")
+        """Returns a human-friendly description of the object for LLM usage."""
+        lines = [f"{self.__class__.__name__}:"]
+        for field_name, field in self.model_fields.items():
+            value = getattr(self, field_name)
+            if isinstance(value, BaseData):
+                nested = value.to_str().replace("\n", "\n  ")
+                description = field.description
+                desc = f" ({description})" if description else ""
+                lines.append(f"- {field_name}{desc}: \n  {nested}")
+            elif isinstance(value, list):
+                lines.append(f"- {field_name}:")
+                for item in value:
+                    if isinstance(item, BaseData):
+                        nested = item.to_str().replace("\n", "\n    ")
+                        lines.append(f"  - {nested}")
+                    else:
+                        lines.append(f"  - {repr(item)}")
+            else:
+                description = field.description
+                desc = f" ({description})" if description else ""
+                lines.append(f"- {field_name}{desc}: {repr(value)}")
+        return "\n".join(lines)
 
     def __str__(self) -> str:
         """
