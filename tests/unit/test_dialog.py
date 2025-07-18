@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from theoriq.biscuit import AgentAddress
 from theoriq.dialog import BlockBase, CommandBlock, Dialog, DialogItem, TextBlock, format_source_and_blocks
-from theoriq.dialog.items import CodeBlock, DataBlock, Web3ProposedTxBlock, Web3SignedTxBlock
+from theoriq.dialog.items import CodeBlock, DataBlock, Web3ProposedTxBlock, Web3SignedTxBlock, Web3SignedTxData
 from theoriq.types import SourceType
 
 USER_ADDRESS: Final[str] = "0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379f"
@@ -87,8 +87,9 @@ dialog_web3_payload = {
                 {
                     "type": "web3:signedTx",
                     "data": {
-                        "txHash": "0x0159def724215e361a61db0b25118ad09cb63cf88ea69bb26c53289e44255gb4",
+                        "txHash": "0xa43da2004cf4131acc2bd14ef6fb68ff47752d0df9036b5b4a145b3b886bc75b",
                         "chainId": 8453,
+                        "status": 1,
                     },
                 },
             ],
@@ -276,10 +277,9 @@ def test_dialog() -> None:
 
 
 def test_dialog_schema() -> None:
-    print(json.dumps(TextBlock.model_json_schema(), indent=2))
+    print(json.dumps(Web3SignedTxData.model_json_schema(), indent=2))
 
 
 def test_dialog_v2_text_item() -> None:
-    # item = dialogv2.TextBlock(type="text", data=dialogv2.TextData(text="some text"), key=None)
     item = TextBlock.from_text("some text")
     print(item.model_dump_json(indent=2))

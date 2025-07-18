@@ -3,8 +3,34 @@ from __future__ import annotations
 from typing import Annotated, Any, Generic, Optional, Sequence, Type, TypeVar, Union
 
 from pydantic import BaseModel, Field
+from pydantic.alias_generators import to_camel
 
-T_Data = TypeVar("T_Data", bound=Union[BaseModel, dict[str, Any]])
+
+class BaseData(BaseModel):
+    """
+    Base class for data items in blocks.
+    This class can be extended to create specific data types.
+    """
+
+    def to_str(self) -> str:
+        """
+        Converts the data item to a string representation.
+        This method should be overridden in subclasses.
+        """
+        raise NotImplementedError("Subclasses must implement this method.")
+
+    def __str__(self) -> str:
+        """
+        Returns a string representation of the BaseData instance.
+        """
+        return self.model_dump_json(by_alias=True, exclude_none=True)
+
+    class Config:
+        populate_by_name = True
+        alias_generator = to_camel
+
+
+T_Data = TypeVar("T_Data", bound=Union[BaseData, dict[str, Any]])
 T_Type = TypeVar("T_Type", bound=str)
 
 

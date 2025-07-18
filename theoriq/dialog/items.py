@@ -4,10 +4,10 @@ from typing import Annotated, Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from .block import BlockBase
+from .block import BaseData, BlockBase
 
 
-class CodeData(BaseModel):
+class CodeData(BaseData):
     code: str
     language: Optional[str] = None
 
@@ -49,7 +49,7 @@ class CodeBlock(BlockBase[CodeData, Annotated[str, Field(pattern="code(:.*)?")]]
         return cls(block_type=block_type, data=CodeData(code=code, language=language))
 
 
-class DataItem(BaseModel):
+class DataItem(BaseData):
     data: str
     type: Optional[str]
 
@@ -92,7 +92,7 @@ class DataBlock(BlockBase[DataItem, Annotated[str, Field(pattern="data(:.*)?")]]
         return DataBlock(block_type=block_type, data=DataItem(data=data, type=sub_type))
 
 
-class ErrorData(BaseModel):
+class ErrorData(BaseData):
     err: str
     message: Optional[str]
 
@@ -123,9 +123,16 @@ class MetricItem(BaseModel):
     value: float
     trend_percentage: Annotated[float, Field(alias="trendPercentage")]
 
+    class Config:
+        populate_by_name = True
 
-class MetricsData(BaseModel):
+
+class MetricsData(BaseData):
     items: List[MetricItem]
+
+    @classmethod
+    def from_metric(cls, name: str, value: float, trend_percentage: float) -> MetricsData:
+        return cls(items=[MetricItem(name=name, value=value, trend_percentage=trend_percentage)])
 
 
 class RouterItem(BaseModel):
@@ -134,7 +141,7 @@ class RouterItem(BaseModel):
     reason: Optional[str] = None
 
 
-class RouterData(BaseModel):
+class RouterData(BaseData):
     items: List[RouterItem]
 
 
@@ -142,7 +149,7 @@ class RouterBlock(BlockBase[RouterData, Literal["router"]]):
     pass
 
 
-class TextData(BaseModel):
+class TextData(BaseData):
     text: str
     type: Optional[str] = None
 
@@ -187,24 +194,25 @@ class MetricsBlock(BlockBase[MetricsData, Literal["metrics"]]):
     pass
 
 
-class Web3ProposedTxData(BaseModel):
+class Web3ProposedTxData(BaseData):
     abi: Dict[str, Any]
     description: str
-    known_addresses: Annotated[Dict[str, str], Field(alias="knownAddresses")]
-    tx_chain_id: Annotated[int, Field(alias="txChainId")]
-    tx_to: Annotated[str, Field(alias="txTo")]
-    tx_gas_limit: Annotated[int, Field(alias="txGasLimit")]
-    tx_data: Annotated[str, Field(alias="txData")]
-    tx_nonce: Annotated[int, Field(alias="txNonce")]
+    known_addresses: Annotated[Dict[str, str], Field(...)]
+    tx_chain_id: Annotated[int, Field(...)]
+    tx_to: Annotated[str, Field(...)]
+    tx_gas_limit: Annotated[int, Field(...)]
+    tx_data: Annotated[str, Field(...)]
+    tx_nonce: Annotated[int, Field(...)]
 
 
 class Web3ProposedTxBlock(BlockBase[Web3ProposedTxData, Literal["web3:proposedTx"]]):
     pass
 
 
-class Web3SignedTxData(BaseModel):
-    chain_id: Annotated[int, Field(alias="chainId")]
-    tx_hash: Annotated[str, Field(alias="txHash")]
+class Web3SignedTxData(BaseData):
+    chain_id: Annotated[int, Field(...)]
+    tx_hash: Annotated[str, Field(pattern="0x[a-fA-F0-9]{64}", description="Transaction hash in hex format")]
+    status: Annotated[Literal[0, 1], Field(description="Transaction status: 0 for failure, 1 for success")]
 
 
 class Web3SignedTxBlock(BlockBase[Web3SignedTxData, Literal["web3:signedTx"]]):
