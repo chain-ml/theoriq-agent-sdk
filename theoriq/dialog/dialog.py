@@ -8,6 +8,7 @@ from pydantic import BaseModel, field_serializer, field_validator
 
 from ..types import SourceType
 from .code import CodeItemBlock
+from .command import CommandItemBlock
 from .custom import CustomItemBlock
 from .data import DataItemBlock
 from .image import ImageItemBlock
@@ -20,6 +21,7 @@ from .web3 import Web3ProposedTxBlock, Web3SignedTxBlock
 
 BLOCK_CLASSES: Final[List[Type[ItemBlock]]] = [
     CodeItemBlock,
+    CommandItemBlock,
     CustomItemBlock,
     DataItemBlock,
     ErrorItemBlock,
@@ -106,10 +108,24 @@ class DialogItem:
         }
 
     def find_blocks_of_type(self, block_type: str) -> Iterable[ItemBlock[Any]]:
+        has_subtype = ItemBlock.sub_type(block_type) is not None
+
         for block in self.blocks:
-            if block.block_type() == block_type:
-                yield block
+            if block.is_valid(block_type):
+                if not has_subtype or block.full_block_type == block_type:
+                    yield block
         return
+
+    def find_all_blocks_of_type(self, block_type: str) -> List[ItemBlock[Any]]:
+        return list(self.find_blocks_of_type(block_type))
+
+    def find_first_block_of_type(self, block_type: str) -> Optional[ItemBlock[Any]]:
+        blocks = self.find_all_blocks_of_type(block_type)
+        return blocks[0] if len(blocks) > 0 else None
+
+    def find_last_block_of_type(self, block_type: str) -> Optional[ItemBlock[Any]]:
+        blocks = self.find_all_blocks_of_type(block_type)
+        return blocks[-1] if len(blocks) > 0 else None
 
     def extract_last_text(self) -> str:
         """
@@ -193,6 +209,65 @@ class Dialog(BaseModel):
     """
 
     items: Sequence[DialogItem]
+
+    @property
+    def last_item(self) -> Optional[DialogItem]:
+        """
+        Returns the last dialog item contained in the request based on the timestamp.
+
+        Returns:
+            Optional[DialogItem]: The dialog item with the most recent timestamp, or None if there are no items.
+        """
+        if len(self.items) == 0:
+            return None
+
+        return max(self.items, key=lambda obj: obj.timestamp)
+
+    @property
+    def last_text(self) -> str:
+        """
+        Returns the last text item from the dialog.
+
+        Returns:
+            str: The last text item from the dialog.
+
+        Raises:
+            RuntimeError: If the dialog is empty or no text blocks are found in the last dialog item.
+        """
+        last_item = self.last_item
+        if last_item is None:
+            raise RuntimeError("Got empty dialog")
+
+        return last_item.extract_last_text()
+
+    def last_item_from(self, source_type: SourceType) -> Optional[DialogItem]:
+        """
+        Returns the last dialog item from a specific source type based on the timestamp.
+
+        Args:
+            source_type (SourceType): The source type to filter the dialog items.
+
+        Returns:
+            Optional[DialogItem]: The dialog item with the most recent timestamp from the specified source type,
+                                  or None if no items match the source type.
+        """
+
+        return self.last_item_predicate(lambda item: item.source_type == source_type)
+
+    def last_item_predicate(self, predicate: DialogItemPredicate) -> Optional[DialogItem]:
+        """
+        Returns the last dialog item that matches the given predicate based on the timestamp.
+
+        Args:
+            predicate (DialogItemPredicate): A function that takes a DialogItem and returns a boolean.
+
+            Returns:
+                Optional[DialogItem]: The dialog item that matches the predicate and has the latest timestamp,
+                                       or None if no items match the predicate.
+        """
+
+        items = (item for item in self.items if predicate(item))
+        return max(items, key=lambda obj: obj.timestamp) if items else None
 
     def map(self, func: DialogItemTransformer) -> List[Any]:
         """Apply a function to each item in the dialog."""

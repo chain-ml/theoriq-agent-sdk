@@ -52,6 +52,10 @@ class ItemBlock(Generic[T_Data]):
         self.key = key
         self.reference = reference
 
+    @property
+    def full_block_type(self) -> str:
+        return self._block_type
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Converts the ItemBlock and its contents into a dictionary format.

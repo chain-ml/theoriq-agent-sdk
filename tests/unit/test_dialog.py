@@ -4,6 +4,7 @@ from uuid import uuid4
 from theoriq.biscuit import AgentAddress
 from theoriq.dialog import (
     CodeItemBlock,
+    CommandItemBlock,
     DataItemBlock,
     Dialog,
     DialogItem,
@@ -89,6 +90,10 @@ dialog_web3_payload = {
                     "type": "text:markdown",
                 },
                 {
+                    "data": {"text": "another text block"},
+                    "type": "text",
+                },
+                {
                     "type": "web3:signedTx",
                     "data": {
                         "txHash": "0x0159def724215e361a61db0b25118ad09cb63cf88ea69bb26c53289e44255gb4",
@@ -96,6 +101,32 @@ dialog_web3_payload = {
                     },
                 },
             ],
+        },
+    ]
+}
+
+dialog_commands_payload = {
+    "items": [
+        {
+            "sourceType": str(SourceType.User),
+            "source": USER_ADDRESS,
+            "timestamp": "2024-11-04T20:00:39Z",
+            "blocks": [
+                {
+                    "data": {"name": "search", "arguments": {"query": "Trending tokens in the last 24 hours"}},
+                    "type": "command",
+                },
+                {
+                    "data": {"name": "summarize", "arguments": {"compression_ratio": 0.5}},
+                    "type": "command",
+                },
+            ],
+        },
+        {
+            "sourceType": str(SourceType.Agent),
+            "source": RANDOM_AGENT_ADDRESS,
+            "timestamp": "2024-11-27T00:57:29.725500Z",
+            "blocks": [{"data": {"text": "The trending tokens in the last 24 hours are ...."}, "type": "text"}],
         },
     ]
 }
@@ -115,7 +146,51 @@ def test_web3_dialog() -> None:
     d: Dialog = Dialog.model_validate(dialog_web3_payload)
     assert isinstance(d, Dialog)
     assert isinstance(d.items[1].blocks[0], Web3ProposedTxBlock)
-    assert isinstance(d.items[2].blocks[1], Web3SignedTxBlock)
+    assert isinstance(d.items[2].blocks[-1], Web3SignedTxBlock)
+
+
+def test_find_blocks_of_type() -> None:
+    d: Dialog = Dialog.model_validate(dialog_web3_payload)
+
+    agent_item, user_item = d.items[1], d.items[2]
+
+    assert len(agent_item.find_all_blocks_of_type("text")) == 0
+    assert len(agent_item.find_all_blocks_of_type("text:markdown")) == 0
+    assert len(agent_item.find_all_blocks_of_type("text:unknown_subtype")) == 0
+    assert len(agent_item.find_all_blocks_of_type("web3:proposedTx")) == 1
+    assert len(agent_item.find_all_blocks_of_type("web3:unknown_subtype")) == 0
+
+    assert len(user_item.find_all_blocks_of_type("text")) == 2
+    assert len(user_item.find_all_blocks_of_type("text:markdown")) == 1
+    assert len(user_item.find_all_blocks_of_type("text:unknown_subtype")) == 0
+    assert len(user_item.find_all_blocks_of_type("web3:signedTx")) == 1
+    assert len(user_item.find_all_blocks_of_type("web3:unknown_subtype")) == 0
+
+    first_web3_block = user_item.find_first_block_of_type("web3:signedTx")
+    last_web3_block = user_item.find_last_block_of_type("web3:signedTx")
+    assert first_web3_block == last_web3_block
+
+    first_text_block = user_item.find_first_block_of_type("text")
+    last_text_block = user_item.find_last_block_of_type("text")
+    assert isinstance(first_text_block, TextItemBlock) and isinstance(last_text_block, TextItemBlock)
+    assert first_text_block.data.text == "transaction sent successfully"
+    assert last_text_block.data.text == "another text block"
+
+    assert user_item.find_first_block_of_type("unknown_type") is None
+
+
+def test_commands_dialog() -> None:
+    d: Dialog = Dialog.model_validate(dialog_commands_payload)
+    search_command_block, summarize_command_block = d.items[0].blocks[0], d.items[0].blocks[1]
+
+    assert isinstance(search_command_block, CommandItemBlock)
+    assert isinstance(summarize_command_block, CommandItemBlock)
+
+    assert search_command_block.data.name == "search"
+    assert search_command_block.data.arguments == {"query": "Trending tokens in the last 24 hours"}
+
+    assert summarize_command_block.data.name == "summarize"
+    assert summarize_command_block.data.arguments == {"compression_ratio": 0.5}
 
 
 def test_format_source() -> None:
