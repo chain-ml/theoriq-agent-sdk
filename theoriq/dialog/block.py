@@ -27,17 +27,17 @@ class BlockBase(BaseModel, Generic[T_Data, T_Type]):
         return super().model_dump_json(**kwargs)
 
     @staticmethod
-    def sub_type(bloc_type: T_Type) -> Optional[str]:
+    def sub_type(block_type: T_Type) -> Optional[str]:
         """
         Extracts the subtype from a block type string.
 
         Args:
-            bloc_type (str): The block type string (e.g., "custom:subtype").
+            block_type (str): The block type string (e.g., "custom:subtype").
 
         Returns:
             str: The subtype part of the block type.
         """
-        parts = bloc_type.split(":", 1)
+        parts = block_type.split(":", 1)
         return parts[1] if len(parts) > 1 else None
 
     def is_of_type(self, block_type: T_Type) -> bool:
