@@ -145,7 +145,7 @@ def test_find_blocks_of_type() -> None:
 
     agent_item, user_item = dialog.items[1], dialog.items[2]
 
-    assert agent_item.has_blocks_of_type("text")
+    assert not agent_item.has_blocks_of_type("text")
     assert not agent_item.has_blocks_of_type("text:markdown")
     assert not agent_item.has_blocks_of_type("text:unknown_subtype")
     assert agent_item.has_blocks_of_type("web3:proposedTx")
