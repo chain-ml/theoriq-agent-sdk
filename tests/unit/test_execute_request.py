@@ -17,7 +17,7 @@ request_payload = {
                 "blocks": [
                     {"data": {"text": "The recommended agent is News Search -- A news search agent. "}, "type": "text"}
                 ],
-                "source": "a271094f9b32aa6fb20c8de5e6cdb06e41603415fc749c7a43e46d5875f93c9f",
+                "source": "0xa271094f9b32aa6fb20c8de5e6cdb06e41603415fc749c7a43e46d5875f93c9f",
                 "sourceType": "agent",
                 "timestamp": "2024-11-10T04:06:05.977921+00:00",
                 "requestId": "21a110d6-f63c-431a-8583-ff6d8e0b29cf",

@@ -7,8 +7,11 @@ from theoriq.dialog import (
     Dialog,
     DialogItem,
     TextBlock,
+    CommandBlock,
+    format_source_and_blocks,
+    BlockBase,
 )
-from theoriq.dialog.items import Web3ProposedTxBlock, Web3SignedTxBlock
+from theoriq.dialog.items import Web3ProposedTxBlock, Web3SignedTxBlock, CodeBlock, DataBlock
 from theoriq.types import SourceType
 
 USER_ADDRESS: Final[str] = "0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379f"
@@ -149,17 +152,18 @@ def test_find_blocks_of_type() -> None:
 
     agent_item, user_item = dialog.items[1], dialog.items[2]
 
-    assert len(agent_item.find_all_blocks_of_type("text")) == 0
-    assert len(agent_item.find_all_blocks_of_type("text:markdown")) == 0
-    assert len(agent_item.find_all_blocks_of_type("text:unknown_subtype")) == 0
+    assert agent_item.has_blocks_of_type("text") == False
+    assert not agent_item.has_blocks_of_type("text:markdown")
+    assert not agent_item.has_blocks_of_type("text:unknown_subtype")
+    assert agent_item.has_blocks_of_type("web3:proposedTx")
     assert len(agent_item.find_all_blocks_of_type("web3:proposedTx")) == 1
-    assert len(agent_item.find_all_blocks_of_type("web3:unknown_subtype")) == 0
+    assert not agent_item.has_blocks_of_type("web3:unknown_subtype")
 
     assert len(user_item.find_all_blocks_of_type("text")) == 2
     assert len(user_item.find_all_blocks_of_type("text:markdown")) == 1
-    assert len(user_item.find_all_blocks_of_type("text:unknown_subtype")) == 0
+    assert not agent_item.has_blocks_of_type("text:unknown_subtype")
     assert len(user_item.find_all_blocks_of_type("web3:signedTx")) == 1
-    assert len(user_item.find_all_blocks_of_type("web3:unknown_subtype")) == 0
+    assert not agent_item.has_blocks_of_type("web3:unknown_subtype")
 
     first_web3_block = user_item.find_first_block_of_type("web3:signedTx")
     last_web3_block = user_item.find_last_block_of_type("web3:signedTx")
@@ -167,7 +171,7 @@ def test_find_blocks_of_type() -> None:
 
     first_text_block = user_item.find_first_block_of_type("text")
     last_text_block = user_item.find_last_block_of_type("text")
-    assert isinstance(first_text_block, TextItemBlock) and isinstance(last_text_block, TextItemBlock)
+    assert isinstance(first_text_block, TextBlock) and isinstance(last_text_block, TextBlock)
     assert first_text_block.data.text == "transaction sent successfully"
     assert last_text_block.data.text == "another text block"
 
@@ -178,8 +182,8 @@ def test_commands_dialog() -> None:
     d: Dialog = Dialog.model_validate(dialog_commands_payload)
     search_command_block, summarize_command_block = d.items[0].blocks[0], d.items[0].blocks[1]
 
-    assert isinstance(search_command_block, CommandItemBlock)
-    assert isinstance(summarize_command_block, CommandItemBlock)
+    assert isinstance(search_command_block, CommandBlock)
+    assert isinstance(summarize_command_block, CommandBlock)
 
     assert search_command_block.data.name == "search"
     assert search_command_block.data.arguments == {"query": "Trending tokens in the last 24 hours"}
@@ -198,17 +202,19 @@ def test_format_source() -> None:
 
 
 def test_format_blocks() -> None:
-    def get_test_item(blocks: Sequence[ItemBlock]) -> DialogItem:
+    def get_test_item(blocks: Sequence[BlockBase]) -> DialogItem:
         return DialogItem.new(source=RANDOM_AGENT_ADDRESS, blocks=blocks)
 
     d: Dialog = Dialog(
         items=[
-            get_test_item([TextItemBlock(text="Some text"), TextItemBlock(text="Some markdown", sub_type="md")]),
+            get_test_item(
+                [TextBlock.from_text(text="Some text"), TextBlock.from_text(text="Some markdown", sub_type="md")]
+            ),
             get_test_item(
                 [
-                    TextItemBlock(text="Another text"),
-                    CodeItemBlock(code="SELECT *"),
-                    DataItemBlock(data="1,2,3", data_type="csv"),
+                    TextBlock.from_text(text="Another text"),
+                    CodeBlock.from_code(code="SELECT *"),
+                    DataBlock.from_data(data="1,2,3", sub_type="csv"),
                 ]
             ),
         ]
@@ -220,7 +226,7 @@ def test_format_blocks() -> None:
     expected = d.items[1].format_blocks()
     assert expected == ["Another text", "```\nSELECT *\n```", "```csv\n1,2,3\n```"]
 
-    expected = d.items[1].format_blocks(block_types_to_format=[TextItemBlock, CodeItemBlock])
+    expected = d.items[1].format_blocks(block_types_to_format=[TextBlock, CodeBlock])
     assert expected == ["Another text", "```\nSELECT *\n```"]
 
 

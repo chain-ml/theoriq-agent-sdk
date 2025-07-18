@@ -40,6 +40,21 @@ class BlockBase(BaseModel, Generic[T_Data, T_Type]):
         parts = bloc_type.split(":", 1)
         return parts[1] if len(parts) > 1 else None
 
+    def is_of_type(self, block_type: T_Type) -> bool:
+        """
+        Checks if the block is of a specific type.
+
+        Args:
+            block_type (T_Type): The block type to check against.
+
+        Returns:
+            bool: True if the block is of the specified type, False otherwise.
+        """
+        sub_type = BlockBase.sub_type(block_type)
+        if sub_type:
+            return self.block_type == block_type
+        return self.block_type.startswith(block_type)
+
 
 def filter_blocks(blocks: Sequence[BlockBase], block_type: Type[BlockBase]) -> Sequence[BlockBase]:
     """

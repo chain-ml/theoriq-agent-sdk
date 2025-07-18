@@ -3,10 +3,11 @@ from typing import Any, Generic, Literal, TypeVar, Union
 
 from pydantic import BaseModel, field_validator
 
-from ..bloc import BlockBase
+from theoriq.dialog.bloc import BlockBase
 
 T_Args = TypeVar("T_Args", bound=Union[BaseModel, dict[str, Any]])
 T_Name = TypeVar("T_Name", bound=str)
+
 
 class CommandData(BaseModel, Generic[T_Args, T_Name]):
     name: T_Name
@@ -18,23 +19,29 @@ class CommandData(BaseModel, Generic[T_Args, T_Name]):
     def __str__(self) -> str:
         return f"CommandItem(name={self.name}, arguments={self.arguments})"
 
+
 UnknownCommandData = CommandData[dict[str, Any], str]
+
 
 class SearchArgs(BaseModel):
     query: str
 
+
 class SearchCommandData(CommandData[SearchArgs, Literal["search"]]):
     pass
 
+
 def parse_command_data(command_data: dict) -> CommandData:
-    command_name =  command_data.get("name")
+    command_name = command_data.get("name")
     if command_name == "search":
         return SearchCommandData(**command_data)
-    return UnknownCommandData(name = command_name, arguments = command_data.get("arguments", {}))
+    return UnknownCommandData(name=command_name, arguments=command_data.get("arguments", {}))
+
 
 T_CommandData = TypeVar("T_CommandData", bound=CommandData)
 
-class CommandBlock(BlockBase[CommandData[T_Args, T_Name], Literal["command"]], Generic[T_Args, T_Name]):
+
+class CommandBlock(BlockBase[CommandData, Literal["command"]], Generic[T_Args, T_Name]):
     @classmethod
     def from_command(cls, command: UnknownCommandData) -> CommandBlock:
         return cls(block_type="command", data=command)

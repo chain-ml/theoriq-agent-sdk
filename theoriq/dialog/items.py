@@ -48,6 +48,64 @@ class CodeBlock(BlockBase[CodeData, Annotated[str, Field(pattern="code(:.*)?")]]
         return cls(block_type=block_type, data=CodeData(code=code, language=language))
 
 
+class DataItem(BaseModel):
+    data: str
+    type: Optional[str]
+
+    def to_str(self) -> str:
+        if self.type is None:
+            return self.data
+
+        result = [f"```{self.type}", self.data, "```"]
+        return "\n".join(result)
+
+    def __str__(self) -> str:
+        """
+        Returns a string representation of the DataItem instance.
+
+        Returns:
+            str: A string representing the DataItem.
+        """
+        data = self.data if len(self.data) < 50 else f"{self.data[:50]}..."
+        return f"DataItem(data={data}, type={self.type})"
+
+
+class DataBlock(BlockBase[DataItem, Annotated[str, Field(pattern="data(:.*)?")]]):
+    @field_validator("block_type")
+    def validate_block_type(cls, v):
+        if not v.startswith("data"):
+            raise ValueError('DataBlock block_type must start with "data"')
+        return v
+
+    @model_validator(mode="after")
+    def set_data_type_from_block_type(self):
+        if self.data and not self.data.type:
+            data_type = self.sub_type(self.block_type)
+            if data_type:
+                self.data.type = data_type
+        return self
+
+    @classmethod
+    def from_data(cls, data: str, sub_type: Optional[str] = None) -> DataBlock:
+        block_type = f"data:{sub_type}" if sub_type else "data"
+        return DataBlock(block_type=block_type, data=DataItem(data=data, type=sub_type))
+
+
+class ErrorData(BaseModel):
+    err: str
+    message: Optional[str]
+
+    """
+    A class representing an error item. Inherits from BaseData.
+    """
+
+    def to_str(self) -> str:
+        result = [f"- Error: {self.err}"]
+        if self.message is not None:
+            result.append(f"- Message: {self.message}")
+        return "\n".join(result)
+
+
 class MetricItem(BaseModel):
     name: str
     value: float
@@ -108,7 +166,8 @@ class TextBlock(BlockBase[TextData, Annotated[str, Field(pattern="text(:.*)?")]]
         return self
 
     @classmethod
-    def from_text(cls, text: str, block_type: Literal["text"] = "text") -> TextBlock:
+    def from_text(cls, text: str, sub_type: Optional[str] = None) -> TextBlock:
+        block_type = f"text:{sub_type}" if sub_type else "text"
         return TextBlock(block_type=block_type, data=TextData(text=text))
 
 
