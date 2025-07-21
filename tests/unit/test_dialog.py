@@ -13,7 +13,6 @@ from theoriq.dialog import (
     TextBlock,
     Web3ProposedTxBlock,
     Web3SignedTxBlock,
-    Web3SignedTxData,
     format_source_and_blocks,
 )
 from theoriq.types import SourceType

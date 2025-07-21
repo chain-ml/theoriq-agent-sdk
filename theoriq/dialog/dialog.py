@@ -23,8 +23,8 @@ UnknownBlock = BlockBase[dict[str, Any], str]
 # Main data model
 class DialogItem(BaseData):
     timestamp: datetime = Field(..., description="ISO format timestamp")
-    source_type: Annotated[SourceType, Field(description="Source type")]
-    source: Annotated[str, Field(pattern="0x[a-fA-F0-9]{40}([a-fA-F0-9]{24})?", description="Source")]
+    source_type: Annotated[SourceType, Field(description="Source type, could be `user`, `agent`")]
+    source: Annotated[str, Field(pattern="0x[a-fA-F0-9]{40}([a-fA-F0-9]{24})?", description="Address of the source")]
     blocks: List[BlockBase]
 
     @field_validator("timestamp", mode="before")
