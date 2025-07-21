@@ -19,7 +19,7 @@ class ExecuteSchema(BaseModel):
 
     @classmethod
     def from_base_models(cls, *, request: Type[BaseModel], response: Type[BaseModel]) -> ExecuteSchema:
-        return cls(request=request.model_json_schema(), response=response.model_json_schema())
+        return cls(request=RootModel[List[Union[request.model_json_schema()]]], response=RootModel[List[Union[response.model_json_schema()]]])
 
 
 class AgentSchemas(BaseModel):
