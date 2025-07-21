@@ -4,8 +4,7 @@ from typing import Annotated, Any, Dict
 
 from pydantic import Field, field_validator, model_validator
 
-from . import BlockBase
-from .dialog import BaseData
+from .block import BaseData, BlockBase
 
 
 class CustomData(BaseData):
