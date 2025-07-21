@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-from typing import Annotated, Any, Dict
+from typing import Annotated, Any, Dict, Union
 
 from pydantic import Field, field_validator, model_validator
 
 from .block import BaseData, BlockBase
 
 
-class CustomData(BaseData):
-    data: Dict[str, Any]
-    custom_type: str
-
+CustomData = Union[dict[str, Any], BaseData]
 
 class CustomBlock(BlockBase[CustomData, Annotated[str, Field(pattern="custom:(.*)?")]]):
     """
