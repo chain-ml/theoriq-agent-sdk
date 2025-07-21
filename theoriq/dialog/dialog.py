@@ -11,6 +11,7 @@ from ..types import SourceType
 from .block import BaseData, BlockBase
 from .code_items import CodeBlock
 from .commands import CommandBlock
+from .custom_items import CustomBlock
 from .metrics_items import MetricsBlock
 from .router_items import RouterBlock
 from .text_items import TextBlock
@@ -181,6 +182,8 @@ def parse_block(block_data: dict) -> BlockBase:
         return TextBlock(**block_data)
     elif block_type.startswith("code:"):
         return CodeBlock(**block_data)
+    elif block_type.startswith("custom:"):
+        return CustomBlock(**block_data)
 
     # For unknown types, use UnknownBlock
     return UnknownBlock(block_type=block_type, data=block_data.get("data", {}))
