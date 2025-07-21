@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, List, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class ExecuteSchema(BaseModel):
@@ -19,7 +19,10 @@ class ExecuteSchema(BaseModel):
 
     @classmethod
     def from_base_models(cls, *, request: Type[BaseModel], response: Type[BaseModel]) -> ExecuteSchema:
-        return cls(request=RootModel[List[Union[request.model_json_schema()]]], response=RootModel[List[Union[response.model_json_schema()]]])
+        return cls(
+            request=RootModel[List[Union[request.model_json_schema()]]],
+            response=RootModel[List[Union[response.model_json_schema()]]],
+        )
 
 
 class AgentSchemas(BaseModel):
