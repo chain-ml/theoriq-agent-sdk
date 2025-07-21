@@ -4,7 +4,8 @@ from datetime import datetime
 from typing import Annotated, Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic.alias_generators import to_camel
 
 from theoriq.dialog import Dialog, DialogItem, DialogItemPredicate
 from theoriq.types import SourceType
@@ -51,13 +52,16 @@ class ExecuteRequestBody(BaseModel):
 
 
 class RequestItem(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     id: UUID
     source: str
-    source_type: Annotated[SourceType, Field(alias="sourceType")]
-    start_at: Annotated[datetime, Field(alias="startAt")]
-    end_at: Annotated[datetime, Field(alias="endAt")]
-    target_agent: Annotated[str, Field(alias="targetAgent")]
+    source_type: SourceType
+    start_at: datetime
+    end_at: datetime
+    target_agent: str
 
+    # TODO: remove after SourceType lowercase fix
     # noinspection PyNestedDecorators
     @field_validator("source_type", mode="before")
     @classmethod
@@ -66,22 +70,29 @@ class RequestItem(BaseModel):
 
 
 class Request(BaseModel):
-    body: ExecuteRequestBody
-    body_bytes: Annotated[List[int], Field(alias="bodyBytes")]
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    body: Optional[ExecuteRequestBody] = None  # could be empty for configure request
+    body_bytes: List[int]
 
 
 class Response(BaseModel):
-    body: Dict[str, Any]  # TODO: must be a DialogItem
-    body_bytes: Annotated[List[int], Field(alias="bodyBytes")]
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    body: Optional[Dict[str, Any]] = None  # TODO: must be a DialogItem
+    body_bytes: Optional[List[int]] = None
     source: Annotated[str, Field(alias="from")]
     message: Optional[str] = None
-    status_code: Annotated[int, Field(alias="statusCode")]
+    status_code: int
 
 
 class Source(BaseModel):
-    source: Annotated[str, Field(alias="sourceId")]
-    source_type: Annotated[SourceType, Field(alias="sourceType")]
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
+    source: str
+    source_type: SourceType
+
+    # TODO: remove after SourceType lowercase fix
     # noinspection PyNestedDecorators
     @field_validator("source_type", mode="before")
     @classmethod
@@ -90,11 +101,13 @@ class Source(BaseModel):
 
 
 class Event(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     context: str
     data: Optional[Any] = None
-    event_type: Annotated[str, Field(alias="eventType")]
+    event_type: str
     message: str
-    timestamp: Annotated[datetime, Field(alias="timestamp")]
+    timestamp: datetime
 
 
 class RequestAudit(BaseModel):
