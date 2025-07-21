@@ -12,10 +12,7 @@ class CodeData(BaseData):
     language: Optional[str] = None
 
     def to_str(self) -> str:
-        if self.language:
-            result = [f"```{self.language}", self.code, "```"]
-        else:
-            result = ["```", self.code, "```"]
+        result = [f"```{self.language or ''}", self.code, "```"]
         return "\n".join(result)
 
     def __str__(self) -> str:
