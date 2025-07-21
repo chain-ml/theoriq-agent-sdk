@@ -81,12 +81,14 @@ def test_web3_proposed_tx_to_str():
         tx_gas_limit=21000,
         tx_data="0x789",
         tx_nonce=0,
+        tx_value=1000000000000000000,  # 1 ETH in wei
     )
     str_repr = web3_proposed_tx_data.to_str()
 
     assert "0x4567456745674567456745674567456745674567" in str_repr
     assert "Test transaction" in str_repr
     assert "21000" in str_repr
+    assert "1000000000000000000" in str_repr
 
 
 def test_web3_signed_tx_to_str():

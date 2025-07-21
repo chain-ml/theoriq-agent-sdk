@@ -17,6 +17,7 @@ class Web3ProposedTxData(BaseData):
     tx_gas_limit: Annotated[int, Field(..., ge=0, description="Gas limit for the transaction")]
     tx_data: Annotated[str, Field(..., description="Data for the transaction")]
     tx_nonce: Annotated[int, Field(..., ge=0, description="Nonce for the transaction")]
+    tx_value: Annotated[int, Field(..., ge=0, description="Value of the transaction")]
 
 
 class Web3ProposedTxBlock(BlockBase[Web3ProposedTxData, Literal["web3:proposedTx"]]):
