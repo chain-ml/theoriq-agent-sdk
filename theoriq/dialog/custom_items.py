@@ -7,7 +7,12 @@ from pydantic import Field, field_validator, model_validator
 from .block import BaseData, BlockBase
 
 
-CustomData = Union[dict[str, Any], BaseData]
+class CustomData(BaseData):
+    data: Dict[str, Any]
+    custom_type: str
+
+    def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
+        return self.data
 
 class CustomBlock(BlockBase[CustomData, Annotated[str, Field(pattern="custom:(.*)?")]]):
     """
