@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, field_serializer, field_validator
 from ..types import SourceType
 from .block import BaseData, BlockBase
 from .code_items import CodeBlock
-from .commands import CommandBlock
+from .command_items import CommandBlock
 from .custom_items import CustomBlock
 from .metrics_items import MetricsBlock
 from .router_items import RouterBlock

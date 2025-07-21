@@ -6,10 +6,10 @@ from theoriq.dialog import (
     RouterData,
     RouterItem,
     TextData,
+    UnknownCommandData,
     Web3ProposedTxData,
     Web3SignedTxData,
 )
-from theoriq.dialog.commands import UnknownCommandData
 
 
 def test_text_to_str():
