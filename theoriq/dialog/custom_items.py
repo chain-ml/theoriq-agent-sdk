@@ -21,14 +21,6 @@ class CustomBlock(BlockBase[CustomData, Annotated[str, Field(pattern="custom:(.*
             raise ValueError('CustomBlock block_type must start with "custom"')
         return v
 
-    @model_validator(mode="after")
-    def set_type_from_block_type(self):
-        if self.data and not self.data.custom_type:
-            custom_type = self.sub_type(self.block_type)
-            if custom_type:
-                self.data.custom_type = custom_type
-        return self
-
     @classmethod
     def from_data(cls, data: Dict[str, Any], custom_type: str) -> CustomBlock:
         """
@@ -41,4 +33,4 @@ class CustomBlock(BlockBase[CustomData, Annotated[str, Field(pattern="custom:(.*
         Returns:
             CustomBlock: An instance of CustomBlock with the provided data and type.
         """
-        return cls(block_type=f"custom:{custom_type}", data=CustomData(data=data, custom_type=custom_type))
+        return cls(block_type=f"custom:{custom_type}", data=data)
