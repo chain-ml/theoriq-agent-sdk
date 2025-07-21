@@ -17,6 +17,7 @@ class Web3ProposedTxItem(BaseData):
         tx_gas_limit: str,
         tx_data: str,
         tx_nonce: int,
+        tx_value: str,
     ) -> None:
         self.abi = abi
         self.description = description
@@ -26,6 +27,7 @@ class Web3ProposedTxItem(BaseData):
         self.tx_gas_limit = tx_gas_limit
         self.tx_data = tx_data
         self.tx_nonce = tx_nonce
+        self.tx_value = tx_value
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> Web3ProposedTxItem:
@@ -38,6 +40,7 @@ class Web3ProposedTxItem(BaseData):
             tx_gas_limit=data["txGasLimit"],
             tx_data=data["txData"],
             tx_nonce=data["txNonce"],
+            tx_value=data["txValue"],
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -50,6 +53,7 @@ class Web3ProposedTxItem(BaseData):
             "txGasLimit": self.tx_gas_limit,
             "txData": self.tx_data,
             "txNonce": self.tx_nonce,
+            "txValue": self.tx_value,
         }
 
     def to_str(self) -> str:
