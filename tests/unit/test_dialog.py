@@ -1,15 +1,16 @@
+import json
 from typing import Final, Sequence, Tuple
 from uuid import uuid4
 
 from theoriq.biscuit import AgentAddress
 from theoriq.dialog import (
-    CodeItemBlock,
-    CommandItemBlock,
-    DataItemBlock,
+    BlockBase,
+    CodeBlock,
+    CommandBlock,
+    DataBlock,
     Dialog,
     DialogItem,
-    ItemBlock,
-    TextItemBlock,
+    TextBlock,
     Web3ProposedTxBlock,
     Web3SignedTxBlock,
     format_source_and_blocks,
@@ -97,8 +98,9 @@ dialog_web3_payload = {
                 {
                     "type": "web3:signedTx",
                     "data": {
-                        "txHash": "0x0159def724215e361a61db0b25118ad09cb63cf88ea69bb26c53289e44255gb4",
+                        "txHash": "0xa43da2004cf4131acc2bd14ef6fb68ff47752d0df9036b5b4a145b3b886bc75b",
                         "chainId": 8453,
+                        "status": 1,
                     },
                 },
             ],
@@ -151,21 +153,22 @@ def test_web3_dialog() -> None:
 
 
 def test_find_blocks_of_type() -> None:
-    d: Dialog = Dialog.model_validate(dialog_web3_payload)
+    dialog: Dialog = Dialog.model_validate(dialog_web3_payload)
 
-    agent_item, user_item = d.items[1], d.items[2]
+    agent_item, user_item = dialog.items[1], dialog.items[2]
 
-    assert len(agent_item.find_all_blocks_of_type("text")) == 0
-    assert len(agent_item.find_all_blocks_of_type("text:markdown")) == 0
-    assert len(agent_item.find_all_blocks_of_type("text:unknown_subtype")) == 0
+    assert not agent_item.has_blocks_of_type("text")
+    assert not agent_item.has_blocks_of_type("text:markdown")
+    assert not agent_item.has_blocks_of_type("text:unknown_subtype")
+    assert agent_item.has_blocks_of_type("web3:proposedTx")
     assert len(agent_item.find_all_blocks_of_type("web3:proposedTx")) == 1
-    assert len(agent_item.find_all_blocks_of_type("web3:unknown_subtype")) == 0
+    assert not agent_item.has_blocks_of_type("web3:unknown_subtype")
 
     assert len(user_item.find_all_blocks_of_type("text")) == 2
     assert len(user_item.find_all_blocks_of_type("text:markdown")) == 1
-    assert len(user_item.find_all_blocks_of_type("text:unknown_subtype")) == 0
+    assert not agent_item.has_blocks_of_type("text:unknown_subtype")
     assert len(user_item.find_all_blocks_of_type("web3:signedTx")) == 1
-    assert len(user_item.find_all_blocks_of_type("web3:unknown_subtype")) == 0
+    assert not agent_item.has_blocks_of_type("web3:unknown_subtype")
 
     first_web3_block = user_item.find_first_block_of_type("web3:signedTx")
     last_web3_block = user_item.find_last_block_of_type("web3:signedTx")
@@ -173,7 +176,7 @@ def test_find_blocks_of_type() -> None:
 
     first_text_block = user_item.find_first_block_of_type("text")
     last_text_block = user_item.find_last_block_of_type("text")
-    assert isinstance(first_text_block, TextItemBlock) and isinstance(last_text_block, TextItemBlock)
+    assert isinstance(first_text_block, TextBlock) and isinstance(last_text_block, TextBlock)
     assert first_text_block.data.text == "transaction sent successfully"
     assert last_text_block.data.text == "another text block"
 
@@ -184,14 +187,14 @@ def test_commands_dialog() -> None:
     d: Dialog = Dialog.model_validate(dialog_commands_payload)
     search_command_block, summarize_command_block = d.items[0].blocks[0], d.items[0].blocks[1]
 
-    assert isinstance(search_command_block, CommandItemBlock)
-    assert isinstance(summarize_command_block, CommandItemBlock)
+    assert isinstance(search_command_block, CommandBlock)
+    assert isinstance(summarize_command_block, CommandBlock)
 
     assert search_command_block.data.name == "search"
-    assert search_command_block.data.arguments == {"query": "Trending tokens in the last 24 hours"}
+    assert search_command_block.data.arguments.query == "Trending tokens in the last 24 hours"
 
     assert summarize_command_block.data.name == "summarize"
-    assert summarize_command_block.data.arguments == {"compression_ratio": 0.5}
+    assert summarize_command_block.data.arguments["compression_ratio"] == 0.5
 
 
 def test_format_source() -> None:
@@ -204,17 +207,19 @@ def test_format_source() -> None:
 
 
 def test_format_blocks() -> None:
-    def get_test_item(blocks: Sequence[ItemBlock]) -> DialogItem:
+    def get_test_item(blocks: Sequence[BlockBase]) -> DialogItem:
         return DialogItem.new(source=RANDOM_AGENT_ADDRESS, blocks=blocks)
 
     d: Dialog = Dialog(
         items=[
-            get_test_item([TextItemBlock(text="Some text"), TextItemBlock(text="Some markdown", sub_type="md")]),
+            get_test_item(
+                [TextBlock.from_text(text="Some text"), TextBlock.from_text(text="Some markdown", sub_type="md")]
+            ),
             get_test_item(
                 [
-                    TextItemBlock(text="Another text"),
-                    CodeItemBlock(code="SELECT *"),
-                    DataItemBlock(data="1,2,3", data_type="csv"),
+                    TextBlock.from_text(text="Another text"),
+                    CodeBlock.from_code(code="SELECT *"),
+                    DataBlock.from_data(data="1,2,3", sub_type="csv"),
                 ]
             ),
         ]
@@ -226,7 +231,7 @@ def test_format_blocks() -> None:
     expected = d.items[1].format_blocks()
     assert expected == ["Another text", "```\nSELECT *\n```", "```csv\n1,2,3\n```"]
 
-    expected = d.items[1].format_blocks(block_types_to_format=[TextItemBlock, CodeItemBlock])
+    expected = d.items[1].format_blocks(block_types_to_format=[TextBlock, CodeBlock])
     assert expected == ["Another text", "```\nSELECT *\n```"]
 
 
@@ -274,3 +279,11 @@ def test_format_md() -> None:
             "The trending tokens in the last 24 hours are ....",
         ]
     )
+
+
+def test_dialog() -> None:
+    for dialog in [dialog_payload, dialog_commands_payload, dialog_web3_payload]:
+        dialog = Dialog.model_validate(dialog)
+        dump = dialog.model_dump_json(indent=2)
+        dialog_json = Dialog.model_validate(json.loads(dump))
+        assert len(dialog_json.items) == len(dialog.items)

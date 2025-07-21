@@ -2,59 +2,51 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Final, Iterable, List, Mapping, Optional, Sequence, Tuple, Type
+from itertools import tee
+from typing import Annotated, Any, Callable, Iterable, List, Optional, Sequence, Tuple, Type
 
-from pydantic import BaseModel, field_serializer, field_validator
+from pydantic import BaseModel, Field, field_serializer, field_validator
 
 from ..types import SourceType
-from .code import CodeItemBlock
-from .command import CommandItemBlock
-from .custom import CustomItemBlock
-from .data import DataItemBlock
-from .image import ImageItemBlock
-from .item_block import ItemBlock
-from .metrics import MetricsItemBlock
-from .router import RouteItem, RouterItemBlock
-from .runtime_error import ErrorItemBlock
-from .text import TextItemBlock
-from .web3 import Web3ProposedTxBlock, Web3SignedTxBlock
+from .block import BaseData, BlockBase
+from .code_items import CodeBlock
+from .command_items import CommandBlock
+from .custom_items import CustomBlock
+from .metrics_items import MetricsBlock
+from .router_items import RouterBlock
+from .text_items import TextBlock
+from .web3_items import Web3ProposedTxBlock, Web3SignedTxBlock
 
-BLOCK_CLASSES: Final[List[Type[ItemBlock]]] = [
-    CodeItemBlock,
-    CommandItemBlock,
-    CustomItemBlock,
-    DataItemBlock,
-    ErrorItemBlock,
-    ImageItemBlock,
-    MetricsItemBlock,
-    RouterItemBlock,
-    TextItemBlock,
-    Web3ProposedTxBlock,
-    Web3SignedTxBlock,
-]
-BLOCK_CLASSES_MAP: Mapping[str, Type[ItemBlock]] = {block_cls.block_type(): block_cls for block_cls in BLOCK_CLASSES}
+UnknownBlock = BlockBase[dict[str, Any], str]
 
 
-class DialogItem:
-    """
-    A DialogItem object represents a message from a source during a dialog.
+# Main data model
+class DialogItem(BaseData):
+    timestamp: datetime = Field(..., description="ISO format timestamp")
+    source_type: Annotated[SourceType, Field(description="Source type, could be `user`, `agent`")]
+    source: Annotated[str, Field(pattern="0x[a-fA-F0-9]{40}([a-fA-F0-9]{24})?", description="Address of the source")]
+    blocks: List[BlockBase]
 
-    A single DialogItem contains multiple instances of ItemBlock.
-    This allows an agent to send multi-format responses for a single request.
-    For example, it can send Python and SQL code blocks along with a Markdown text block.
+    @field_validator("timestamp", mode="before")
+    @classmethod
+    def validate_timestamp(cls, v):
+        if isinstance(v, str):
+            return cls._datetime_from_str(v)
+        return v
 
-    Attributes:
-        timestamp (str): The creation time of the dialog item.
-        source (str): The creator of the dialog item. Either user address or Theoriq agent ID.
-        source_type (str): The type of the source that creates the dialog item. Can be either 'user' or 'agent'.
-        blocks (Sequence[ItemBlock]): A sequence of ItemBlock objects consisting of responses from the agent.
-    """
+    @field_validator("source")
+    def validate_source(cls, v):
+        # Basic validation for hex string
+        if not v.startswith("0x"):
+            raise ValueError("Source must start with '0x'")
+        return v
 
-    def __init__(self, timestamp: str, source_type: str, source: str, blocks: Sequence[ItemBlock[Any]]) -> None:
-        self.timestamp: datetime = self._datetime_from_str(timestamp)
-        self.source = source
-        self.source_type = SourceType.from_value(source_type)
-        self.blocks = list(blocks)
+    @field_serializer("timestamp")
+    def serialize_timestamp(self, value: datetime) -> str:
+        return value.isoformat()
+
+    class Config:
+        populate_by_name = True
 
     @classmethod
     def _datetime_from_str(cls, value: str) -> datetime:
@@ -67,65 +59,60 @@ class DialogItem:
             result = datetime.fromisoformat(value)
         return result.replace(tzinfo=timezone.utc) if result.tzinfo is None else result
 
+    def model_dump_json(self, **kwargs):
+        """Override to ensure proper JSON serialization"""
+        return super().model_dump_json(**self._set_dump_defaults(kwargs))
+
+    def model_dump(self, **kwargs):
+        """Override to ensure proper JSON serialization"""
+        return super().model_dump(**self._set_dump_defaults(kwargs))
+
+    @field_validator("blocks", mode="before")
+    def parse_blocks(cls, v):
+        if isinstance(v, list):
+            return [parse_block(block) if isinstance(block, dict) else block for block in v]
+        return v
+
     @classmethod
-    def from_dict(cls, values: Any | None) -> DialogItem:
-        if values is None:
-            raise ValueError("Cannot create a DialogItem from None")
-
-        if not isinstance(values, dict):
-            raise ValueError(f"Expect a dictionary, got {type(values)}")
-
-        item_blocks: List[ItemBlock[Any]] = []
-        blocks = values.get("blocks", [])
-        for item in blocks:
-            block_type: str = item["type"]
-            block_class = BLOCK_CLASSES_MAP.get(ItemBlock.root_type(block_type))  # try root type first
-            if block_class is None:
-                block_class = BLOCK_CLASSES_MAP.get(block_type)  # then try full type
-                if block_class is None:
-                    raise ValueError(
-                        f"Invalid item type {block_type}, expected one of {', '.join(BLOCK_CLASSES_MAP.keys())}"
-                    )
-
-            block_data = item["data"]
-            block_key = item.get("key", None)
-            block_ref = item.get("ref", None)
-            item_blocks.append(block_class.from_dict(block_data, block_type, block_key, block_ref))
-
+    def new(cls, source: str, blocks: Sequence[BlockBase]) -> DialogItem:
+        """Create a new instance with current datetime, deriving `source_type` from `source`."""
         return cls(
-            timestamp=values["timestamp"],
-            source_type=values["sourceType"],
-            source=values["source"],
-            blocks=item_blocks,
+            timestamp=datetime.now(timezone.utc),
+            source_type=SourceType.from_address(source),
+            source=source,
+            blocks=list(blocks),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "timestamp": self.timestamp.isoformat(),
-            "sourceType": self.source_type.value,
-            "source": self.source,
-            "blocks": [block.to_dict() for block in self.blocks],
-        }
+    @classmethod
+    def new_text(cls, source: str, text: str) -> DialogItem:
+        return DialogItem.new(source=source, blocks=[TextBlock.from_text(text=text)])
 
-    def find_blocks_of_type(self, block_type: str) -> Iterable[ItemBlock[Any]]:
-        has_subtype = ItemBlock.sub_type(block_type) is not None
-
+    def find_blocks_of_type(self, block_type: str) -> Iterable[BlockBase]:
         for block in self.blocks:
-            if block.is_valid(block_type):
-                if not has_subtype or block.full_block_type == block_type:
-                    yield block
+            if block.is_of_type(block_type):
+                yield block
         return
 
-    def find_all_blocks_of_type(self, block_type: str) -> List[ItemBlock[Any]]:
+    def has_blocks_of_type(self, block_type: str) -> bool:
+        iterable = self.find_blocks_of_type(block_type)
+        a, _ = tee(iterable)
+        try:
+            next(a)
+            return True
+        except StopIteration:
+            return False
+
+    def find_all_blocks_of_type(self, block_type: str) -> List[BlockBase]:
         return list(self.find_blocks_of_type(block_type))
 
-    def find_first_block_of_type(self, block_type: str) -> Optional[ItemBlock[Any]]:
-        blocks = self.find_all_blocks_of_type(block_type)
-        return blocks[0] if len(blocks) > 0 else None
+    def find_first_block_of_type(self, block_type: str) -> Optional[BlockBase]:
+        return next(iter(self.find_blocks_of_type(block_type)), None)
 
-    def find_last_block_of_type(self, block_type: str) -> Optional[ItemBlock[Any]]:
-        blocks = self.find_all_blocks_of_type(block_type)
-        return blocks[-1] if len(blocks) > 0 else None
+    def find_last_block_of_type(self, block_type: str) -> Optional[BlockBase]:
+        last_item = None
+        for last_item in self.find_blocks_of_type(block_type):  # fall back to iteration
+            pass
+        return last_item
 
     def extract_last_text(self) -> str:
         """
@@ -149,7 +136,7 @@ class DialogItem:
         source_type = self.source_type.value.capitalize()
         return source_type if not with_address else f"{source_type} ({self.source})"
 
-    def format_blocks(self, block_types_to_format: Optional[Sequence[Type[ItemBlock]]] = None) -> List[str]:
+    def format_blocks(self, block_types_to_format: Optional[Sequence[Type[BlockBase]]] = None) -> List[str]:
         """
         Format each block with `to_str()` whose type is in `block_types_to_format`.
         If `block_types_to_format` is None, format every block.
@@ -161,38 +148,49 @@ class DialogItem:
         return [
             block.data.to_str()
             for block in self.blocks
-            if any(block_type.is_valid(block.block_type()) for block_type in block_types_to_format)
+            if any(isinstance(block, block_type) for block_type in block_types_to_format)
         ]
-
-    @classmethod
-    def new(cls, source: str, blocks: Sequence[ItemBlock[Any]]) -> DialogItem:
-        """Create a new instance with current datetime, deriving `source_type` from `source`."""
-        return cls(
-            timestamp=datetime.now(timezone.utc).isoformat(),
-            source_type=SourceType.from_address(source).value,
-            source=source,
-            blocks=blocks,
-        )
-
-    @classmethod
-    def new_text(cls, source: str, text: str) -> DialogItem:
-        return DialogItem.new(source=source, blocks=[TextItemBlock(text)])
-
-    @classmethod
-    def new_route(cls, source: str, route: str, score: float) -> DialogItem:
-        return DialogItem.new(source=source, blocks=[RouterItemBlock([RouteItem(route, score)])])
-
-    def __str__(self) -> str:
-        source_str = f"{self.source[:6]}...{self.source[-4:]}"
-        return f"DialogItem(timestamp={self.timestamp}, source_type={self.source_type}, source={source_str}, n_blocks={len(self.blocks)})"
 
 
 DialogItemPredicate = Callable[[DialogItem], bool]
 DialogItemTransformer = Callable[[DialogItem], Any]
 
 
+# Block type mapping for factory function
+BLOCK_TYPE_MAP = {
+    "router": RouterBlock,
+    "text": TextBlock,
+    "code": CodeBlock,
+    "metrics": MetricsBlock,
+    "command": CommandBlock,
+    "web3:proposedTx": Web3ProposedTxBlock,
+    "web3:signedTx": Web3SignedTxBlock,
+}
+
+
+# Factory function to parse blocks with unknown type handling
+def parse_block(block_data: dict) -> BlockBase:
+    """Parse a block dictionary into the appropriate Block type."""
+    block_type = block_data.get("type", "")
+
+    # Check exact match first
+    if block_type in BLOCK_TYPE_MAP:
+        return BLOCK_TYPE_MAP[block_type](**block_data)
+
+    # Check for prefix matches
+    if block_type.startswith("text:"):
+        return TextBlock(**block_data)
+    elif block_type.startswith("code:"):
+        return CodeBlock(**block_data)
+    elif block_type.startswith("custom:"):
+        return CustomBlock(**block_data)
+
+    # For unknown types, use UnknownBlock
+    return UnknownBlock(block_type=block_type, data=block_data.get("data", {}))
+
+
 def format_source_and_blocks(
-    item: DialogItem, with_address: bool = True, block_types_to_format: Optional[Sequence[Type[ItemBlock]]] = None
+    item: DialogItem, with_address: bool = True, block_types_to_format: Optional[Sequence[Type[BlockBase]]] = None
 ) -> Tuple[str, str]:
     """Format the source and blocks of a dialog item. Helper function to use with Dialog.map()."""
     source_str = item.format_source(with_address=with_address)
@@ -201,14 +199,7 @@ def format_source_and_blocks(
 
 
 class Dialog(BaseModel):
-    """
-    Represents the expected payload for an execute request.
-
-    Attributes:
-        items (list[DialogItem]): A list of DialogItem objects consisting of request/response from the user and agent.
-    """
-
-    items: Sequence[DialogItem]
+    items: List[DialogItem]
 
     @property
     def last_item(self) -> Optional[DialogItem]:
@@ -277,32 +268,3 @@ class Dialog(BaseModel):
         """Formats the dialog as a markdown string with default parameters from `format_source_and_blocks`."""
         sources_and_blocks = self.map(format_source_and_blocks)
         return "\n\n".join(f"{'#' * indent} {source}\n\n{blocks}" for source, blocks in sources_and_blocks)
-
-    # noinspection PyNestedDecorators
-    @field_validator("items", mode="before")
-    @classmethod
-    def validate_items(cls, value: Any) -> List[DialogItem]:
-        if not isinstance(value, Sequence):
-            raise ValueError("items must be a sequence")
-
-        items = []
-        for item in value:
-            if isinstance(item, DialogItem):
-                items.append(item)
-            else:
-                try:
-                    dialog_item = DialogItem.from_dict(item)
-                    items.append(dialog_item)
-                except ValueError:
-                    raise
-                except Exception as e:
-                    raise ValueError from e
-
-        return items
-
-    @field_serializer("items")
-    def serialize_items(self, value: Sequence[DialogItem]) -> List[Dict[str, Any]]:
-        return [item.to_dict() for item in value]
-
-    class Config:
-        arbitrary_types_allowed = True

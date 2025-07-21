@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from theoriq.biscuit import AgentAddress, RequestBiscuit, ResponseBiscuit, TheoriqBiscuit
 from theoriq.biscuit.facts import TheoriqRequest
-from theoriq.dialog import Dialog, DialogItem, ItemBlock
+from theoriq.dialog import BlockBase, Dialog, DialogItem
 from theoriq.types import AgentMetadata, Metric
 
 from ..common import ExecuteContextBase, ExecuteResponse
@@ -71,7 +71,7 @@ class ExecuteContext(ExecuteContextBase):
         biscuit = self.agent_biscuit()
         self._protocol_client.post_notification(biscuit=biscuit, agent_id=self.agent_address, notification=notification)
 
-    def send_request(self, blocks: Sequence[ItemBlock], to_addr: str) -> ExecuteResponse:
+    def send_request(self, blocks: Sequence[BlockBase], to_addr: str) -> ExecuteResponse:
         """
         Sends a request to another address, attenuating the biscuit for the request and handling the response.
 

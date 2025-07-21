@@ -4,7 +4,7 @@ import abc
 from typing import Any, Dict, Optional, Sequence
 
 from ..biscuit import RequestBiscuit, ResponseBiscuit
-from ..dialog import DialogItem, ErrorItemBlock, ItemBlock, TextItemBlock
+from ..dialog import BlockBase, DialogItem, ErrorBlock, TextBlock
 from ..types import AgentMetadata, SourceType
 from ..utils import TTLCache
 from .v1alpha2.agent import Agent
@@ -12,7 +12,7 @@ from .v1alpha2.agent import Agent
 
 class RequestSenderBase(abc.ABC):
     @abc.abstractmethod
-    def send_request(self, blocks: Sequence[ItemBlock], to_addr: str) -> ExecuteResponse:
+    def send_request(self, blocks: Sequence[BlockBase], to_addr: str) -> ExecuteResponse:
         """
         Sends a request to another address, attenuating the biscuit for the request and handling the response.
 
@@ -26,7 +26,7 @@ class RequestSenderBase(abc.ABC):
         pass
 
     def send_text_request(self, *, message: str, to_addr: str) -> ExecuteResponse:
-        return self.send_request(blocks=[TextItemBlock(message)], to_addr=to_addr)
+        return self.send_request(blocks=[TextBlock.from_text(message)], to_addr=to_addr)
 
 
 class ExecuteContextBase(RequestSenderBase):
@@ -81,9 +81,9 @@ class ExecuteContextBase(RequestSenderBase):
         Returns:
             ExecuteResponse: The response object with single TextItemBlock.
         """
-        return self.new_response(blocks=[TextItemBlock(text=text)])
+        return self.new_response(blocks=[TextBlock.from_text(text=text)])
 
-    def new_response(self, blocks: Sequence[ItemBlock]) -> ExecuteResponse:
+    def new_response(self, blocks: Sequence[BlockBase]) -> ExecuteResponse:
         """
         Creates a new response with the specified blocks.
 
@@ -105,7 +105,7 @@ class ExecuteContextBase(RequestSenderBase):
         Returns:
             ExecuteResponse: The response object encapsulating the error.
         """
-        return self.new_response(blocks=[ErrorItemBlock.new(err=err.err, message=err.message)])
+        return self.new_response(blocks=[ErrorBlock.from_error(err=err.err, message=err.message)])
 
     @property
     def agent_address(self) -> str:
@@ -216,7 +216,7 @@ class ExecuteResponse:
             ExecuteResponse: A new instance of ExecuteResponse initialized with the provided data.
         """
         # Convert the dialog item from the dictionary format.
-        dialog_item = DialogItem.from_dict(data["dialog_item"])
+        dialog_item = DialogItem.model_validate(data["dialog_item"])
         return cls(
             dialog_item=dialog_item,
             status_code=status_code,

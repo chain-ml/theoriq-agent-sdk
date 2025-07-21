@@ -5,7 +5,7 @@ from typing import Optional, Sequence
 
 from theoriq import ExecuteResponse
 from theoriq.biscuit import TheoriqRequest
-from theoriq.dialog import Dialog, DialogItem, ItemBlock
+from theoriq.dialog import BlockBase, Dialog, DialogItem
 
 from ..common import RequestSenderBase
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
@@ -20,7 +20,7 @@ class Messenger(RequestSenderBase):
         self._client = client or ProtocolClient.from_env()
         self._biscuit_provider = biscuit_provider
 
-    def send_request(self, blocks: Sequence[ItemBlock], to_addr: str) -> ExecuteResponse:
+    def send_request(self, blocks: Sequence[BlockBase], to_addr: str) -> ExecuteResponse:
         """
         Sends a request to another address, attenuating the biscuit for the request and handling the response.
 
