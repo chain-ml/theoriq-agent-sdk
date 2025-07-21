@@ -3,9 +3,11 @@ from __future__ import annotations
 from typing import Any, Dict, List, Mapping, Optional, Type
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic.alias_generators import to_camel
 
+from ..biscuit import AgentAddress
+from ..utils import must_read_env_str
 from .data_object import DataObject, DataObjectSpecBase
 
 
@@ -18,6 +20,17 @@ class DeploymentConfiguration(BaseModel):
     headers: List[Header] = Field(default_factory=list)
     url: str
 
+    # noinspection PyNestedDecorators
+    @field_validator("url", mode="before")
+    @classmethod
+    def validate_and_load_content(cls, value: Any) -> str:
+        if isinstance(value, str):
+            return value
+        elif isinstance(value, dict) and "fromEnv" in value:
+            return must_read_env_str(value["fromEnv"])
+
+        raise ValueError("`url` must be either a string or a dict with 'fromEnv' key")
+
 
 class VirtualConfiguration(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
@@ -28,6 +41,20 @@ class VirtualConfiguration(BaseModel):
     def validate_and_update(self, model: Type[BaseModel]) -> None:
         """Validate the configuration against the given schema and update it with the validated data."""
         self.configuration = model.model_validate(self.configuration).model_dump()
+
+    # noinspection PyNestedDecorators
+    @field_validator("agent_id", mode="before")
+    @classmethod
+    def validate_and_load_content(cls, value: Any) -> str:
+        if isinstance(value, str):
+            agent_id = value
+        elif isinstance(value, dict) and "fromEnv" in value:
+            agent_id = must_read_env_str(value["fromEnv"])
+        else:
+            raise ValueError("`agent_id` must be either a string or a dict with 'fromEnv' key")
+
+        agent_address = AgentAddress(agent_id)
+        return str(agent_address)
 
 
 class AgentConfiguration(BaseModel):
