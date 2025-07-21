@@ -24,6 +24,7 @@ class Web3ProposedTxBlock(BlockBase[Web3ProposedTxData, Literal["web3:proposedTx
     @classmethod
     def from_data(
         cls,
+        *,
         abi: Dict[str, Any],
         description: str,
         known_addresses: Dict[str, str],
