@@ -21,7 +21,33 @@ class Web3ProposedTxData(BaseData):
 
 
 class Web3ProposedTxBlock(BlockBase[Web3ProposedTxData, Literal["web3:proposedTx"]]):
-    pass
+    @classmethod
+    def from_data(
+        cls,
+        abi: Dict[str, Any],
+        description: str,
+        known_addresses: Dict[str, str],
+        tx_chain_id: int,
+        tx_to: str,
+        tx_gas_limit: int,
+        tx_data: str,
+        tx_nonce: int,
+        tx_value: int,
+    ) -> Web3ProposedTxBlock:
+        return Web3ProposedTxBlock(
+            block_type="web3:proposedTx",
+            data=Web3ProposedTxData(
+                abi=abi,
+                description=description,
+                known_addresses=known_addresses,
+                tx_chain_id=tx_chain_id,
+                tx_to=tx_to,
+                tx_gas_limit=tx_gas_limit,
+                tx_data=tx_data,
+                tx_nonce=tx_nonce,
+                tx_value=tx_value,
+            ),
+        )
 
 
 class Web3SignedTxData(BaseData):
@@ -39,4 +65,8 @@ class Web3SignedTxData(BaseData):
 
 
 class Web3SignedTxBlock(BlockBase[Web3SignedTxData, Literal["web3:signedTx"]]):
-    pass
+    @classmethod
+    def from_data(cls, chain_id: int, tx_hash: str, status: Literal[0, 1]) -> Web3SignedTxBlock:
+        return Web3SignedTxBlock(
+            block_type="web3:signedTx", data=Web3SignedTxData(chain_id=chain_id, tx_hash=tx_hash, status=status)
+        )
