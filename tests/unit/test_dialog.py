@@ -76,6 +76,7 @@ dialog_web3_payload = {
                         "txGasLimit": 29279,
                         "txNonce": 42,
                         "txTo": "0x4200000000000000000000000000000000000006",
+                        "txValue": "0",
                     },
                 }
             ],
