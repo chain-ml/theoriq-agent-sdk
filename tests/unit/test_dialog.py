@@ -284,13 +284,6 @@ def test_format_md() -> None:
 def test_dialog() -> None:
     for dialog in [dialog_payload, dialog_commands_payload, dialog_web3_payload]:
         dialog = Dialog.model_validate(dialog)
-        print(dialog.model_dump_json(indent=2))
-
-
-def test_dialog_schema() -> None:
-    print(json.dumps(Web3SignedTxData.model_json_schema(), indent=2))
-
-
-def test_dialog_v2_text_item() -> None:
-    item = TextBlock.from_text("some text")
-    print(item.model_dump_json(indent=2))
+        dump = dialog.model_dump_json(indent=2)
+        dialog_json = Dialog.model_validate(json.loads(dump))
+        assert len(dialog_json.items) == len(dialog.items)
