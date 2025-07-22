@@ -7,6 +7,7 @@ from theoriq.dialog import (
     BlockBase,
     CodeBlock,
     CommandBlock,
+    CustomBlock,
     DataBlock,
     Dialog,
     DialogItem,
@@ -287,3 +288,12 @@ def test_dialog() -> None:
         dump = dialog.model_dump_json(indent=2)
         dialog_json = Dialog.model_validate(json.loads(dump))
         assert len(dialog_json.items) == len(dialog.items)
+
+
+def test_custom_block() -> None:
+    custom = {"picka": "boo"}
+    block = CustomBlock.from_data(data=custom, custom_type="custom:boo")
+
+    block_json = block.model_dump_json(indent=2)
+
+    print(block_json)

@@ -54,6 +54,14 @@ class BaseData(BaseModel):
         kwargs.setdefault("exclude_unset", True)
         return kwargs
 
+    def model_dump_json(self, **kwargs):
+        """Override to ensure proper JSON serialization"""
+        return super().model_dump_json(**self._set_dump_defaults(kwargs))
+
+    def model_dump(self, **kwargs):
+        """Override to ensure proper JSON serialization"""
+        return super().model_dump(**self._set_dump_defaults(kwargs))
+
 
 T_Data = TypeVar("T_Data", bound=Union[BaseData, dict[str, Any]])
 T_Type = TypeVar("T_Type", bound=str)
@@ -67,6 +75,14 @@ class BlockBase(BaseModel, Generic[T_Data, T_Type]):
 
     class Config:
         populate_by_name = True
+
+    def _set_dump_defaults(self, kwargs):
+        """Set default serialization options"""
+        kwargs.setdefault("by_alias", True)
+        kwargs.setdefault("exclude_none", True)
+        kwargs.setdefault("exclude_defaults", True)
+        kwargs.setdefault("exclude_unset", True)
+        return kwargs
 
     def model_dump_json(self, **kwargs):
         """Override to ensure proper JSON serialization"""

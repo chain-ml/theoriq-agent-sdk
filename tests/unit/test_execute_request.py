@@ -38,6 +38,13 @@ request_payload = {
 }
 
 
+def test_exec_request_body_serialization() -> None:
+    e: ExecuteRequestBody = ExecuteRequestBody.model_validate(request_payload)
+    serialized = e.model_dump_json(exclude_none=True, exclude_unset=True)
+    assert "sourceType" in serialized
+    assert len(serialized) > 0
+
+
 def test_exec_request_body_deserialization() -> None:
 
     e: ExecuteRequestBody = ExecuteRequestBody.model_validate(request_payload)
