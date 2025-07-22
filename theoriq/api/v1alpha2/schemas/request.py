@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Optional
 
-
 from theoriq.dialog import BaseData, Dialog, DialogItem, DialogItemPredicate
 from theoriq.types import SourceType
 
