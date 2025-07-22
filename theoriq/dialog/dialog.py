@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from itertools import tee
 from typing import Annotated, Any, Callable, Iterable, List, Optional, Sequence, Tuple, Type
 
-from pydantic import BaseModel, Field, field_serializer, field_validator
+from pydantic import Field, field_serializer, field_validator
 
 from ..types import SourceType
 from .block import BaseData, BlockBase
@@ -28,7 +28,6 @@ class DialogItem(BaseData):
     blocks: List[BlockBase]
 
     @field_validator("timestamp", mode="before")
-    @classmethod
     def validate_timestamp(cls, v):
         if isinstance(v, str):
             return cls._datetime_from_str(v)
@@ -63,7 +62,7 @@ class DialogItem(BaseData):
         """Override to ensure proper JSON serialization"""
         return super().model_dump_json(**self._set_dump_defaults(kwargs))
 
-    def model_dump(self, **kwargs):
+    def model_dump(self, **kwargs) -> dict[str, Any]:
         """Override to ensure proper JSON serialization"""
         return super().model_dump(**self._set_dump_defaults(kwargs))
 
@@ -198,7 +197,7 @@ def format_source_and_blocks(
     return source_str, blocks_str
 
 
-class Dialog(BaseModel):
+class Dialog(BaseData):
     items: List[DialogItem]
 
     @property

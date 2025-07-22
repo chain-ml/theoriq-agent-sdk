@@ -13,6 +13,9 @@ from .web3_items import Web3ProposedTxData, Web3ProposedTxBlock, Web3SignedTxDat
 
 # Re-export all classes for backward compatibility
 __all__ = [
+    # BlockBase
+    "BlockBase",
+    "UnknownBlock",
     # Code items
     "CodeData",
     "CodeBlock",

@@ -10,14 +10,7 @@ from theoriq.dialog import (
     Web3ProposedTxData,
     Web3SignedTxData,
 )
-
-
-def test_text_to_str():
-    text_data = TextData(text="Hello, world!", type="md")
-    str_repr = text_data.to_str()
-
-    assert "```md" in str_repr
-    assert "Hello, world!" in str_repr
+from theoriq.dialog.custom_items import CustomData
 
 
 def test_code_to_str():
@@ -26,6 +19,13 @@ def test_code_to_str():
 
     assert "```python" in str_repr
     assert "print('Hello, world!')" in str_repr
+
+
+def test_custom_to_str():
+    code_data = CustomData(data={"key": "value"}, custom_type="custom_type_example")
+    str_repr = code_data.to_str()
+
+    print(str_repr)
 
 
 def test_data_to_str():
@@ -60,6 +60,14 @@ def test_router_to_str():
     assert "model_a" in str_repr
     assert "0.99" in str_repr
     assert "It's a good model" in str_repr
+
+
+def test_text_to_str():
+    text_data = TextData(text="Hello, world!", type="md")
+    str_repr = text_data.to_str()
+
+    assert "```md" in str_repr
+    assert "Hello, world!" in str_repr
 
 
 def test_unknown_command_to_str():

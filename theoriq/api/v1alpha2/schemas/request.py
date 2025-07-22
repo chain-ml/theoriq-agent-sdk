@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel
 
-from theoriq.dialog import Dialog, DialogItem, DialogItemPredicate
+from theoriq.dialog import BaseData, Dialog, DialogItem, DialogItemPredicate
 from theoriq.types import SourceType
 
 
-class ConfigurationRef(BaseModel):
+class ConfigurationRef(BaseData):
     """
     Represents the expected payload for a configuration request.
     """
@@ -17,7 +16,7 @@ class ConfigurationRef(BaseModel):
     id: str
 
 
-class Configuration(BaseModel):
+class Configuration(BaseData):
     """
     Represents the expected payload for a configuration request.
     """
@@ -25,7 +24,7 @@ class Configuration(BaseModel):
     fromRef: ConfigurationRef
 
 
-class ExecuteRequestBody(BaseModel):
+class ExecuteRequestBody(BaseData):
     """
     A class representing the body of an execute request. Inherits from BaseModel.
     """

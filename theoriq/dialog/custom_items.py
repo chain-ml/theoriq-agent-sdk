@@ -31,3 +31,17 @@ class CustomBlock(BlockBase[CustomData, Annotated[str, Field(pattern="custom:(.*
             if custom_type:
                 self.data.custom_type = custom_type
         return self
+
+    @classmethod
+    def from_data(cls, data: Dict[str, Any], custom_type: str) -> CustomBlock:
+        """
+        Creates a CustomBlock from the provided data and custom type.
+
+        Args:
+            data (Dict[str, Any]): The custom data to be wrapped.
+            custom_type (str): The type of the custom block.
+
+        Returns:
+            CustomBlock: An instance of CustomBlock with the provided data and type.
+        """
+        return cls(block_type=f"custom:{custom_type}", data=CustomData(data=data, custom_type=custom_type))
