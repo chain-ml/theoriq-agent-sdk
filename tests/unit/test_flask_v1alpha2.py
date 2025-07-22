@@ -65,7 +65,7 @@ def test_send_execute_request(
         response = client.post("/api/v1alpha2/execute", data=req_body_bytes, headers=req_biscuit.to_headers())
         assert response.status_code == 200
 
-        response_body = DialogItem.from_dict(response.json)
+        response_body = DialogItem.model_validate(response.json)
         assert response_body.blocks[0].data.text == "My name is John Doe"
 
 
@@ -127,8 +127,9 @@ def test_send_chat_completion_request(
         response = client.post("/api/v1alpha2/execute", data=req_body_bytes, headers=req_biscuit.to_headers())
         assert response.status_code == 200
 
-        response_body = DialogItem.from_dict(response.json)
-        assert response_body.blocks[0].data.text == "My name is John Doe"
+        dialog_item = DialogItem.model_validate(response.json)
+        textblock = dialog_item.blocks[0]
+        assert textblock.data.text == "My name is John Doe"
 
 
 def echo_last_prompt(_context: ExecuteContext, request: ExecuteRequestBody) -> ExecuteResponse:
