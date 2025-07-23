@@ -141,6 +141,7 @@ dialog_commands_payload = {
 
 def test_dialog_deserialization() -> None:
     d: Dialog = Dialog.model_validate(dialog_payload)
+
     assert isinstance(d, Dialog)
     assert d.items[0].source_type == SourceType.User
     assert (
@@ -304,3 +305,15 @@ def test_custom_block() -> None:
     block_json = block.model_dump_json(indent=2)
 
     print(block_json)
+
+
+def test_text_block_is_of_type() -> None:
+    dialog = Dialog.model_validate(dialog_web3_payload)
+
+    # reveal_type(blocks)
+    # reveal_type(dialog.items[0].blocks)
+
+    for block in dialog.items[2].blocks:
+        if TextBlock.is_instance(block):
+            print(block.data.text)
+            assert isinstance(block, TextBlock)
