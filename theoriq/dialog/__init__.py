@@ -25,6 +25,9 @@ __all__ = [
     # Data items
     "DataItem",
     "DataBlock",
+    # Dialog items
+    "Dialog",
+    "DialogItem",
     # Error items
     "ErrorData",
     "ErrorBlock",

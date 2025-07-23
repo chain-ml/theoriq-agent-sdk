@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import List, Optional
 
-from theoriq.dialog import BaseData, Dialog, DialogItem, DialogItemPredicate
+from theoriq.dialog import BaseTheoriqModel, Dialog, DialogItem, DialogItemPredicate
 from theoriq.types import SourceType
 
 
-class ConfigurationRef(BaseData):
+class ConfigurationRef(BaseTheoriqModel):
     """
     Represents the expected payload for a configuration request.
     """
@@ -15,7 +15,7 @@ class ConfigurationRef(BaseData):
     id: str
 
 
-class Configuration(BaseData):
+class Configuration(BaseTheoriqModel):
     """
     Represents the expected payload for a configuration request.
     """
@@ -23,7 +23,7 @@ class Configuration(BaseData):
     fromRef: ConfigurationRef
 
 
-class ExecuteRequestBody(BaseData):
+class ExecuteRequestBody(BaseTheoriqModel):
     """
     A class representing the body of an execute request. Inherits from BaseModel.
     """
@@ -41,6 +41,9 @@ class ExecuteRequestBody(BaseData):
 
     def last_item_from(self, source_type: SourceType) -> Optional[DialogItem]:
         return self.dialog.last_item_from(source_type)
+
+    def filter_items(self, predicate: DialogItemPredicate) -> List[DialogItem]:
+        return self.dialog.filter_items(predicate)
 
     def last_item_predicate(self, predicate: DialogItemPredicate) -> Optional[DialogItem]:
         return self.dialog.last_item_predicate(predicate)

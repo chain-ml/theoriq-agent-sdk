@@ -1,12 +1,37 @@
 from __future__ import annotations
 
-from typing import Annotated, Any, Generic, Optional, Sequence, Type, TypeVar, Union
+import json
+from typing import Annotated, Any, Callable, Generic, Optional, Sequence, Type, TypeVar, Union
 
 from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
 
 
-class BaseData(BaseModel):
+class BaseTheoriqModel(BaseModel):
+
+    class Config:
+        populate_by_name = True
+        alias_generator = to_camel
+
+    @staticmethod
+    def _set_dump_defaults(kwargs):
+        """Set default serialization options"""
+        kwargs.setdefault("by_alias", True)
+        kwargs.setdefault("exclude_none", True)
+        kwargs.setdefault("exclude_defaults", True)
+        kwargs.setdefault("exclude_unset", True)
+        return kwargs
+
+    def model_dump_json(self, **kwargs) -> str:
+        """Override to ensure proper JSON serialization"""
+        return super().model_dump_json(**BaseTheoriqModel._set_dump_defaults(kwargs))
+
+    def model_dump(self, **kwargs) -> dict[str, Any]:
+        """Override to ensure proper JSON serialization"""
+        return super().model_dump(**BaseTheoriqModel._set_dump_defaults(kwargs))
+
+
+class BaseData(BaseTheoriqModel):
     """
     Base class for data items in blocks.
     This class can be extended to create specific data types.
@@ -42,32 +67,12 @@ class BaseData(BaseModel):
         """
         return self.model_dump_json(by_alias=True, exclude_none=True)
 
-    class Config:
-        populate_by_name = True
-        alias_generator = to_camel
-
-    def _set_dump_defaults(self, kwargs):
-        """Set default serialization options"""
-        kwargs.setdefault("by_alias", True)
-        kwargs.setdefault("exclude_none", True)
-        kwargs.setdefault("exclude_defaults", True)
-        kwargs.setdefault("exclude_unset", True)
-        return kwargs
-
-    def model_dump_json(self, **kwargs):
-        """Override to ensure proper JSON serialization"""
-        return super().model_dump_json(**self._set_dump_defaults(kwargs))
-
-    def model_dump(self, **kwargs):
-        """Override to ensure proper JSON serialization"""
-        return super().model_dump(**self._set_dump_defaults(kwargs))
-
 
 T_Data = TypeVar("T_Data", bound=Union[BaseData, dict[str, Any]])
 T_Type = TypeVar("T_Type", bound=str)
 
 
-class BlockBase(BaseModel, Generic[T_Data, T_Type]):
+class BlockBase(BaseTheoriqModel, Generic[T_Data, T_Type]):
     ref: Annotated[Optional[str], Field(default=None)] = None
     key: Annotated[Optional[str], Field(default=None)] = None
     block_type: Annotated[T_Type, Field(alias="type")]
@@ -75,23 +80,6 @@ class BlockBase(BaseModel, Generic[T_Data, T_Type]):
 
     class Config:
         populate_by_name = True
-
-    def _set_dump_defaults(self, kwargs):
-        """Set default serialization options"""
-        kwargs.setdefault("by_alias", True)
-        kwargs.setdefault("exclude_none", True)
-        kwargs.setdefault("exclude_defaults", True)
-        kwargs.setdefault("exclude_unset", True)
-        return kwargs
-
-    def model_dump_json(self, **kwargs):
-        """Override to ensure proper JSON serialization"""
-        # Set default serialization options
-        kwargs.setdefault("by_alias", True)
-        kwargs.setdefault("exclude_none", True)
-        kwargs.setdefault("exclude_defaults", True)
-        kwargs.setdefault("exclude_unset", True)
-        return super().model_dump_json(**kwargs)
 
     @staticmethod
     def sub_type(block_type: T_Type) -> Optional[str]:
@@ -122,6 +110,11 @@ class BlockBase(BaseModel, Generic[T_Data, T_Type]):
             return self.block_type == block_type
         return self.block_type.startswith(block_type)
 
+    def to_str(self) -> str:
+        if isinstance(self.data, BaseData):
+            return self.data.to_str()
+        return json.dumps(self.data, indent=2)
+
 
 def filter_blocks(blocks: Sequence[BlockBase], block_type: Type[BlockBase]) -> Sequence[BlockBase]:
     """
@@ -135,3 +128,25 @@ def filter_blocks(blocks: Sequence[BlockBase], block_type: Type[BlockBase]) -> S
         Sequence[BlockBase]: A filtered list of BlockBase that match the block type.
     """
     return list(filter(lambda x: isinstance(x, block_type), blocks))
+
+
+BlockBasePredicate = Callable[[BlockBase], bool]
+
+
+def AllBlocks(_: BlockBase) -> bool:
+    """Predicate that matches all blocks."""
+    return True
+
+
+def BlockOfTypes(block_types: Sequence[Type[BlockBase]]) -> BlockBasePredicate:
+    def predicate(block: BlockBase) -> bool:
+        return any(isinstance(block, block_type) for block_type in block_types)
+
+    return predicate
+
+
+def BlockOfType(block_type: T_Type) -> BlockBasePredicate:
+    def predicate(block: BlockBase) -> bool:
+        return block.is_of_type(block_type)
+
+    return predicate
