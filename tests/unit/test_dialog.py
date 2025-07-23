@@ -1,6 +1,8 @@
 import json
 from typing import Final, Sequence, Tuple
 
+from typing_extensions import reveal_type
+
 from theoriq.biscuit import AgentAddress
 from theoriq.dialog import (
     BlockBase,
@@ -304,3 +306,22 @@ def test_custom_block() -> None:
     block_json = block.model_dump_json(indent=2)
 
     print(block_json)
+
+def test_text_block_is_of_type() -> None:
+    dialog = Dialog.model_validate(dialog_web3_payload)
+
+
+    # reveal_type(blocks)
+    # reveal_type(dialog.items[0].blocks)
+
+
+    for block in dialog.items[2].blocks:
+        # print(reveal_type(block))
+        print(block.data.text)
+
+        if TextBlock.is_instance(block):
+            print(reveal_type(block))
+            print(block.data.text)
+        else:
+            print(reveal_type(block))
+

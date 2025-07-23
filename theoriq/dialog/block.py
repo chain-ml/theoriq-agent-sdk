@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from typing import Annotated, Any, Callable, Generic, Optional, Sequence, Type, TypeVar, Union
+from typing_extensions import TypeGuard
 
 from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
@@ -115,6 +116,9 @@ class BlockBase(BaseTheoriqModel, Generic[T_Data, T_Type]):
             return self.data.to_str()
         return json.dumps(self.data, indent=2)
 
+    @classmethod
+    def is_instance(cls, block: BlockBase[T_Data, T_Type]) -> TypeGuard[BlockBase[T_Data, T_Type]]:
+        return isinstance(block, cls)
 
 def filter_blocks(blocks: Sequence[BlockBase], block_type: Type[BlockBase]) -> Sequence[BlockBase]:
     """
