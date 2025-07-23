@@ -4,6 +4,8 @@ from datetime import datetime
 from typing import Annotated, Any, Dict, List, Optional
 from uuid import UUID
 
+from pydantic import Field, field_validator
+
 from theoriq.dialog import BaseTheoriqModel, Dialog, DialogItem, DialogItemPredicate
 from theoriq.types import SourceType
 
@@ -67,9 +69,7 @@ class RequestItem(BaseTheoriqModel):
         return SourceType.from_value(value)
 
 
-class Request(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
-
+class Request(BaseTheoriqModel):
     body: Optional[ExecuteRequestBody] = None  # could be empty for configure request
     body_bytes: List[int]
 
