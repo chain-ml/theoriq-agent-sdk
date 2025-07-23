@@ -7,6 +7,7 @@ from typing import Annotated, Any, Callable, Iterable, List, Optional, Sequence,
 from pydantic import Field, field_serializer, field_validator
 
 from ..types import SourceType
+from . import DataBlock
 from .block import AllBlocks, BaseData, BaseTheoriqModel, BlockBase, BlockBasePredicate, BlockOfType, BlockOfTypes
 from .code_items import CodeBlock
 from .command_items import CommandBlock
@@ -144,11 +145,12 @@ DialogItemTransformer = Callable[[DialogItem], Any]
 
 # Block type mapping for factory function
 BLOCK_TYPE_MAP = {
+    "code": CodeBlock,
+    "command": CommandBlock,
+    "data": DataBlock,
+    "metrics": MetricsBlock,
     "router": RouterBlock,
     "text": TextBlock,
-    "code": CodeBlock,
-    "metrics": MetricsBlock,
-    "command": CommandBlock,
     "web3:proposedTx": Web3ProposedTxBlock,
     "web3:signedTx": Web3SignedTxBlock,
 }
@@ -168,6 +170,8 @@ def parse_block(block_data: dict) -> BlockBase:
         return TextBlock(**block_data)
     elif block_type.startswith("code:"):
         return CodeBlock(**block_data)
+    elif block_type.startswith("data:"):
+        return DataBlock(**block_data)
     elif block_type.startswith("custom:"):
         return CustomBlock(**block_data)
 
