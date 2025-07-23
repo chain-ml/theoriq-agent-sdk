@@ -58,7 +58,7 @@ class RequestItem(BaseTheoriqModel):
     source: str
     source_type: SourceType
     start_at: datetime
-    end_at: datetime
+    end_at: Optional[datetime]  # TODO: ?
     target_agent: str
 
     # TODO: remove after SourceType lowercase fix
