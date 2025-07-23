@@ -310,10 +310,8 @@ def test_custom_block() -> None:
 def test_text_block_is_of_type() -> None:
     dialog = Dialog.model_validate(dialog_web3_payload)
 
-
     # reveal_type(blocks)
     # reveal_type(dialog.items[0].blocks)
-
 
     for block in dialog.items[2].blocks:
         if TextBlock.is_instance(block):
