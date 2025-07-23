@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Optional
+from typing import Annotated, Any, List, Optional
 from uuid import UUID
 
 from pydantic import Field, field_validator
 
-from theoriq.dialog import BaseTheoriqModel, Dialog, DialogItem, DialogItemPredicate
+from theoriq.dialog import Dialog, DialogItem, DialogItemPredicate
+from theoriq.dialog.block import BaseTheoriqModel
 from theoriq.types import SourceType
 
 
@@ -58,7 +59,7 @@ class RequestItem(BaseTheoriqModel):
     source: str
     source_type: SourceType
     start_at: datetime
-    end_at: Optional[datetime]  # TODO: ?
+    end_at: Optional[datetime]  # TODO: wasn't optional before?
     target_agent: str
 
     # TODO: remove after SourceType lowercase fix
@@ -75,7 +76,7 @@ class Request(BaseTheoriqModel):
 
 
 class Response(BaseTheoriqModel):
-    body: Optional[Dict[str, Any]] = None  # TODO: must be a DialogItem
+    body: Optional[DialogItem] = None
     body_bytes: Optional[List[int]] = None
     source: Annotated[str, Field(alias="from")]
     message: Optional[str] = None
