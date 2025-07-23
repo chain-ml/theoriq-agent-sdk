@@ -65,8 +65,8 @@ def test_send_execute_request(
         response = client.post("/api/v1alpha2/execute", data=req_body_bytes, headers=req_biscuit.to_headers())
         assert response.status_code == 200
 
-        response_body = DialogItem.model_validate(response.json)
-        assert response_body.blocks[0].data.text == "My name is John Doe"
+        dialog_item = DialogItem.model_validate(response.get_json())
+        assert dialog_item.blocks[0].data.text == "My name is John Doe"
 
 
 def test_send_execute_request_without_biscuit_returns_401(
@@ -138,8 +138,8 @@ def echo_last_prompt(_context: ExecuteContext, request: ExecuteRequestBody) -> E
     if "should fail" in last_prompt:
         raise RuntimeError("Execute function fails")
 
-    response_body = DialogItem.new_text(source=str(AgentAddress.one()), text=last_prompt)
-    return ExecuteResponse(response_body, request_id=uuid.uuid4())
+    dialog_item = DialogItem.new_text(source=str(AgentAddress.one()), text=last_prompt)
+    return ExecuteResponse(dialog_item=dialog_item, request_id=uuid.uuid4())
 
 
 def _build_request_body_bytes(text: str, source: AgentAddress) -> bytes:

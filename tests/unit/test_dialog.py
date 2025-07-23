@@ -1,16 +1,19 @@
 import json
 from typing import Final, Sequence, Tuple
-from uuid import uuid4
 
 from theoriq.biscuit import AgentAddress
 from theoriq.dialog import (
     BlockBase,
+    BlockOfType,
+    BlockOfTypes,
     CodeBlock,
     CommandBlock,
+    CustomBlock,
     DataBlock,
     Dialog,
     DialogItem,
     TextBlock,
+    UnknownBlock,
     Web3ProposedTxBlock,
     Web3SignedTxBlock,
     format_source_and_blocks,
@@ -27,17 +30,12 @@ dialog_payload = {
             "source": USER_ADDRESS,
             "timestamp": "2024-11-04T20:00:39Z",
             "blocks": [{"data": {"text": "Give me the trending tokens in the last 24 hours"}, "type": "text"}],
-            "requestId": [uuid4()],
-            "sse": [],
         },
         {
             "sourceType": str(SourceType.Agent),
             "source": RANDOM_AGENT_ADDRESS,
             "timestamp": "2024-11-27T00:57:29.725500Z",
             "blocks": [{"data": {"text": "The trending tokens in the last 24 hours are ...."}, "type": "text"}],
-            "requestId": [],
-            "dialogId": "7f105329-a491-4f6f-8882-67627acce6bb",
-            "sse": [],
         },
     ]
 }
@@ -131,6 +129,12 @@ dialog_commands_payload = {
             "timestamp": "2024-11-27T00:57:29.725500Z",
             "blocks": [{"data": {"text": "The trending tokens in the last 24 hours are ...."}, "type": "text"}],
         },
+        {
+            "sourceType": str(SourceType.Agent),
+            "source": RANDOM_AGENT_ADDRESS,
+            "timestamp": "2024-11-27T00:57:29.725500Z",
+            "blocks": [{"data": {"text": "The trending tokens in the last 24 hours are ...."}, "type": "unknown_type"}],
+        },
     ]
 }
 
@@ -157,18 +161,18 @@ def test_find_blocks_of_type() -> None:
 
     agent_item, user_item = dialog.items[1], dialog.items[2]
 
-    assert not agent_item.has_blocks_of_type("text")
-    assert not agent_item.has_blocks_of_type("text:markdown")
-    assert not agent_item.has_blocks_of_type("text:unknown_subtype")
-    assert agent_item.has_blocks_of_type("web3:proposedTx")
+    assert not agent_item.has_blocks(BlockOfType("text"))
+    assert not agent_item.has_blocks(BlockOfType("text:markdown"))
+    assert not agent_item.has_blocks(BlockOfType("text:unknown_subtype"))
+    assert agent_item.has_blocks(BlockOfType("web3:proposedTx"))
     assert len(agent_item.find_all_blocks_of_type("web3:proposedTx")) == 1
-    assert not agent_item.has_blocks_of_type("web3:unknown_subtype")
+    assert not agent_item.has_blocks(BlockOfType("web3:unknown_subtype"))
 
     assert len(user_item.find_all_blocks_of_type("text")) == 2
     assert len(user_item.find_all_blocks_of_type("text:markdown")) == 1
-    assert not agent_item.has_blocks_of_type("text:unknown_subtype")
+    assert not agent_item.has_blocks(BlockOfType("text:unknown_subtype"))
     assert len(user_item.find_all_blocks_of_type("web3:signedTx")) == 1
-    assert not agent_item.has_blocks_of_type("web3:unknown_subtype")
+    assert not agent_item.has_blocks(BlockOfType("web3:unknown_subtype"))
 
     first_web3_block = user_item.find_first_block_of_type("web3:signedTx")
     last_web3_block = user_item.find_last_block_of_type("web3:signedTx")
@@ -222,17 +226,21 @@ def test_format_blocks() -> None:
                     DataBlock.from_data(data="1,2,3", sub_type="csv"),
                 ]
             ),
+            get_test_item([UnknownBlock(block_type="unknown_type", data={"data": "This is an unknown block"})]),
         ]
     )
 
-    expected = d.items[0].format_blocks()
-    assert expected == ["Some text", "```md\nSome markdown\n```"]
+    actual = d.items[0].format_blocks()
+    assert actual == ["Some text", "```md\nSome markdown\n```"]
 
-    expected = d.items[1].format_blocks()
-    assert expected == ["Another text", "```\nSELECT *\n```", "```csv\n1,2,3\n```"]
+    actual = d.items[1].format_blocks()
+    assert actual == ["Another text", "```\nSELECT *\n```", "```csv\n1,2,3\n```"]
 
-    expected = d.items[1].format_blocks(block_types_to_format=[TextBlock, CodeBlock])
-    assert expected == ["Another text", "```\nSELECT *\n```"]
+    actual = d.items[1].format_blocks(block_to_format=BlockOfTypes([TextBlock, CodeBlock]))
+    assert actual == ["Another text", "```\nSELECT *\n```"]
+
+    actual = d.items[2].format_blocks()
+    assert actual == ['{\n  "data": "This is an unknown block"\n}']
 
 
 def test_map_format_source_and_blocks() -> None:
@@ -282,8 +290,17 @@ def test_format_md() -> None:
 
 
 def test_dialog() -> None:
-    for dialog in [dialog_payload, dialog_commands_payload, dialog_web3_payload]:
-        dialog = Dialog.model_validate(dialog)
+    for payload in [dialog_payload, dialog_commands_payload, dialog_web3_payload]:
+        dialog = Dialog.model_validate(payload)
         dump = dialog.model_dump_json(indent=2)
         dialog_json = Dialog.model_validate(json.loads(dump))
         assert len(dialog_json.items) == len(dialog.items)
+
+
+def test_custom_block() -> None:
+    custom = {"picka": "boo"}
+    block = CustomBlock.from_data(data=custom, custom_type="custom:boo")
+
+    block_json = block.model_dump_json(indent=2)
+
+    print(block_json)

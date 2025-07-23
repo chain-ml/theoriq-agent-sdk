@@ -4,14 +4,11 @@ from datetime import datetime
 from typing import Annotated, Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-from pydantic.alias_generators import to_camel
-
-from theoriq.dialog import Dialog, DialogItem, DialogItemPredicate
+from theoriq.dialog import BaseTheoriqModel, Dialog, DialogItem, DialogItemPredicate
 from theoriq.types import SourceType
 
 
-class ConfigurationRef(BaseModel):
+class ConfigurationRef(BaseTheoriqModel):
     """
     Represents the expected payload for a configuration request.
     """
@@ -20,7 +17,7 @@ class ConfigurationRef(BaseModel):
     id: str
 
 
-class Configuration(BaseModel):
+class Configuration(BaseTheoriqModel):
     """
     Represents the expected payload for a configuration request.
     """
@@ -28,7 +25,7 @@ class Configuration(BaseModel):
     fromRef: ConfigurationRef
 
 
-class ExecuteRequestBody(BaseModel):
+class ExecuteRequestBody(BaseTheoriqModel):
     """
     A class representing the body of an execute request. Inherits from BaseModel.
     """
@@ -47,13 +44,14 @@ class ExecuteRequestBody(BaseModel):
     def last_item_from(self, source_type: SourceType) -> Optional[DialogItem]:
         return self.dialog.last_item_from(source_type)
 
+    def filter_items(self, predicate: DialogItemPredicate) -> List[DialogItem]:
+        return self.dialog.filter_items(predicate)
+
     def last_item_predicate(self, predicate: DialogItemPredicate) -> Optional[DialogItem]:
         return self.dialog.last_item_predicate(predicate)
 
 
-class RequestItem(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
-
+class RequestItem(BaseTheoriqModel):
     id: UUID
     source: str
     source_type: SourceType
@@ -76,9 +74,7 @@ class Request(BaseModel):
     body_bytes: List[int]
 
 
-class Response(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
-
+class Response(BaseTheoriqModel):
     body: Optional[Dict[str, Any]] = None  # TODO: must be a DialogItem
     body_bytes: Optional[List[int]] = None
     source: Annotated[str, Field(alias="from")]
@@ -86,9 +82,7 @@ class Response(BaseModel):
     status_code: int
 
 
-class Source(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
-
+class Source(BaseTheoriqModel):
     source: str
     source_type: SourceType
 
@@ -100,9 +94,7 @@ class Source(BaseModel):
         return SourceType.from_value(value)
 
 
-class Event(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
-
+class Event(BaseTheoriqModel):
     context: str
     data: Optional[Any] = None
     event_type: str
@@ -110,7 +102,7 @@ class Event(BaseModel):
     timestamp: datetime
 
 
-class RequestAudit(BaseModel):
+class RequestAudit(BaseTheoriqModel):
     id: UUID
     request: Request
     response: Response
