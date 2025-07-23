@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
-from itertools import tee
 from typing import Annotated, Any, Callable, Iterable, List, Optional, Sequence, Tuple, Type
 
 from pydantic import Field, field_serializer, field_validator
 
 from ..types import SourceType
-from .block import BaseData, BlockBase
+from .block import AllBlocks, BaseData, BaseTheoriqModel, BlockBase, BlockBasePredicate, BlockOfType, BlockOfTypes
 from .code_items import CodeBlock
 from .command_items import CommandBlock
 from .custom_items import CustomBlock
+from .data_items import DataBlock
 from .metrics_items import MetricsBlock
 from .router_items import RouterBlock
 from .text_items import TextBlock
@@ -21,7 +21,7 @@ UnknownBlock = BlockBase[dict[str, Any], str]
 
 
 # Main data model
-class DialogItem(BaseData):
+class DialogItem(BaseTheoriqModel):
     timestamp: datetime = Field(..., description="ISO format timestamp")
     source_type: Annotated[SourceType, Field(description="Source type, could be `user`, `agent`")]
     source: Annotated[str, Field(pattern="0x[a-fA-F0-9]{40}([a-fA-F0-9]{24})?", description="Address of the source")]
@@ -58,14 +58,6 @@ class DialogItem(BaseData):
             result = datetime.fromisoformat(value)
         return result.replace(tzinfo=timezone.utc) if result.tzinfo is None else result
 
-    def model_dump_json(self, **kwargs):
-        """Override to ensure proper JSON serialization"""
-        return super().model_dump_json(**self._set_dump_defaults(kwargs))
-
-    def model_dump(self, **kwargs) -> dict[str, Any]:
-        """Override to ensure proper JSON serialization"""
-        return super().model_dump(**self._set_dump_defaults(kwargs))
-
     @field_validator("blocks", mode="before")
     def parse_blocks(cls, v):
         if isinstance(v, list):
@@ -86,20 +78,20 @@ class DialogItem(BaseData):
     def new_text(cls, source: str, text: str) -> DialogItem:
         return DialogItem.new(source=source, blocks=[TextBlock.from_text(text=text)])
 
-    def find_blocks_of_type(self, block_type: str) -> Iterable[BlockBase]:
+    def find_blocks(self, predicate: BlockBasePredicate) -> Iterable[BlockBase]:
         for block in self.blocks:
-            if block.is_of_type(block_type):
+            if predicate(block):
                 yield block
         return
 
-    def has_blocks_of_type(self, block_type: str) -> bool:
-        iterable = self.find_blocks_of_type(block_type)
-        a, _ = tee(iterable)
-        try:
-            next(a)
-            return True
-        except StopIteration:
-            return False
+    def find_blocks_of_type(self, block_type: str) -> Iterable[BlockBase]:
+        return self.find_blocks(BlockOfType(block_type))
+
+    def has_blocks(self, predicate: BlockBasePredicate) -> bool:
+        for block in self.blocks:
+            if predicate(block):
+                return True
+        return False
 
     def find_all_blocks_of_type(self, block_type: str) -> List[BlockBase]:
         return list(self.find_blocks_of_type(block_type))
@@ -135,20 +127,16 @@ class DialogItem(BaseData):
         source_type = self.source_type.value.capitalize()
         return source_type if not with_address else f"{source_type} ({self.source})"
 
-    def format_blocks(self, block_types_to_format: Optional[Sequence[Type[BlockBase]]] = None) -> List[str]:
+    def format_blocks(self, block_to_format: BlockBasePredicate = AllBlocks) -> List[str]:
         """
         Format each block with `to_str()` whose type is in `block_types_to_format`.
         If `block_types_to_format` is None, format every block.
         """
 
-        if block_types_to_format is None:
-            return [block.data.to_str() for block in self.blocks]
+        if block_to_format is None:
+            return [block.to_str() for block in self.blocks]
 
-        return [
-            block.data.to_str()
-            for block in self.blocks
-            if any(isinstance(block, block_type) for block_type in block_types_to_format)
-        ]
+        return [block.to_str() for block in self.blocks if block_to_format(block)]
 
 
 DialogItemPredicate = Callable[[DialogItem], bool]
@@ -157,11 +145,12 @@ DialogItemTransformer = Callable[[DialogItem], Any]
 
 # Block type mapping for factory function
 BLOCK_TYPE_MAP = {
+    "code": CodeBlock,
+    "command": CommandBlock,
+    "data": DataBlock,
+    "metrics": MetricsBlock,
     "router": RouterBlock,
     "text": TextBlock,
-    "code": CodeBlock,
-    "metrics": MetricsBlock,
-    "command": CommandBlock,
     "web3:proposedTx": Web3ProposedTxBlock,
     "web3:signedTx": Web3SignedTxBlock,
 }
@@ -181,6 +170,8 @@ def parse_block(block_data: dict) -> BlockBase:
         return TextBlock(**block_data)
     elif block_type.startswith("code:"):
         return CodeBlock(**block_data)
+    elif block_type.startswith("data:"):
+        return DataBlock(**block_data)
     elif block_type.startswith("custom:"):
         return CustomBlock(**block_data)
 
@@ -193,12 +184,17 @@ def format_source_and_blocks(
 ) -> Tuple[str, str]:
     """Format the source and blocks of a dialog item. Helper function to use with Dialog.map()."""
     source_str = item.format_source(with_address=with_address)
-    blocks_str = "\n\n".join(item.format_blocks(block_types_to_format=block_types_to_format))
+
+    predicate = BlockOfTypes(block_types_to_format) if block_types_to_format else AllBlocks
+    blocks_str = "\n\n".join(item.format_blocks(block_to_format=predicate))
     return source_str, blocks_str
 
 
 class Dialog(BaseData):
     items: List[DialogItem]
+
+    def filter_items(self, predicate: DialogItemPredicate) -> List[DialogItem]:
+        return [item for item in self.items if predicate(item)]
 
     @property
     def last_item(self) -> Optional[DialogItem]:
@@ -259,9 +255,9 @@ class Dialog(BaseData):
         items = (item for item in self.items if predicate(item))
         return max(items, key=lambda obj: obj.timestamp) if items else None
 
-    def map(self, func: DialogItemTransformer) -> List[Any]:
+    def map(self, transformer: DialogItemTransformer) -> List[Any]:
         """Apply a function to each item in the dialog."""
-        return [func(item) for item in self.items]
+        return [transformer(item) for item in self.items]
 
     def format_as_markdown(self, indent: int = 1) -> str:
         """Formats the dialog as a markdown string with default parameters from `format_source_and_blocks`."""
