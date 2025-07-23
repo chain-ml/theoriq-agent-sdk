@@ -7,11 +7,11 @@ from typing import Annotated, Any, Callable, Iterable, List, Optional, Sequence,
 from pydantic import Field, field_serializer, field_validator
 
 from ..types import SourceType
-from . import DataBlock
 from .block import AllBlocks, BaseData, BaseTheoriqModel, BlockBase, BlockBasePredicate, BlockOfType, BlockOfTypes
 from .code_items import CodeBlock
 from .command_items import CommandBlock
 from .custom_items import CustomBlock
+from .data_items import DataBlock
 from .metrics_items import MetricsBlock
 from .router_items import RouterBlock
 from .text_items import TextBlock
