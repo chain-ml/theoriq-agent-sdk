@@ -12,9 +12,6 @@ class MetricItem(BaseData):
     value: float
     trend_percentage: Annotated[float, Field(alias="trendPercentage")]
 
-    class Config:
-        populate_by_name = True
-
 
 class MetricsData(BaseData):
     items: List[MetricItem]
