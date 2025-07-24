@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, Any, Dict
+from typing import Annotated, Any, Dict, Optional
 
 from pydantic import Field, field_validator, model_validator
 
@@ -9,7 +9,7 @@ from .block import BaseData, BlockBase
 
 class CustomData(BaseData):
     data: Dict[str, Any]
-    custom_type: str
+    custom_type: Optional[str] = None
 
 
 class CustomBlock(BlockBase[CustomData, Annotated[str, Field(pattern="custom:(.*)?")]]):
