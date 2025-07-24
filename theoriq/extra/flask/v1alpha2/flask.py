@@ -19,6 +19,7 @@ from theoriq.extra.flask.common import get_bearer_token
 from theoriq.extra.globals import agent_var
 
 from ...logging.execute_context import ExecuteLogContext
+from ...logging.http_request_context import x_request_id_var
 from ..common import (
     add_biscuit_to_response,
     build_error_payload,
@@ -149,7 +150,6 @@ def execute_async_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -
     protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
     request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
     execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit)
-    request_id_header = theoriq.extra.flask.logging.http_request_context.x_request_id_var.get()
     with ExecuteLogContext(execute_context):
         try:
             execute_request_body = ExecuteRequestBody.model_validate(request.json)
@@ -157,7 +157,8 @@ def execute_async_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -
 
             # Execute user's function
             thread = threading.Thread(
-                target=_execute_async, args=(execute_request_function, execute_context, execute_request_body, request_id_header)
+                target=_execute_async,
+                args=(execute_request_function, execute_context, execute_request_body, x_request_id_var.get()),
             )
             thread.start()
             return Response(status=202)
