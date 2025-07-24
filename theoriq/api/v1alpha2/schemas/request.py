@@ -59,7 +59,7 @@ class RequestItem(BaseTheoriqModel):
     source: str
     source_type: SourceType
     start_at: datetime
-    end_at: Optional[datetime]  # TODO: wasn't optional before?
+    end_at: Optional[datetime]
     target_agent: str
 
 
@@ -77,7 +77,7 @@ class Response(BaseTheoriqModel):
 
 
 class Source(BaseTheoriqModel):
-    source: str
+    source_id: str
     source_type: SourceType
 
 
@@ -87,6 +87,7 @@ class Event(BaseTheoriqModel):
     event_type: str
     message: str
     timestamp: datetime
+    source: Source
 
 
 class RequestAudit(BaseTheoriqModel):
