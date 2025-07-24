@@ -172,6 +172,10 @@ dialog_suggestions_payload = {
                                 "description": "code to compute 7",
                                 "block": {"data": {"code": "c = 3 + 4"}, "type": "code"},
                             },
+                            {
+                                "description": "A data block I do not support",
+                                "block": {"data": {"data": "1,2,3,4"}, "type": "data"},
+                            },
                         ]
                     },
                 }

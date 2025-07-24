@@ -22,20 +22,22 @@ class SuggestionItem(BaseData):
     block: SuggestionBlockTypes
 
     @classmethod
-    def from_text(cls, *, description: str, text: str) -> SuggestionItem:
-        return cls(agent_id=None, description=description, block=TextBlock.from_text(text))
+    def from_text(cls, agent_id: Optional[str] = None, *, description: str, text: str) -> SuggestionItem:
+        return cls(agent_id=agent_id, description=description, block=TextBlock.from_text(text))
 
     @classmethod
-    def from_command(cls, description: str, command: UnknownCommandData) -> SuggestionItem:
-        return cls(agent_id=None, description=description, block=CommandBlock.from_command(command))
+    def from_command(
+        cls, agent_id: Optional[str] = None, *, description: str, command: UnknownCommandData
+    ) -> SuggestionItem:
+        return cls(agent_id=agent_id, description=description, block=CommandBlock.from_command(command))
 
 
 class SuggestionsData(BaseData):
     items: List[SuggestionItem]
 
     @classmethod
-    def from_suggestion(cls, description: str, block: T) -> SuggestionsData:
-        return cls(items=[SuggestionItem(agent_id=None, description=description, block=block)])
+    def from_suggestion(cls, agent_id: Optional[str] = None, *, description: str, block: T) -> SuggestionsData:
+        return cls(items=[SuggestionItem(agent_id=agent_id, description=description, block=block)])
 
     @classmethod
     def from_items(cls, items: Sequence[SuggestionItem]) -> SuggestionsData:
@@ -45,8 +47,11 @@ class SuggestionsData(BaseData):
 class SuggestionsBlock(BlockBase[SuggestionsData, Literal["suggestions"]]):
 
     @classmethod
-    def from_suggestion(cls, description: str, block: T) -> SuggestionsBlock:
-        return cls(block_type="suggestions", data=SuggestionsData.from_suggestion(description=description, block=block))
+    def from_suggestion(cls, agent_id: Optional[str] = None, *, description: str, block: T) -> SuggestionsBlock:
+        return cls(
+            block_type="suggestions",
+            data=SuggestionsData.from_suggestion(agent_id=agent_id, description=description, block=block),
+        )
 
     @classmethod
     def from_items(cls, items: Sequence[SuggestionItem]) -> SuggestionsBlock:

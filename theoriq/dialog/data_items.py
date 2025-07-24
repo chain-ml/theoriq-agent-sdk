@@ -9,7 +9,7 @@ from .block import BaseData, BlockBase
 
 class DataItem(BaseData):
     data: str
-    type: Optional[str]
+    type: Optional[str] = None
 
     def to_str(self) -> str:
         if self.type is None:

@@ -7,7 +7,7 @@ from .block import BaseData, BlockBase
 
 class ErrorData(BaseData):
     err: str
-    message: Optional[str]
+    message: Optional[str] = None
 
     """
     A class representing an error item. Inherits from BaseData.
