@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 from typing import Any, Dict, Optional, Sequence
+from uuid import UUID
 
 from ..biscuit import RequestBiscuit, ResponseBiscuit
 from ..dialog import BlockBase, DialogItem, ErrorBlock, TextBlock
@@ -93,7 +94,10 @@ class ExecuteContextBase(RequestSenderBase):
         Returns:
             ExecuteResponse: The response object with the provided blocks.
         """
-        return ExecuteResponse(dialog_item=DialogItem.new(source=self.agent_address, blocks=blocks))
+        return ExecuteResponse(
+            dialog_item=DialogItem.new(source=self.agent_address, blocks=blocks),
+            request_id=self._request_biscuit.request_facts.req_id,
+        )
 
     def runtime_error_response(self, err: ExecuteRuntimeError) -> ExecuteResponse:
         """
@@ -180,18 +184,21 @@ class ExecuteResponse:
 
     Attributes:
         body (DialogItem): The dialog item to encapsulate in the response payload.
+        request_id (UUID): The request ID of the request that generated this response.
         status_code (int, optional): The status code of the response. Defaults to 200.
     """
 
-    def __init__(self, dialog_item: DialogItem, status_code: int = 200) -> None:
+    def __init__(self, dialog_item: DialogItem, request_id: UUID, status_code: int = 200) -> None:
         """
         Initializes an ExecuteResponse instance.
 
         Args:
             dialog_item (DialogItem): The dialog item to be included in the response body.
+            request_id (UUID): The request ID of the request that generated this response.
             status_code (int, optional): The HTTP status code for the response. Defaults to 200.
         """
         self.body = dialog_item
+        self.request_id = request_id
         self.status_code = status_code
 
     def __str__(self) -> str:
@@ -199,28 +206,25 @@ class ExecuteResponse:
         Returns a string representation of the ExecuteResponse instance.
 
         Returns:
-            str: A string representing the ExecuteResponse, including the body and status code.
+            str: A string representing the ExecuteResponse, including the request_id, body and status code.
         """
-        return f"ExecuteResponse(body={self.body}, status_code={self.status_code})"
+        return f"ExecuteResponse(request_id={self.request_id}, body={self.body}, status_code={self.status_code})"
 
     @classmethod
-    def from_protocol_response(cls, data: Dict[str, Any], status_code: int) -> ExecuteResponse:
+    def from_protocol_response(cls, data: Dict[str, Any], request_id: UUID, status_code: int) -> ExecuteResponse:
         """
         Creates an instance of ExecuteResponse from a protocol response.
 
         Args:
             data (Dict[str, Any]): The dictionary containing the dialog item data.
+            request_id (UUID): The request ID of the request that generated this response.
             status_code (int): The HTTP status code for the response.
 
         Returns:
             ExecuteResponse: A new instance of ExecuteResponse initialized with the provided data.
         """
-        # Convert the dialog item from the dictionary format.
         dialog_item = DialogItem.model_validate(data["dialog_item"])
-        return cls(
-            dialog_item=dialog_item,
-            status_code=status_code,
-        )
+        return cls(dialog_item=dialog_item, request_id=request_id, status_code=status_code)
 
 
 class ExecuteRuntimeError(RuntimeError):

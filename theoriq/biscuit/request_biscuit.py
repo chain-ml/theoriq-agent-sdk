@@ -80,9 +80,11 @@ class RequestBiscuit:
 
         return ResponseBiscuit(attenuated_biscuit, response_facts)
 
-    def attenuate_for_request(self, request: TheoriqRequest, agent_private_key: PrivateKey) -> RequestBiscuit:
+    def attenuate_for_request(
+        self, request: TheoriqRequest, agent_private_key: PrivateKey, request_id: UUID | str
+    ) -> RequestBiscuit:
         agent_kp = KeyPair.from_private_key(agent_private_key)
-        request_facts = RequestFacts(uuid.uuid4(), request)
+        request_facts = RequestFacts(request_id, request)
         attenuated_biscuit = self.biscuit.append_third_party_block(agent_kp, request_facts.to_block_builder())  # type: ignore
         return RequestBiscuit(attenuated_biscuit)
 

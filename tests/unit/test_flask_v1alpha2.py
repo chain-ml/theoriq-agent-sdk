@@ -139,7 +139,7 @@ def echo_last_prompt(_context: ExecuteContext, request: ExecuteRequestBody) -> E
         raise RuntimeError("Execute function fails")
 
     dialog_item = DialogItem.new_text(source=str(AgentAddress.one()), text=last_prompt)
-    return ExecuteResponse(dialog_item=dialog_item)
+    return ExecuteResponse(dialog_item=dialog_item, request_id=uuid.uuid4())
 
 
 def _build_request_body_bytes(text: str, source: AgentAddress) -> bytes:
