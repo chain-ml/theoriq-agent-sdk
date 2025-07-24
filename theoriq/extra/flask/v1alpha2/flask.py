@@ -149,6 +149,7 @@ def execute_async_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -
     protocol_client = theoriq.api.v1alpha2.ProtocolClient.from_env()
     request_biscuit = process_biscuit_request(agent, protocol_client.public_key, request)
     execute_context = ExecuteContextV1alpha2(agent, protocol_client, request_biscuit)
+    request_id_header = theoriq.extra.flask.logging.http_request_context.x_request_id_var.get()
     with ExecuteLogContext(execute_context):
         try:
             execute_request_body = ExecuteRequestBody.model_validate(request.json)
@@ -156,7 +157,7 @@ def execute_async_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -
 
             # Execute user's function
             thread = threading.Thread(
-                target=_execute_async, args=(execute_request_function, execute_context, execute_request_body)
+                target=_execute_async, args=(execute_request_function, execute_context, execute_request_body, request_id_header)
             )
             thread.start()
             return Response(status=202)
@@ -172,8 +173,9 @@ def _execute_async(
     execute_fn: ExecuteRequestFnV1alpha2,
     execute_context: ExecuteContextV1alpha2,
     execute_request_body: ExecuteRequestBody,
+    request_id_header: str,
 ) -> None:
-    with ExecuteLogContext(execute_context):
+    with ExecuteLogContext(execute_context, request_id_header):
         try:
             execute_response = execute_fn(execute_context, execute_request_body)
         except ExecuteRuntimeError as err:
