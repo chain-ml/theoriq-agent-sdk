@@ -106,7 +106,8 @@ dialog_web3_payload = {
         },
         {
             "blocks": [
-                { "data" : {
+                {
+                    "data": {
                         "amount0_out": "0x0",
                         "amount1_out": "0x0",
                         "block": 33297348,
@@ -116,8 +117,9 @@ dialog_web3_payload = {
                         "token1": "0x0000000000000000000000000000000000000000",
                         "transaction_fee": 342052960331,
                         "tx_hash": "0x6d8259b9f100306decc693f66ae4b5575997b5827ecb1c7bf3aeea2799049325",
+                    },
+                    "type": "custom:lp:collect_fees_response",
                 },
-                "type": "custom:lp:collect_fees_response",},
             ],
             "source": "0x9ebc84b02d21f0808d1f68ad0f483ef17e41b07caeec5e8dced546d2e82d5c9e",
             "sourceType": "agent",
@@ -233,6 +235,11 @@ def test_web3_dialog() -> None:
     assert isinstance(d, Dialog)
     assert isinstance(d.items[1].blocks[0], Web3ProposedTxBlock)
     assert isinstance(d.items[2].blocks[-1], Web3SignedTxBlock)
+
+    dump = d.model_dump()
+    assert isinstance(dump, dict)
+    dump_json = d.model_dump_json(indent=2)
+    assert isinstance(dump_json, str)
 
 
 def test_find_blocks_of_type() -> None:

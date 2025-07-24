@@ -52,11 +52,11 @@ class DialogItem(BaseTheoriqModel):
     def _datetime_from_str(cls, value: str) -> datetime:
         try:
             if re.search(r"\.\d+Z$", value):
-                value = value[:value.find(".") + 7] + "Z"
+                value = value[: value.find(".") + 7] + "Z"
                 result = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ")
             else:
                 result = datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
-        except ValueError as e:
+        except ValueError:
             result = datetime.fromisoformat(value)
         return result.replace(tzinfo=timezone.utc) if result.tzinfo is None else result
 
