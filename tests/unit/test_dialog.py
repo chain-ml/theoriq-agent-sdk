@@ -236,10 +236,17 @@ def test_web3_dialog() -> None:
     assert isinstance(d.items[1].blocks[0], Web3ProposedTxBlock)
     assert isinstance(d.items[2].blocks[-1], Web3SignedTxBlock)
 
+    custom_block = d.items[3].blocks[-1]
+    assert CustomBlock.is_instance(custom_block)
+    assert custom_block.data.data["gas_used"] == 55117
+
     dump = d.model_dump()
     assert isinstance(dump, dict)
     dump_json = d.model_dump_json(indent=2)
     assert isinstance(dump_json, str)
+
+    values = json.loads(dump_json)
+    assert values["items"][3]["blocks"][0]["data"]["gas_used"] == 55117
 
 
 def test_find_blocks_of_type() -> None:
