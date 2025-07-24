@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Dict, Optional
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_validator, model_serializer, model_validator
 
 from .block import BaseData, BlockBase
 
@@ -10,6 +10,16 @@ from .block import BaseData, BlockBase
 class CustomData(BaseData):
     data: Dict[str, Any]
     custom_type: Optional[str] = None
+
+    @model_serializer
+    def serialize_model(self) -> dict[str, Any]:
+        """Override to ensure proper JSON serialization"""
+        return self.data
+
+    @model_validator(mode="before")
+    def validate_data(cls, v):
+        new_value = {"data": v}
+        return new_value
 
 
 class CustomBlock(BlockBase[CustomData, Annotated[str, Field(pattern="custom:(.*)?")]]):
