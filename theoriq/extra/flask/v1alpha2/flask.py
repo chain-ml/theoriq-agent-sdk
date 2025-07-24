@@ -19,6 +19,7 @@ from theoriq.extra.flask.common import get_bearer_token
 from theoriq.extra.globals import agent_var
 
 from ...logging.execute_context import ExecuteLogContext
+from ...logging.http_request_context import x_request_id_var
 from ..common import (
     add_biscuit_to_response,
     build_error_payload,
@@ -156,7 +157,8 @@ def execute_async_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -
 
             # Execute user's function
             thread = threading.Thread(
-                target=_execute_async, args=(execute_request_function, execute_context, execute_request_body)
+                target=_execute_async,
+                args=(execute_request_function, execute_context, execute_request_body, x_request_id_var.get()),
             )
             thread.start()
             return Response(status=202)
@@ -172,8 +174,9 @@ def _execute_async(
     execute_fn: ExecuteRequestFnV1alpha2,
     execute_context: ExecuteContextV1alpha2,
     execute_request_body: ExecuteRequestBody,
+    request_id_header: str,
 ) -> None:
-    with ExecuteLogContext(execute_context):
+    with ExecuteLogContext(execute_context, request_id_header):
         try:
             execute_response = execute_fn(execute_context, execute_request_body)
         except ExecuteRuntimeError as err:
