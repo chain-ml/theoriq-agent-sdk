@@ -12,6 +12,7 @@ from theoriq.dialog import (
     DataBlock,
     Dialog,
     DialogItem,
+    SuggestionsBlock,
     TextBlock,
     UnknownBlock,
     Web3ProposedTxBlock,
@@ -138,9 +139,68 @@ dialog_commands_payload = {
     ]
 }
 
+dialog_suggestions_payload = {
+    "items": [
+        {
+            "sourceType": str(SourceType.Agent),
+            "source": RANDOM_AGENT_ADDRESS,
+            "timestamp": "2024-11-27T00:57:29.725500Z",
+            "blocks": [
+                {
+                    "type": "suggestions",
+                    "data": {
+                        "items": [
+                            {
+                                "description": "Next 10",
+                                "block": {"data": {"text": "What are the next 10?"}, "type": "text"},
+                            },
+                        ]
+                    },
+                }
+            ],
+        },
+        {
+            "sourceType": str(SourceType.Agent),
+            "source": RANDOM_AGENT_ADDRESS,
+            "timestamp": "2024-11-27T00:57:29.725500Z",
+            "blocks": [
+                {
+                    "type": "suggestions",
+                    "data": {
+                        "items": [
+                            {
+                                "description": "code to compute 7",
+                                "block": {"data": {"code": "c = 3 + 4"}, "type": "code"},
+                            },
+                            {
+                                "description": "A data block I do not support",
+                                "block": {"data": {"data": "1,2,3,4"}, "type": "data"},
+                            },
+                        ]
+                    },
+                }
+            ],
+        },
+    ]
+}
+
+
+def test_dialog_suggestion_deserialization() -> None:
+    d: Dialog = Dialog.model_validate(dialog_suggestions_payload)
+    assert isinstance(d, Dialog)
+    first_block = d.items[0].blocks[0]
+    assert SuggestionsBlock.is_instance(first_block)
+
+    assert first_block.block_type == "suggestions"
+    assert len(first_block.data.items) == 1
+    assert first_block.data.items[0].description == "Next 10"
+    assert isinstance(first_block.data.items[0].block, TextBlock)
+    assert first_block.data.items[0].block.data.text == "What are the next 10?"
+
 
 def test_dialog_deserialization() -> None:
     d: Dialog = Dialog.model_validate(dialog_payload)
+
     assert isinstance(d, Dialog)
     assert d.items[0].source_type == SourceType.User
     assert (
@@ -304,3 +364,11 @@ def test_custom_block() -> None:
     block_json = block.model_dump_json(indent=2)
 
     print(block_json)
+
+
+def test_text_block_is_of_type() -> None:
+    dialog = Dialog.model_validate(dialog_web3_payload)
+    for block in dialog.items[2].blocks:
+        if TextBlock.is_instance(block):
+            print(block.data.text)
+            assert isinstance(block, TextBlock)

@@ -8,6 +8,7 @@ from .data_items import DataItem, DataBlock
 from .error_items import ErrorData, ErrorBlock
 from .metrics_items import MetricItem, MetricsData, MetricsBlock
 from .router_items import RouterItem, RouterData, RouterBlock
+from .suggestions_items import SuggestionItem, SuggestionsData, SuggestionsBlock
 from .text_items import TextData, TextBlock
 from .web3_items import Web3ProposedTxData, Web3ProposedTxBlock, Web3SignedTxData, Web3SignedTxBlock
 
@@ -39,6 +40,10 @@ __all__ = [
     "RouterItem",
     "RouterData",
     "RouterBlock",
+    # Suggestions items
+    "SuggestionItem",
+    "SuggestionsData",
+    "SuggestionsBlock",
     # Text items
     "TextData",
     "TextBlock",

@@ -5,6 +5,7 @@ from typing import Annotated, Any, Callable, Generic, Optional, Sequence, Type, 
 
 from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
+from typing_extensions import TypeGuard
 
 
 class BaseTheoriqModel(BaseModel):
@@ -81,6 +82,10 @@ class BlockBase(BaseTheoriqModel, Generic[T_Data, T_Type]):
     class Config:
         populate_by_name = True
 
+    @classmethod
+    def is_instance(cls, block: BlockBase[T_Data, T_Type]) -> TypeGuard[BlockBase[T_Data, T_Type]]:
+        return isinstance(block, cls)
+
     @staticmethod
     def sub_type(block_type: T_Type) -> Optional[str]:
         """
@@ -116,20 +121,6 @@ class BlockBase(BaseTheoriqModel, Generic[T_Data, T_Type]):
         return json.dumps(self.data, indent=2)
 
 
-def filter_blocks(blocks: Sequence[BlockBase], block_type: Type[BlockBase]) -> Sequence[BlockBase]:
-    """
-    Filters a sequence of BlockBase based on a given block type.
-
-    Args:
-        blocks (Sequence[BlockBase]): A sequence of BlockBase to filter.
-        block_type (T_Type): The block type to filter by.
-
-    Returns:
-        Sequence[BlockBase]: A filtered list of BlockBase that match the block type.
-    """
-    return list(filter(lambda x: isinstance(x, block_type), blocks))
-
-
 BlockBasePredicate = Callable[[BlockBase], bool]
 
 
@@ -140,7 +131,7 @@ def AllBlocks(_: BlockBase) -> bool:
 
 def BlockOfTypes(block_types: Sequence[Type[BlockBase]]) -> BlockBasePredicate:
     def predicate(block: BlockBase) -> bool:
-        return any(isinstance(block, block_type) for block_type in block_types)
+        return any(block_type.is_instance(block) for block_type in block_types)
 
     return predicate
 
@@ -150,3 +141,19 @@ def BlockOfType(block_type: T_Type) -> BlockBasePredicate:
         return block.is_of_type(block_type)
 
     return predicate
+
+
+def filter_blocks(
+    blocks: Sequence[BlockBase], block_type: Type[BlockBase[T_Data, T_Type]]
+) -> Sequence[BlockBase[T_Data, T_Type]]:
+    """
+    Filters a sequence of BlockBase based on a given block type.
+
+    Args:
+        blocks (Sequence[BlockBase]): A sequence of BlockBase to filter.
+        block_type (T_Type): The block type to filter by.
+
+    Returns:
+        Sequence[BlockBase]: A filtered list of BlockBase that match the block type.
+    """
+    return list(filter(lambda x: block_type.is_instance(x), blocks))

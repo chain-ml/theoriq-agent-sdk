@@ -14,6 +14,7 @@ from .custom_items import CustomBlock
 from .data_items import DataBlock
 from .metrics_items import MetricsBlock
 from .router_items import RouterBlock
+from .suggestions_items import SuggestionsBlock
 from .text_items import TextBlock
 from .web3_items import Web3ProposedTxBlock, Web3SignedTxBlock
 
@@ -150,6 +151,7 @@ BLOCK_TYPE_MAP = {
     "data": DataBlock,
     "metrics": MetricsBlock,
     "router": RouterBlock,
+    "suggestions": SuggestionsBlock,
     "text": TextBlock,
     "web3:proposedTx": Web3ProposedTxBlock,
     "web3:signedTx": Web3SignedTxBlock,
