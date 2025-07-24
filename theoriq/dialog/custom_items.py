@@ -7,12 +7,8 @@ from pydantic import Field, field_validator, model_validator
 from .block import BaseData, BlockBase
 
 
-class CustomData(BaseData):
-    data: Dict[str, Any]
-    custom_type: Optional[str] = None
 
-
-class CustomBlock(BlockBase[CustomData, Annotated[str, Field(pattern="custom:(.*)?")]]):
+class CustomBlock(BlockBase[Dict[str, Any], Annotated[str, Field(pattern="custom:(.*)?")]]):
     """
     CustomItemBlock is a specialized ItemBlock that wraps around CustomData.
     It provides additional functionality to handle and validate custom block types.
@@ -24,13 +20,6 @@ class CustomBlock(BlockBase[CustomData, Annotated[str, Field(pattern="custom:(.*
             raise ValueError('CustomBlock block_type must start with "custom"')
         return v
 
-    @model_validator(mode="after")
-    def set_type_from_block_type(self):
-        if self.data and not self.data.custom_type:
-            custom_type = self.sub_type(self.block_type)
-            if custom_type:
-                self.data.custom_type = custom_type
-        return self
 
     @classmethod
     def from_data(cls, data: Dict[str, Any], custom_type: str) -> CustomBlock:

@@ -104,6 +104,25 @@ dialog_web3_payload = {
                 },
             ],
         },
+        {
+            "blocks": [
+                { "data" : {
+                        "amount0_out": "0x0",
+                        "amount1_out": "0x0",
+                        "block": 33297348,
+                        "gas_price": 6205943,
+                        "gas_used": 55117,
+                        "token0": "0x0000000000000000000000000000000000000000",
+                        "token1": "0x0000000000000000000000000000000000000000",
+                        "transaction_fee": 342052960331,
+                        "tx_hash": "0x6d8259b9f100306decc693f66ae4b5575997b5827ecb1c7bf3aeea2799049325",
+                },
+                "type": "custom:lp:collect_fees_response",},
+            ],
+            "source": "0x9ebc84b02d21f0808d1f68ad0f483ef17e41b07caeec5e8dced546d2e82d5c9e",
+            "sourceType": "agent",
+            "timestamp": "2025-07-24T19:07:28.376682390Z",
+        },
     ]
 }
 
