@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated, Any, List, Optional
 from uuid import UUID
 
-from pydantic import Field, field_validator
+from pydantic import Field
 
 from theoriq.dialog import Dialog, DialogItem, DialogItemPredicate
 from theoriq.dialog.block import BaseTheoriqModel
@@ -62,13 +62,6 @@ class RequestItem(BaseTheoriqModel):
     end_at: Optional[datetime]  # TODO: wasn't optional before?
     target_agent: str
 
-    # TODO: remove after SourceType lowercase fix
-    # noinspection PyNestedDecorators
-    @field_validator("source_type", mode="before")
-    @classmethod
-    def validate_source_type(cls, value: Any) -> SourceType:
-        return SourceType.from_value(value)
-
 
 class Request(BaseTheoriqModel):
     body: Optional[ExecuteRequestBody] = None  # could be empty for configure request
@@ -86,13 +79,6 @@ class Response(BaseTheoriqModel):
 class Source(BaseTheoriqModel):
     source: str
     source_type: SourceType
-
-    # TODO: remove after SourceType lowercase fix
-    # noinspection PyNestedDecorators
-    @field_validator("source_type", mode="before")
-    @classmethod
-    def validate_source_type(cls, value: Any) -> SourceType:
-        return SourceType.from_value(value)
 
 
 class Event(BaseTheoriqModel):

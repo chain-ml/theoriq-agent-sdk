@@ -29,7 +29,7 @@ class SourceType(str, Enum):
         ValueError: If the provided value does not correspond to any of the `SourceType` enum members.
         """
         try:
-            return SourceType(str(value).lower())
+            return SourceType(str(value))
         except ValueError as e:
             raise ValueError(f"'{value}' is not a valid SourceType") from e
 
