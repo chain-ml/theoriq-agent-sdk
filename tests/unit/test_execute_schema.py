@@ -14,13 +14,18 @@ class AddCommandArguments(BaseTheoriqModel):
     a: int
     b: int
 
+class MulCommandArguments(BaseTheoriqModel):
+    """Arguments for addition command."""
+
+    c: int
+    d: int
+
 
 class AddCommandResponse(BaseTheoriqModel):
     result: int
 
 
 def test_execute_schema_from_base_models() -> None:
-    print(json.dumps(AddCommandResponse.model_json_schema(), indent=2))
     execute_schema = ExecuteSchema.from_base_models(request_types=CommandBlock[AddCommandArguments, Literal["add"]], response_types=BlockBase[AddCommandResponse, Literal["addResult"]])
 
     print(execute_schema.model_dump_json(indent=2))
@@ -28,7 +33,7 @@ def test_execute_schema_from_base_models() -> None:
 def test_execute_schema_add_mul_commands() -> None:
     request_types =  [
         CommandBlock[AddCommandArguments, Literal["add"]],
-        CommandBlock[AddCommandArguments, Literal["mul"]],
+        CommandBlock[MulCommandArguments, Literal["mul", "div"]],
     ]
 
     response_types = BlockBase[AddCommandResponse, Literal["computeResult"]]
