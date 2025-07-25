@@ -1,15 +1,20 @@
+import json
 from typing import Final, Sequence, Tuple
-from uuid import uuid4
 
 from theoriq.biscuit import AgentAddress
 from theoriq.dialog import (
-    CodeItemBlock,
-    CommandItemBlock,
-    DataItemBlock,
+    BlockBase,
+    BlockOfType,
+    BlockOfTypes,
+    CodeBlock,
+    CommandBlock,
+    CustomBlock,
+    DataBlock,
     Dialog,
     DialogItem,
-    ItemBlock,
-    TextItemBlock,
+    SuggestionsBlock,
+    TextBlock,
+    UnknownBlock,
     Web3ProposedTxBlock,
     Web3SignedTxBlock,
     format_source_and_blocks,
@@ -26,17 +31,12 @@ dialog_payload = {
             "source": USER_ADDRESS,
             "timestamp": "2024-11-04T20:00:39Z",
             "blocks": [{"data": {"text": "Give me the trending tokens in the last 24 hours"}, "type": "text"}],
-            "requestId": [uuid4()],
-            "sse": [],
         },
         {
             "sourceType": str(SourceType.Agent),
             "source": RANDOM_AGENT_ADDRESS,
             "timestamp": "2024-11-27T00:57:29.725500Z",
             "blocks": [{"data": {"text": "The trending tokens in the last 24 hours are ...."}, "type": "text"}],
-            "requestId": [],
-            "dialogId": "7f105329-a491-4f6f-8882-67627acce6bb",
-            "sse": [],
         },
     ]
 }
@@ -76,6 +76,7 @@ dialog_web3_payload = {
                         "txGasLimit": 29279,
                         "txNonce": 42,
                         "txTo": "0x4200000000000000000000000000000000000006",
+                        "txValue": "0",
                     },
                 }
             ],
@@ -96,11 +97,33 @@ dialog_web3_payload = {
                 {
                     "type": "web3:signedTx",
                     "data": {
-                        "txHash": "0x0159def724215e361a61db0b25118ad09cb63cf88ea69bb26c53289e44255gb4",
+                        "txHash": "0xa43da2004cf4131acc2bd14ef6fb68ff47752d0df9036b5b4a145b3b886bc75b",
                         "chainId": 8453,
+                        "status": 1,
                     },
                 },
             ],
+        },
+        {
+            "blocks": [
+                {
+                    "data": {
+                        "amount0_out": "0x0",
+                        "amount1_out": "0x0",
+                        "block": 33297348,
+                        "gas_price": 6205943,
+                        "gas_used": 55117,
+                        "token0": "0x0000000000000000000000000000000000000000",
+                        "token1": "0x0000000000000000000000000000000000000000",
+                        "transaction_fee": 342052960331,
+                        "tx_hash": "0x6d8259b9f100306decc693f66ae4b5575997b5827ecb1c7bf3aeea2799049325",
+                    },
+                    "type": "custom:lp:collect_fees_response",
+                },
+            ],
+            "source": "0x9ebc84b02d21f0808d1f68ad0f483ef17e41b07caeec5e8dced546d2e82d5c9e",
+            "sourceType": "agent",
+            "timestamp": "2025-07-24T19:07:28.376682390Z",
         },
     ]
 }
@@ -128,12 +151,77 @@ dialog_commands_payload = {
             "timestamp": "2024-11-27T00:57:29.725500Z",
             "blocks": [{"data": {"text": "The trending tokens in the last 24 hours are ...."}, "type": "text"}],
         },
+        {
+            "sourceType": str(SourceType.Agent),
+            "source": RANDOM_AGENT_ADDRESS,
+            "timestamp": "2024-11-27T00:57:29.725500Z",
+            "blocks": [{"data": {"text": "The trending tokens in the last 24 hours are ...."}, "type": "unknown_type"}],
+        },
+    ]
+}
+
+dialog_suggestions_payload = {
+    "items": [
+        {
+            "sourceType": str(SourceType.Agent),
+            "source": RANDOM_AGENT_ADDRESS,
+            "timestamp": "2024-11-27T00:57:29.725500Z",
+            "blocks": [
+                {
+                    "type": "suggestions",
+                    "data": {
+                        "items": [
+                            {
+                                "description": "Next 10",
+                                "block": {"data": {"text": "What are the next 10?"}, "type": "text"},
+                            },
+                        ]
+                    },
+                }
+            ],
+        },
+        {
+            "sourceType": str(SourceType.Agent),
+            "source": RANDOM_AGENT_ADDRESS,
+            "timestamp": "2024-11-27T00:57:29.725500Z",
+            "blocks": [
+                {
+                    "type": "suggestions",
+                    "data": {
+                        "items": [
+                            {
+                                "description": "code to compute 7",
+                                "block": {"data": {"code": "c = 3 + 4"}, "type": "code"},
+                            },
+                            {
+                                "description": "A data block I do not support",
+                                "block": {"data": {"data": "1,2,3,4"}, "type": "data"},
+                            },
+                        ]
+                    },
+                }
+            ],
+        },
     ]
 }
 
 
+def test_dialog_suggestion_deserialization() -> None:
+    d: Dialog = Dialog.model_validate(dialog_suggestions_payload)
+    assert isinstance(d, Dialog)
+    first_block = d.items[0].blocks[0]
+    assert SuggestionsBlock.is_instance(first_block)
+
+    assert first_block.block_type == "suggestions"
+    assert len(first_block.data.items) == 1
+    assert first_block.data.items[0].description == "Next 10"
+    assert isinstance(first_block.data.items[0].block, TextBlock)
+    assert first_block.data.items[0].block.data.text == "What are the next 10?"
+
+
 def test_dialog_deserialization() -> None:
     d: Dialog = Dialog.model_validate(dialog_payload)
+
     assert isinstance(d, Dialog)
     assert d.items[0].source_type == SourceType.User
     assert (
@@ -148,23 +236,36 @@ def test_web3_dialog() -> None:
     assert isinstance(d.items[1].blocks[0], Web3ProposedTxBlock)
     assert isinstance(d.items[2].blocks[-1], Web3SignedTxBlock)
 
+    custom_block = d.items[3].blocks[-1]
+    assert CustomBlock.is_instance(custom_block)
+    assert custom_block.data.data["gas_used"] == 55117
+
+    dump = d.model_dump()
+    assert isinstance(dump, dict)
+    dump_json = d.model_dump_json(indent=2)
+    assert isinstance(dump_json, str)
+
+    values = json.loads(dump_json)
+    assert values["items"][3]["blocks"][0]["data"]["gas_used"] == 55117
+
 
 def test_find_blocks_of_type() -> None:
-    d: Dialog = Dialog.model_validate(dialog_web3_payload)
+    dialog: Dialog = Dialog.model_validate(dialog_web3_payload)
 
-    agent_item, user_item = d.items[1], d.items[2]
+    agent_item, user_item = dialog.items[1], dialog.items[2]
 
-    assert len(agent_item.find_all_blocks_of_type("text")) == 0
-    assert len(agent_item.find_all_blocks_of_type("text:markdown")) == 0
-    assert len(agent_item.find_all_blocks_of_type("text:unknown_subtype")) == 0
+    assert not agent_item.has_blocks(BlockOfType("text"))
+    assert not agent_item.has_blocks(BlockOfType("text:markdown"))
+    assert not agent_item.has_blocks(BlockOfType("text:unknown_subtype"))
+    assert agent_item.has_blocks(BlockOfType("web3:proposedTx"))
     assert len(agent_item.find_all_blocks_of_type("web3:proposedTx")) == 1
-    assert len(agent_item.find_all_blocks_of_type("web3:unknown_subtype")) == 0
+    assert not agent_item.has_blocks(BlockOfType("web3:unknown_subtype"))
 
     assert len(user_item.find_all_blocks_of_type("text")) == 2
     assert len(user_item.find_all_blocks_of_type("text:markdown")) == 1
-    assert len(user_item.find_all_blocks_of_type("text:unknown_subtype")) == 0
+    assert not agent_item.has_blocks(BlockOfType("text:unknown_subtype"))
     assert len(user_item.find_all_blocks_of_type("web3:signedTx")) == 1
-    assert len(user_item.find_all_blocks_of_type("web3:unknown_subtype")) == 0
+    assert not agent_item.has_blocks(BlockOfType("web3:unknown_subtype"))
 
     first_web3_block = user_item.find_first_block_of_type("web3:signedTx")
     last_web3_block = user_item.find_last_block_of_type("web3:signedTx")
@@ -172,7 +273,7 @@ def test_find_blocks_of_type() -> None:
 
     first_text_block = user_item.find_first_block_of_type("text")
     last_text_block = user_item.find_last_block_of_type("text")
-    assert isinstance(first_text_block, TextItemBlock) and isinstance(last_text_block, TextItemBlock)
+    assert isinstance(first_text_block, TextBlock) and isinstance(last_text_block, TextBlock)
     assert first_text_block.data.text == "transaction sent successfully"
     assert last_text_block.data.text == "another text block"
 
@@ -183,14 +284,14 @@ def test_commands_dialog() -> None:
     d: Dialog = Dialog.model_validate(dialog_commands_payload)
     search_command_block, summarize_command_block = d.items[0].blocks[0], d.items[0].blocks[1]
 
-    assert isinstance(search_command_block, CommandItemBlock)
-    assert isinstance(summarize_command_block, CommandItemBlock)
+    assert isinstance(search_command_block, CommandBlock)
+    assert isinstance(summarize_command_block, CommandBlock)
 
     assert search_command_block.data.name == "search"
-    assert search_command_block.data.arguments == {"query": "Trending tokens in the last 24 hours"}
+    assert search_command_block.data.arguments.query == "Trending tokens in the last 24 hours"
 
     assert summarize_command_block.data.name == "summarize"
-    assert summarize_command_block.data.arguments == {"compression_ratio": 0.5}
+    assert summarize_command_block.data.arguments["compression_ratio"] == 0.5
 
 
 def test_format_source() -> None:
@@ -203,30 +304,36 @@ def test_format_source() -> None:
 
 
 def test_format_blocks() -> None:
-    def get_test_item(blocks: Sequence[ItemBlock]) -> DialogItem:
+    def get_test_item(blocks: Sequence[BlockBase]) -> DialogItem:
         return DialogItem.new(source=RANDOM_AGENT_ADDRESS, blocks=blocks)
 
     d: Dialog = Dialog(
         items=[
-            get_test_item([TextItemBlock(text="Some text"), TextItemBlock(text="Some markdown", sub_type="md")]),
+            get_test_item(
+                [TextBlock.from_text(text="Some text"), TextBlock.from_text(text="Some markdown", sub_type="md")]
+            ),
             get_test_item(
                 [
-                    TextItemBlock(text="Another text"),
-                    CodeItemBlock(code="SELECT *"),
-                    DataItemBlock(data="1,2,3", data_type="csv"),
+                    TextBlock.from_text(text="Another text"),
+                    CodeBlock.from_code(code="SELECT *"),
+                    DataBlock.from_data(data="1,2,3", sub_type="csv"),
                 ]
             ),
+            get_test_item([UnknownBlock(block_type="unknown_type", data={"data": "This is an unknown block"})]),
         ]
     )
 
-    expected = d.items[0].format_blocks()
-    assert expected == ["Some text", "```md\nSome markdown\n```"]
+    actual = d.items[0].format_blocks()
+    assert actual == ["Some text", "```md\nSome markdown\n```"]
 
-    expected = d.items[1].format_blocks()
-    assert expected == ["Another text", "```\nSELECT *\n```", "```csv\n1,2,3\n```"]
+    actual = d.items[1].format_blocks()
+    assert actual == ["Another text", "```\nSELECT *\n```", "```csv\n1,2,3\n```"]
 
-    expected = d.items[1].format_blocks(block_types_to_format=[TextItemBlock, CodeItemBlock])
-    assert expected == ["Another text", "```\nSELECT *\n```"]
+    actual = d.items[1].format_blocks(block_to_format=BlockOfTypes([TextBlock, CodeBlock]))
+    assert actual == ["Another text", "```\nSELECT *\n```"]
+
+    actual = d.items[2].format_blocks()
+    assert actual == ['{\n  "data": "This is an unknown block"\n}']
 
 
 def test_map_format_source_and_blocks() -> None:
@@ -273,3 +380,28 @@ def test_format_md() -> None:
             "The trending tokens in the last 24 hours are ....",
         ]
     )
+
+
+def test_dialog() -> None:
+    for payload in [dialog_payload, dialog_commands_payload, dialog_web3_payload]:
+        dialog = Dialog.model_validate(payload)
+        dump = dialog.model_dump_json(indent=2)
+        dialog_json = Dialog.model_validate(json.loads(dump))
+        assert len(dialog_json.items) == len(dialog.items)
+
+
+def test_custom_block() -> None:
+    custom = {"picka": "boo"}
+    block = CustomBlock.from_data(data=custom, custom_type="custom:boo")
+
+    block_json = block.model_dump_json(indent=2)
+
+    print(block_json)
+
+
+def test_text_block_is_of_type() -> None:
+    dialog = Dialog.model_validate(dialog_web3_payload)
+    for block in dialog.items[2].blocks:
+        if TextBlock.is_instance(block):
+            print(block.data.text)
+            assert isinstance(block, TextBlock)

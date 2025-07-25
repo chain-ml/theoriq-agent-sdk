@@ -19,6 +19,7 @@ from theoriq.extra.flask.common import get_bearer_token
 from theoriq.extra.globals import agent_var
 
 from ...logging.execute_context import ExecuteLogContext
+from ...logging.http_request_context import x_request_id_var
 from ..common import (
     add_biscuit_to_response,
     build_error_payload,
@@ -130,7 +131,8 @@ def execute_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -> Resp
             except ExecuteRuntimeError as err:
                 execute_response = execute_context.runtime_error_response(err)
 
-            response = jsonify(execute_response.body.to_dict())
+            dump = execute_response.body.model_dump()
+            response = jsonify(dump)
             response_biscuit = execute_context.new_response_biscuit(response.get_data())
             response = add_biscuit_to_response(response, response_biscuit)
             return response
@@ -155,7 +157,8 @@ def execute_async_v1alpha2(execute_request_function: ExecuteRequestFnV1alpha2) -
 
             # Execute user's function
             thread = threading.Thread(
-                target=_execute_async, args=(execute_request_function, execute_context, execute_request_body)
+                target=_execute_async,
+                args=(execute_request_function, execute_context, execute_request_body, x_request_id_var.get()),
             )
             thread.start()
             return Response(status=202)
@@ -171,14 +174,15 @@ def _execute_async(
     execute_fn: ExecuteRequestFnV1alpha2,
     execute_context: ExecuteContextV1alpha2,
     execute_request_body: ExecuteRequestBody,
+    request_id_header: str,
 ) -> None:
-    with ExecuteLogContext(execute_context):
+    with ExecuteLogContext(execute_context, request_id_header):
         try:
             execute_response = execute_fn(execute_context, execute_request_body)
         except ExecuteRuntimeError as err:
             execute_response = execute_context.runtime_error_response(err)
 
-        response_payload = {"response": execute_response.body.to_dict()}
+        response_payload = {"response": execute_response.body.model_dump()}
         response = Response(response=json.dumps(response_payload), content_type="application/json")
         response_biscuit = execute_context.new_response_biscuit(response.get_data())
 
