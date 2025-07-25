@@ -1,11 +1,7 @@
-import json
-from typing import Literal, Optional
-
-from pydantic import BaseModel
+from typing import Literal
 
 from theoriq.api.v1alpha2.schemas import ExecuteSchema
-from theoriq.dialog import BaseTheoriqModel, BlockBase, CommandBlock, UnknownBlock
-from theoriq.dialog.command_items import CommandData
+from theoriq.dialog import BaseTheoriqModel, BlockBase, CommandBlock
 
 
 class AddCommandArguments(BaseTheoriqModel):
