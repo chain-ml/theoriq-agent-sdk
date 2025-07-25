@@ -1,36 +1,37 @@
+import json
 from typing import Literal, Optional
 
 from pydantic import BaseModel
 
 from theoriq.api.v1alpha2.schemas import ExecuteSchema
+from theoriq.dialog import BaseTheoriqModel, BlockBase, CommandBlock, UnknownBlock
+from theoriq.dialog.command_items import CommandData
 
 
-class AddCommandArguments(BaseModel):
+class AddCommandArguments(BaseTheoriqModel):
     """Arguments for addition command."""
 
     a: int
     b: int
 
 
-class CommandDataAdd(BaseModel):
-    """Command data for addition operation."""
-
-    name: Literal["add"]
-    arguments: AddCommandArguments
-
-
-class AddCommand(BaseModel):
-    """Addition command structure."""
-
-    type: Literal["command"]
-    data: CommandDataAdd
-    key: Optional[str] = None
-    ref: Optional[str] = None
-
-
-class AddCommandResponse(BaseModel):
+class AddCommandResponse(BaseTheoriqModel):
     result: int
 
 
 def test_execute_schema_from_base_models() -> None:
-    execute_schema = ExecuteSchema.from_base_models(request=AddCommand, response=AddCommandResponse)
+    print(json.dumps(AddCommandResponse.model_json_schema(), indent=2))
+    execute_schema = ExecuteSchema.from_base_models(request_types=CommandBlock[AddCommandArguments, Literal["add"]], response_types=BlockBase[AddCommandResponse, Literal["addResult"]])
+
+    print(execute_schema.model_dump_json(indent=2))
+
+def test_execute_schema_add_mul_commands() -> None:
+    request_types =  [
+        CommandBlock[AddCommandArguments, Literal["add"]],
+        CommandBlock[AddCommandArguments, Literal["mul"]],
+    ]
+
+    response_types = BlockBase[AddCommandResponse, Literal["computeResult"]]
+    execute_schema = ExecuteSchema.from_base_models(request_types, response_types)
+
+    print(execute_schema.model_dump_json(indent=2))
