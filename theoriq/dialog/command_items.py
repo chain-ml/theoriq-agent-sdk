@@ -45,6 +45,7 @@ def parse_command_data(command_data: dict) -> CommandData:
 _registry: dict[str, Type[CommandData]] = dict()
 
 class CommandBlock(BlockBase[CommandData, Literal["command"]], Generic[T_Args, T_Name]):
+    @classmethod
     def register(cls, command: Type[T_Args], name: Type[T_Name]) -> None:
         for item in get_args(name):
             _registry[item] = CommandData[command, name]
