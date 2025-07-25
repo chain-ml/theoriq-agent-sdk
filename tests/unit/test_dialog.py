@@ -1,5 +1,5 @@
 import json
-from typing import Final, Sequence, Tuple
+from typing import Final, Literal, Sequence, Tuple
 
 from theoriq.biscuit import AgentAddress
 from theoriq.dialog import (
@@ -19,6 +19,7 @@ from theoriq.dialog import (
     Web3SignedTxBlock,
     format_source_and_blocks,
 )
+from theoriq.dialog.command_items import SearchArgs, SearchCommandData
 from theoriq.types import SourceType
 
 USER_ADDRESS: Final[str] = "0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379f"
@@ -281,6 +282,8 @@ def test_find_blocks_of_type() -> None:
 
 
 def test_commands_dialog() -> None:
+    # CommandBlock.register(SearchCommandData)
+    CommandBlock.register(SearchArgs, Literal["search"])
     d: Dialog = Dialog.model_validate(dialog_commands_payload)
     search_command_block, summarize_command_block = d.items[0].blocks[0], d.items[0].blocks[1]
 

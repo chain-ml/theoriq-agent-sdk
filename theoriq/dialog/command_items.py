@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Generic, Literal, TypeVar, Union
+from typing import Any, Generic, Literal, Type, TypeVar, Union, get_args, get_origin
 
 from pydantic import BaseModel, field_validator
 
@@ -42,10 +42,13 @@ def parse_command_data(command_data: dict) -> CommandData:
     return UnknownCommandData(name=command_name, arguments=command_data.get("arguments", {}))
 
 
-T_CommandData = TypeVar("T_CommandData", bound=CommandData)
-
+_registry: dict[str, Type[CommandData]] = dict()
 
 class CommandBlock(BlockBase[CommandData, Literal["command"]], Generic[T_Args, T_Name]):
+    def register(cls, command: Type[T_Args], name: Type[T_Name]) -> None:
+        for item in get_args(name):
+            _registry[item] = CommandData[command, name]
+
     @classmethod
     def from_command(cls, command: UnknownCommandData) -> CommandBlock:
         return cls(block_type="command", data=command)
@@ -53,5 +56,7 @@ class CommandBlock(BlockBase[CommandData, Literal["command"]], Generic[T_Args, T
     @field_validator("data", mode="before")
     def parse_command_data(cls, v):
         if isinstance(v, dict):
-            return parse_command_data(v)
+            command_name = v.get("name", "unknown")
+            command_type = _registry.get(command_name, UnknownCommandData)
+            return command_type(**v)
         return v
