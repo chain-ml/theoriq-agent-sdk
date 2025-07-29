@@ -46,9 +46,10 @@ _registry: dict[str, Type[CommandData]] = dict()
 
 class CommandBlock(BlockBase[CommandData, Literal["command"]], Generic[T_Args, T_Name]):
     @classmethod
-    def register(cls, command: Type[T_Args], name: Type[T_Name]) -> None:
-        for item in get_args(name):
-            _registry[item] = CommandData[command, name]
+    def register(cls, command_data: Type[CommandData[T_Args, T_Name]]) -> None:
+        values_ = get_args(command_data.model_fields["name"].annotation)
+        for item in values_:
+            _registry[item] = command_data
 
     @classmethod
     def from_command(cls, command: UnknownCommandData) -> CommandBlock:

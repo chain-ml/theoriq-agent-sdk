@@ -282,8 +282,7 @@ def test_find_blocks_of_type() -> None:
 
 
 def test_commands_dialog() -> None:
-    # CommandBlock.register(SearchCommandData)
-    CommandBlock.register(SearchArgs, Literal["search"])
+    CommandBlock.register(SearchCommandData)
     d: Dialog = Dialog.model_validate(dialog_commands_payload)
     search_command_block, summarize_command_block = d.items[0].blocks[0], d.items[0].blocks[1]
 
