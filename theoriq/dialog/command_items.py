@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Generic, Literal, Type, TypeVar, Union, get_args, get_origin
+from typing import Any, Generic, Literal, Sequence, Type, TypeVar, Union, get_args, get_origin
 
 from pydantic import BaseModel, field_validator
 
@@ -13,6 +13,10 @@ T_Name = TypeVar("T_Name", bound=str)
 class CommandData(BaseData, Generic[T_Args, T_Name]):
     name: T_Name
     arguments: T_Args
+
+    @classmethod
+    def get_names(cls: Type[CommandData[T_Args, T_Name]]) -> Sequence[str]:
+        return get_args(cls.model_fields["name"].annotation)
 
     def to_str(self) -> str:
         return f"- `{self.name}` command with arguments `{self.arguments}`"
@@ -47,7 +51,7 @@ _registry: dict[str, Type[CommandData]] = dict()
 class CommandBlock(BlockBase[CommandData, Literal["command"]], Generic[T_Args, T_Name]):
     @classmethod
     def register(cls, command_data: Type[CommandData[T_Args, T_Name]]) -> None:
-        values_ = get_args(command_data.model_fields["name"].annotation)
+        values_ = command_data.get_names()
         for item in values_:
             _registry[item] = command_data
 
