@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Generic, Literal, Sequence, Type, TypeVar, Union, get_args, get_origin
+from typing import Any, Generic, Literal, Sequence, Type, TypeVar, Union, get_args
 
 from pydantic import BaseModel, field_validator
 
@@ -37,13 +37,6 @@ class SearchArgs(BaseModel):
 
 class SearchCommandData(CommandData[SearchArgs, Literal["search"]]):
     pass
-
-
-def parse_command_data(command_data: dict) -> CommandData:
-    command_name = command_data.get("name", "unknown")
-    if command_name == "search":
-        return SearchCommandData(**command_data)
-    return UnknownCommandData(name=command_name, arguments=command_data.get("arguments", {}))
 
 
 _registry: dict[str, Type[CommandData]] = dict()
