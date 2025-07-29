@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Generic, Literal, TypeVar, Union
+from typing import Any, Generic, Literal, Sequence, Type, TypeVar, Union, get_args
 
 from pydantic import BaseModel, field_validator
 
@@ -13,6 +13,10 @@ T_Name = TypeVar("T_Name", bound=str)
 class CommandData(BaseData, Generic[T_Args, T_Name]):
     name: T_Name
     arguments: T_Args
+
+    @classmethod
+    def get_names(cls: Type[CommandData[T_Args, T_Name]]) -> Sequence[str]:
+        return get_args(cls.model_fields["name"].annotation)
 
     def to_str(self) -> str:
         return f"- `{self.name}` command with arguments `{self.arguments}`"
@@ -35,17 +39,16 @@ class SearchCommandData(CommandData[SearchArgs, Literal["search"]]):
     pass
 
 
-def parse_command_data(command_data: dict) -> CommandData:
-    command_name = command_data.get("name", "unknown")
-    if command_name == "search":
-        return SearchCommandData(**command_data)
-    return UnknownCommandData(name=command_name, arguments=command_data.get("arguments", {}))
-
-
-T_CommandData = TypeVar("T_CommandData", bound=CommandData)
+_registry: dict[str, Type[CommandData]] = dict()
 
 
 class CommandBlock(BlockBase[CommandData, Literal["command"]], Generic[T_Args, T_Name]):
+    @classmethod
+    def register(cls, command_data: Type[CommandData[T_Args, T_Name]]) -> None:
+        values_ = command_data.get_names()
+        for item in values_:
+            _registry[item] = command_data
+
     @classmethod
     def from_command(cls, command: UnknownCommandData) -> CommandBlock:
         return cls(block_type="command", data=command)
@@ -53,5 +56,7 @@ class CommandBlock(BlockBase[CommandData, Literal["command"]], Generic[T_Args, T
     @field_validator("data", mode="before")
     def parse_command_data(cls, v):
         if isinstance(v, dict):
-            return parse_command_data(v)
+            command_name = v.get("name", "unknown")
+            command_type = _registry.get(command_name, UnknownCommandData)
+            return command_type(**v)
         return v
