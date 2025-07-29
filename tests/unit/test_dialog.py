@@ -15,11 +15,12 @@ from theoriq.dialog import (
     SuggestionsBlock,
     TextBlock,
     UnknownBlock,
-    UnknownCommandData, Web3ProposedTxBlock,
+    UnknownCommandData,
+    Web3ProposedTxBlock,
     Web3SignedTxBlock,
     format_source_and_blocks,
 )
-from theoriq.dialog.command_items import CommandData, SearchArgs, SearchCommandData
+from theoriq.dialog.command_items import CommandData, SearchCommandData
 from theoriq.types import SourceType
 
 USER_ADDRESS: Final[str] = "0x1F32Bc2B1Ace25D762E22888a71C7eC0799D379f"
@@ -408,11 +409,13 @@ def test_text_block_is_of_type() -> None:
             print(block.data.text)
             assert isinstance(block, TextBlock)
 
+
 def test_command_item_get_names() -> None:
     class MyCommand(CommandData[UnknownCommandData, Literal["myCommand"]]):
         pass
 
-    assert MyCommand.get_names() == ("myCommand", )
+    assert MyCommand.get_names() == ("myCommand",)
+
 
 def test_command_item_with_multiple_names() -> None:
     class MyCommand(CommandData[UnknownCommandData, Literal["myCommand", "stillMyCommand"]]):
