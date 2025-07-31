@@ -50,6 +50,9 @@ class Web3ProposedTxBlock(BlockBase[Web3ProposedTxData, Literal["web3:proposedTx
             ),
         )
 
+    def to_str(self) -> str:
+        return f"Proposed the following transaction:\n{self.data.description}"
+
 
 class Web3SignedTxData(BaseData):
     chain_id: Annotated[int, Field(..., gt=0, description="Chain ID of the transaction")]
@@ -71,3 +74,7 @@ class Web3SignedTxBlock(BlockBase[Web3SignedTxData, Literal["web3:signedTx"]]):
         return Web3SignedTxBlock(
             block_type="web3:signedTx", data=Web3SignedTxData(chain_id=chain_id, tx_hash=tx_hash, status=status)
         )
+
+    def to_str(self) -> str:
+        status = "success" if self.data.status == 1 else "failure"
+        return f"Signed transaction with status `{status}` and hash `{self.data.tx_hash}`"
