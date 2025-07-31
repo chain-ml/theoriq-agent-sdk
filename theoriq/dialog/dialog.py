@@ -130,14 +130,7 @@ class DialogItem(BaseTheoriqModel):
         return source_type if not with_address else f"{source_type} ({self.source})"
 
     def format_blocks(self, block_to_format: BlockBasePredicate = AllBlocks) -> List[str]:
-        """
-        Format each block with `to_str()` whose type is in `block_types_to_format`.
-        If `block_types_to_format` is None, format every block.
-        """
-
-        if block_to_format is None:
-            return [block.to_str() for block in self.blocks]
-
+        """Format each block with `to_str()` whose satisfy `block_to_format` predicate."""
         return [block.to_str() for block in self.blocks if block_to_format(block)]
 
 
