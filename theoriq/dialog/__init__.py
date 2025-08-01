@@ -10,6 +10,7 @@ from .metrics_items import MetricItem, MetricsData, MetricsBlock
 from .router_items import RouterItem, RouterData, RouterBlock
 from .suggestions_items import SuggestionItem, SuggestionsData, SuggestionsBlock
 from .text_items import TextData, TextBlock
+from .tool_items import ToolCallData, ToolCallBlock, ToolCallResultData, ToolCallResultBlock
 from .web3_items import Web3ProposedTxData, Web3ProposedTxBlock, Web3SignedTxData, Web3SignedTxBlock
 
 # Re-export all classes for backward compatibility
@@ -47,6 +48,11 @@ __all__ = [
     # Text items
     "TextData",
     "TextBlock",
+    # Tool items
+    "ToolCallData",
+    "ToolCallBlock",
+    "ToolCallResultData",
+    "ToolCallResultBlock",
     # Web3 items
     "Web3ProposedTxData",
     "Web3ProposedTxBlock",
