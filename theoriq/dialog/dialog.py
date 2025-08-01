@@ -46,9 +46,6 @@ class DialogItem(BaseTheoriqModel):
     def serialize_timestamp(self, value: datetime) -> str:
         return value.isoformat()
 
-    class Config:
-        populate_by_name = True
-
     @classmethod
     def _datetime_from_str(cls, value: str) -> datetime:
         try:
@@ -96,6 +93,9 @@ class DialogItem(BaseTheoriqModel):
                 return True
         return False
 
+    def has_blocks_of_type(self, block_type: str) -> bool:
+        return self.has_blocks(BlockOfType(block_type))
+
     def find_all_blocks_of_type(self, block_type: str) -> List[BlockBase]:
         return list(self.find_blocks_of_type(block_type))
 
@@ -119,11 +119,11 @@ class DialogItem(BaseTheoriqModel):
             RuntimeError: If no text blocks are found in the dialog item.
         """
 
-        text_blocks = list(self.find_blocks_of_type("text"))
-        if len(text_blocks) == 0:
+        last_text_block = self.find_last_block_of_type("text")
+        if last_text_block is None:
             raise RuntimeError("No text blocks found in the dialog item")
 
-        return text_blocks[-1].data.text
+        return last_text_block.data.text
 
     def format_source(self, with_address: bool = True) -> str:
         """Format the string describing the creator of the dialog item."""
