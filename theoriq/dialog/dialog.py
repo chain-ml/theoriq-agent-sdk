@@ -16,6 +16,7 @@ from .metrics_items import MetricsBlock
 from .router_items import RouterBlock
 from .suggestions_items import SuggestionsBlock
 from .text_items import TextBlock
+from .tool_items import ToolCallBlock, ToolCallResultBlock
 from .web3_items import Web3ProposedTxBlock, Web3SignedTxBlock
 
 UnknownBlock = BlockBase[dict[str, Any], str]
@@ -147,6 +148,8 @@ BLOCK_TYPE_MAP = {
     "router": RouterBlock,
     "suggestions": SuggestionsBlock,
     "text": TextBlock,
+    "tool_call": ToolCallBlock,
+    "tool_call_result": ToolCallResultBlock,
     "web3:proposedTx": Web3ProposedTxBlock,
     "web3:signedTx": Web3SignedTxBlock,
 }
