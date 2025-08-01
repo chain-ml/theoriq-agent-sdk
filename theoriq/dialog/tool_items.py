@@ -9,7 +9,7 @@ from .block import BaseData, BlockBase
 
 class ToolCallData(BaseData):
     name: Annotated[str, Field(..., description="Name of the tool to call")]
-    arguments: Annotated[str, Field(..., description="Arguments to pass to the tool")]
+    arguments: Annotated[str, Field(..., description="JSON string of arguments to pass to the tool")]
     id: Annotated[str, Field(..., description="ID of the tool call")]
 
 
