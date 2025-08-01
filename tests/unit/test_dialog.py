@@ -14,6 +14,8 @@ from theoriq.dialog import (
     DialogItem,
     SuggestionsBlock,
     TextBlock,
+    ToolCallBlock,
+    ToolCallResultBlock,
     UnknownBlock,
     UnknownCommandData,
     Web3ProposedTxBlock,
@@ -207,6 +209,33 @@ dialog_suggestions_payload = {
     ]
 }
 
+dialog_tools_payload = {
+    "items": [
+        {
+            "sourceType": str(SourceType.Agent),
+            "source": RANDOM_AGENT_ADDRESS,
+            "timestamp": "2024-11-27T00:57:29.725500Z",
+            "blocks": [
+                {
+                    "type": "tool_call",
+                    "data": {
+                        "name": "get_weather",
+                        "arguments": '{"city": "San Francisco"}',
+                        "id": "12345",
+                    },
+                },
+                {
+                    "type": "tool_call_result",
+                    "data": {
+                        "content": "Weather in San Francisco is foggy",
+                        "id": "12345",
+                    },
+                },
+            ],
+        }
+    ]
+}
+
 
 def test_dialog_suggestion_deserialization() -> None:
     d: Dialog = Dialog.model_validate(dialog_suggestions_payload)
@@ -295,6 +324,21 @@ def test_commands_dialog() -> None:
 
     assert summarize_command_block.data.name == "summarize"
     assert summarize_command_block.data.arguments["compression_ratio"] == 0.5
+
+
+def test_tools_dialog() -> None:
+    d: Dialog = Dialog.model_validate(dialog_tools_payload)
+    tool_call_block, tool_call_result_block = d.items[0].blocks[0], d.items[0].blocks[1]
+
+    assert isinstance(tool_call_block, ToolCallBlock)
+    assert isinstance(tool_call_result_block, ToolCallResultBlock)
+
+    assert tool_call_block.data.name == "get_weather"
+    assert tool_call_block.data.arguments == '{"city": "San Francisco"}'
+    assert tool_call_block.data.id == "12345"
+
+    assert tool_call_result_block.data.content == "Weather in San Francisco is foggy"
+    assert tool_call_result_block.data.id == "12345"
 
 
 def test_format_source() -> None:
@@ -386,7 +430,7 @@ def test_format_md() -> None:
 
 
 def test_dialog() -> None:
-    for payload in [dialog_payload, dialog_commands_payload, dialog_web3_payload]:
+    for payload in [dialog_payload, dialog_commands_payload, dialog_web3_payload, dialog_tools_payload]:
         dialog = Dialog.model_validate(payload)
         dump = dialog.model_dump_json(indent=2)
         dialog_json = Dialog.model_validate(json.loads(dump))
