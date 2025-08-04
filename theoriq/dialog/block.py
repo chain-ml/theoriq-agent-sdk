@@ -95,14 +95,14 @@ class BlockBase(BaseTheoriqModel, Generic[T_Data, T_Type]):
                 pattern = item.metadata[0].pattern
                 prefix = pattern.split("(")[0]
                 _registry[prefix] = block_data
-                _registryPrefix[prefix + ":"] = block_data
+                _registryPrefix[prefix] = block_data
 
     @staticmethod
     def get_block_type(block_type: str) -> Optional[Type[BlockBase]]:
         result = _registry.get(block_type)
         if result is not None:
             return result
-        return _registryPrefix.get(block_type)
+        return _registryPrefix.get(block_type.split(":")[0])
 
     @classmethod
     def is_instance(cls, block: BlockBase[T_Data, T_Type]) -> TypeGuard[BlockBase[T_Data, T_Type]]:

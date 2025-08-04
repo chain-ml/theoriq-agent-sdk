@@ -69,11 +69,13 @@ class DialogItem(BaseTheoriqModel):
 
     @staticmethod
     def parse_block(v):
-        block_type_name = v.get("type")
-        block_type = BlockBase.get_block_type(block_type_name)
-        if block_type is not None:
-            return block_type(**v)
-        return UnknownBlock(**v)
+        if isinstance(v, dict):
+            block_type_name = v.get("type")
+            block_type = BlockBase.get_block_type(block_type_name)
+            if block_type is not None:
+                return block_type(**v)
+            return UnknownBlock(**v)
+        return v
 
     @classmethod
     def new(cls, source: str, blocks: Sequence[BlockBase]) -> DialogItem:
@@ -150,6 +152,7 @@ DialogItemTransformer = Callable[[DialogItem], Any]
 # Block type mapping for factory function
 BlockBase.register(CodeBlock)
 BlockBase.register(CommandBlock)
+BlockBase.register(CustomBlock)
 BlockBase.register(DataBlock)
 BlockBase.register(MetricsBlock)
 BlockBase.register(RouterBlock)
