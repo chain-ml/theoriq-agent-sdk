@@ -395,11 +395,12 @@ def test_dialog() -> None:
 
 def test_custom_block() -> None:
     custom = {"picka": "boo"}
-    block = CustomBlock.from_data(data=custom, custom_type="custom:boo")
+    block = CustomBlock.from_data(data=custom, custom_type="boo")
 
-    block_json = block.model_dump_json(indent=2)
-
-    print(block_json)
+    block_json = block.model_dump()
+    print(block.model_dump_json(indent=2))
+    assert block_json["type"] == "custom:boo"
+    assert block_json["data"]["custom_type"] == "boo"
 
 
 def test_text_block_is_of_type() -> None:

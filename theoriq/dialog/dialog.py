@@ -63,8 +63,17 @@ class DialogItem(BaseTheoriqModel):
     @field_validator("blocks", mode="before")
     def parse_blocks(cls, v):
         if isinstance(v, list):
-            return [parse_block(block) if isinstance(block, dict) else block for block in v]
+            result =  [DialogItem.parse_block(item) for item in v]
+            return result
         return v
+
+    @staticmethod
+    def parse_block(v):
+        block_type_name = v.get("type")
+        block_type = BlockBase.get_block_type(block_type_name)
+        if block_type is not None:
+            return block_type(**v)
+        return UnknownBlock(**v)
 
     @classmethod
     def new(cls, source: str, blocks: Sequence[BlockBase]) -> DialogItem:
@@ -139,40 +148,15 @@ DialogItemTransformer = Callable[[DialogItem], Any]
 
 
 # Block type mapping for factory function
-BLOCK_TYPE_MAP = {
-    "code": CodeBlock,
-    "command": CommandBlock,
-    "data": DataBlock,
-    "metrics": MetricsBlock,
-    "router": RouterBlock,
-    "suggestions": SuggestionsBlock,
-    "text": TextBlock,
-    "web3:proposedTx": Web3ProposedTxBlock,
-    "web3:signedTx": Web3SignedTxBlock,
-}
-
-
-# Factory function to parse blocks with unknown type handling
-def parse_block(block_data: dict) -> BlockBase:
-    """Parse a block dictionary into the appropriate Block type."""
-    block_type = block_data.get("type", "")
-
-    # Check exact match first
-    if block_type in BLOCK_TYPE_MAP:
-        return BLOCK_TYPE_MAP[block_type](**block_data)
-
-    # Check for prefix matches
-    if block_type.startswith("text:"):
-        return TextBlock(**block_data)
-    elif block_type.startswith("code:"):
-        return CodeBlock(**block_data)
-    elif block_type.startswith("data:"):
-        return DataBlock(**block_data)
-    elif block_type.startswith("custom:"):
-        return CustomBlock(**block_data)
-
-    # For unknown types, use UnknownBlock
-    return UnknownBlock(block_type=block_type, data=block_data.get("data", {}))
+BlockBase.register(CodeBlock)
+BlockBase.register(CommandBlock)
+BlockBase.register(DataBlock)
+BlockBase.register(MetricsBlock)
+BlockBase.register(RouterBlock)
+BlockBase.register(SuggestionsBlock)
+BlockBase.register(TextBlock)
+BlockBase.register(Web3ProposedTxBlock)
+BlockBase.register(Web3SignedTxBlock)
 
 
 def format_source_and_blocks(
