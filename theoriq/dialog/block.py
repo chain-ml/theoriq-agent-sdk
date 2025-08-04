@@ -76,6 +76,7 @@ T_Type = TypeVar("T_Type", bound=str)
 _registry: dict[str, Type[BlockBase]] = dict()
 _registryPrefix: dict[str, Type[BlockBase]] = dict()
 
+
 class BlockBase(BaseTheoriqModel, Generic[T_Data, T_Type]):
     ref: Annotated[Optional[str], Field(default=None)] = None
     key: Annotated[Optional[str], Field(default=None)] = None
@@ -107,7 +108,6 @@ class BlockBase(BaseTheoriqModel, Generic[T_Data, T_Type]):
     @classmethod
     def is_instance(cls, block: BlockBase[T_Data, T_Type]) -> TypeGuard[BlockBase[T_Data, T_Type]]:
         return isinstance(block, cls)
-
 
     @staticmethod
     def sub_type(block_type: T_Type) -> Optional[str]:

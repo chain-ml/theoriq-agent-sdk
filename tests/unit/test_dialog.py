@@ -394,12 +394,7 @@ def test_dialog() -> None:
 
 
 def test_custom_block() -> None:
-    custom_block = {
-        "type": "custom:boo",
-        "data": {
-            "picka": "boo"
-        }
-    }
+    custom_block = {"type": "custom:boo", "data": {"picka": "boo"}}
 
     block = CustomBlock(**custom_block)
     assert block.block_type == "custom:boo"

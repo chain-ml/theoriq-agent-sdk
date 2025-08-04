@@ -63,7 +63,7 @@ class DialogItem(BaseTheoriqModel):
     @field_validator("blocks", mode="before")
     def parse_blocks(cls, v):
         if isinstance(v, list):
-            result =  [DialogItem.parse_block(item) for item in v]
+            result = [DialogItem.parse_block(item) for item in v]
             return result
         return v
 
