@@ -283,7 +283,7 @@ def test_find_blocks_of_type() -> None:
 
 
 def test_commands_dialog() -> None:
-    CommandBlock.register(SearchCommandData)
+    CommandBlock.register_command(SearchCommandData)
     d: Dialog = Dialog.model_validate(dialog_commands_payload)
     search_command_block, summarize_command_block = d.items[0].blocks[0], d.items[0].blocks[1]
 
@@ -396,7 +396,7 @@ def test_dialog() -> None:
 def test_custom_block() -> None:
     custom_block = {"type": "custom:boo", "data": {"picka": "boo"}}
 
-    block = CustomBlock(**custom_block)
+    block = CustomBlock.model_validate(custom_block)
     assert block.block_type == "custom:boo"
     assert block.data.data.get("picka") == "boo"
 

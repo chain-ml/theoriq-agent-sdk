@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import json
-from typing import Annotated, Any, Callable, Dict, Generic, Iterable, Optional, Sequence, Type, TypeVar, Union, get_args
+from typing import Annotated, Any, Callable, Generic, Optional, Sequence, Type, TypeVar, Union, get_args
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
 from pydantic.fields import FieldInfo
 from typing_extensions import TypeGuard
@@ -86,8 +86,8 @@ class BlockBase(BaseTheoriqModel, Generic[T_Data, T_Type]):
     class Config:
         populate_by_name = True
 
-    @classmethod
-    def register(cls, block_data: Type[BlockBase[T_Data, T_Type]]) -> None:
+    @staticmethod
+    def register(block_data: Type[BlockBase[T_Data, T_Type]]) -> None:
         values = get_args(block_data.model_fields["block_type"].annotation)
         for item in values:
             if isinstance(item, str):
