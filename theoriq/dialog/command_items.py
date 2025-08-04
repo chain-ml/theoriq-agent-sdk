@@ -44,7 +44,7 @@ _registry: dict[str, Type[CommandData]] = dict()
 
 class CommandBlock(BlockBase[CommandData, Literal["command"]], Generic[T_Args, T_Name]):
     @staticmethod
-    def register_command(command_data: Type[CommandData]) -> None:
+    def register_command(command_data: Type[CommandData[T_Args, T_Name]]) -> None:
         values_ = command_data.get_names()
         for item in values_:
             _registry[item] = command_data
