@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import json
-from typing import Annotated, Any, Callable, Generic, Optional, Sequence, Type, TypeVar, Union
+from typing import Annotated, Any, Callable, Generic, Optional, Sequence, Type, TypeVar, Union, get_args
 
 from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
+from pydantic.fields import FieldInfo
 from typing_extensions import TypeGuard
 
 
@@ -72,6 +73,9 @@ class BaseData(BaseTheoriqModel):
 T_Data = TypeVar("T_Data", bound=Union[BaseData, dict[str, Any]])
 T_Type = TypeVar("T_Type", bound=str)
 
+_registry: dict[str, Type[BlockBase]] = dict()
+_registryPrefix: dict[str, Type[BlockBase]] = dict()
+
 
 class BlockBase(BaseTheoriqModel, Generic[T_Data, T_Type]):
     ref: Annotated[Optional[str], Field(default=None)] = None
@@ -81,6 +85,25 @@ class BlockBase(BaseTheoriqModel, Generic[T_Data, T_Type]):
 
     class Config:
         populate_by_name = True
+
+    @staticmethod
+    def register(block_data: Type[BlockBase[T_Data, T_Type]]) -> None:
+        values = get_args(block_data.model_fields["block_type"].annotation)
+        for item in values:
+            if isinstance(item, str):
+                _registry[item] = block_data
+            if isinstance(item, FieldInfo):
+                pattern = item.metadata[0].pattern
+                prefix = pattern.split("(")[0]
+                _registry[prefix] = block_data
+                _registryPrefix[prefix] = block_data
+
+    @staticmethod
+    def get_block_type(block_type: str) -> Optional[Type[BlockBase]]:
+        result = _registry.get(block_type)
+        if result is not None:
+            return result
+        return _registryPrefix.get(block_type.split(":")[0])
 
     @classmethod
     def is_instance(cls, block: BlockBase[T_Data, T_Type]) -> TypeGuard[BlockBase[T_Data, T_Type]]:
