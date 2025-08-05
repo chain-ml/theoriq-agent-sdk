@@ -217,7 +217,7 @@ dialog_tools_payload = {
             "timestamp": "2024-11-27T00:57:29.725500Z",
             "blocks": [
                 {
-                    "type": "tool_call",
+                    "type": "internal:tool_call",
                     "data": {
                         "name": "get_weather",
                         "arguments": '{"city": "San Francisco"}',
@@ -225,7 +225,7 @@ dialog_tools_payload = {
                     },
                 },
                 {
-                    "type": "tool_call_result",
+                    "type": "internal:tool_call_result",
                     "data": {
                         "content": "Weather in San Francisco is foggy",
                         "id": "12345",

@@ -13,10 +13,10 @@ class ToolCallData(BaseData):
     id: Annotated[str, Field(..., description="ID of the tool call")]
 
 
-class ToolCallBlock(BlockBase[ToolCallData, Literal["tool_call"]]):
+class ToolCallBlock(BlockBase[ToolCallData, Literal["internal:tool_call"]]):
     @classmethod
     def from_data(cls, *, name: str, arguments: str, id: str) -> ToolCallBlock:
-        return ToolCallBlock(block_type="tool_call", data=ToolCallData(name=name, arguments=arguments, id=id))
+        return ToolCallBlock(block_type="internal:tool_call", data=ToolCallData(name=name, arguments=arguments, id=id))
 
 
 class ToolCallResultData(BaseData):
@@ -24,7 +24,9 @@ class ToolCallResultData(BaseData):
     id: Annotated[str, Field(..., description="ID of the tool call")]
 
 
-class ToolCallResultBlock(BlockBase[ToolCallResultData, Literal["tool_call_result"]]):
+class ToolCallResultBlock(BlockBase[ToolCallResultData, Literal["internal:tool_call_result"]]):
     @classmethod
     def from_data(cls, *, content: str, id: str) -> ToolCallResultBlock:
-        return ToolCallResultBlock(block_type="tool_call_result", data=ToolCallResultData(content=content, id=id))
+        return ToolCallResultBlock(
+            block_type="internal:tool_call_result", data=ToolCallResultData(content=content, id=id)
+        )
