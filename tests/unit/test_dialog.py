@@ -449,10 +449,15 @@ def test_custom_block() -> None:
     assert block_json["data"]["picka"] == "boo"
 
 
+def function_expecting_text_block(block: TextBlock) -> TextBlock:
+    return block
+
+
 def test_text_block_is_of_type() -> None:
     dialog = Dialog.model_validate(dialog_web3_payload)
     for block in dialog.items[2].blocks:
         if TextBlock.is_instance(block):
+            function_expecting_text_block(block)
             print(block.data.text)
             assert isinstance(block, TextBlock)
 
