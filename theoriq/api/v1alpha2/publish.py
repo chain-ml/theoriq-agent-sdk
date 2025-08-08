@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import threading
 from typing import Any, Callable, Dict, Optional
 
@@ -7,6 +8,8 @@ from ...biscuit import AgentAddress
 from .agent import Agent
 from .protocol import ProtocolClient
 from .protocol.biscuit_provider import BiscuitProviderFromPrivateKey
+
+logger = logging.getLogger(__name__)
 
 
 class PublisherContext:
@@ -33,11 +36,15 @@ class PublisherContext:
 
     def refresh_configuration(self) -> None:
         virtual_address = self._agent.virtual_address
+        logger.info(f"Refreshing configuration for agent {virtual_address}")
         if virtual_address.is_null:
             return
 
         agent_metadata = self._client.get_agent(virtual_address.address, self._biscuit_provider.get_biscuit())
-        self._configuration = agent_metadata.configuration.virtual.configuration
+        if agent_metadata.configuration.virtual:
+            self._configuration = agent_metadata.configuration.virtual.configuration
+        else:
+            logger.warning(f"Agent {virtual_address} has no virtual configuration")
 
 
 PublishJob = Callable[[PublisherContext], None]
@@ -92,7 +99,7 @@ class Publisher:
             new_agent = Agent(root_agent.config, root_agent.schemas)
             new_agent.virtual_address = virtual_address
             publisher = Publisher(new_agent)
-            virtual_publishers[new_agent.virtual_address.address] = publisher
+            virtual_publishers[new_agent.virtual_address] = publisher
             publisher._context.refresh_configuration()
             publisher.new_job(job, background=True).start()
         else:
