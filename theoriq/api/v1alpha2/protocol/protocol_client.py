@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, Final, Iterator, List, Optional
+from typing import Any, Dict, Final, Iterator, List, Optional, Union
 from uuid import UUID
 
 import httpx
@@ -144,7 +144,10 @@ class ProtocolClient:
             return AgentResponse.model_validate(response.json())
 
     def get_configuration(
-        self, request_biscuit: RequestBiscuit, agent_address: AgentAddress, configuration_hash: str
+        self,
+        request_biscuit: Union[TheoriqBiscuit, RequestBiscuit],
+        agent_address: AgentAddress,
+        configuration_hash: str,
     ) -> Dict[str, Any]:
         key = f"{agent_address.address}_{configuration_hash}"
         cached_response = self._config_cache.get(key)
@@ -162,7 +165,7 @@ class ProtocolClient:
             return configuration
 
     def post_request(
-        self, request_biscuit: TheoriqBiscuit | RequestBiscuit, content: bytes, to_addr: str
+        self, request_biscuit: Union[TheoriqBiscuit, RequestBiscuit], content: bytes, to_addr: str
     ) -> Dict[str, Any]:
         url = f'{self._uri}/agents/{to_addr.removeprefix("0x")}/execute'
         headers = request_biscuit.to_headers()

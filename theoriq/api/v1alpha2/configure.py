@@ -7,6 +7,7 @@ from theoriq.biscuit import AgentAddress, RequestFact, TheoriqBiscuit
 
 from .agent import Agent
 from .protocol import ProtocolClient
+from .publish import Publisher
 
 logger = logging.getLogger(__name__)
 
@@ -56,14 +57,14 @@ class AgentConfigurator:
     """
 
     def __init__(self, configure_fn: ConfigureFn, is_long_running_fn: IsLongRunningFn) -> None:
-        self.configure_fn = configure_fn
+        self._configure_fn = configure_fn
         self.is_long_running_fn = is_long_running_fn
 
     def __call__(
         self, configure_context: ConfigureContext, payload: Any, biscuit: TheoriqBiscuit, agent: Agent
     ) -> None:
         try:
-            self.configure_fn(configure_context, payload)
+            self.do_configure(configure_context, payload)
         except Exception as e:
             logger.error(f"Failed to configure agent: {e}")
             configure_context.post_request_failure(biscuit, str(e))
@@ -73,6 +74,10 @@ class AgentConfigurator:
             message = f"Successfully configured agent {configured_agent_id}"
             logger.info(message)
             configure_context.post_request_success(biscuit, message)
+
+    def do_configure(self, configure_context: ConfigureContext, payload: Any) -> None:
+        self._configure_fn(configure_context, payload)
+        Publisher.start_or_update_virtual_job(configure_context._agent, configure_context.virtual_address)
 
     @classmethod
     def default(cls) -> AgentConfigurator:
