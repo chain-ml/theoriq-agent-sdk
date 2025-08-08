@@ -106,7 +106,7 @@ class BlockBase(BaseTheoriqModel, Generic[T_Data, T_Type]):
         return _registryPrefix.get(block_type.split(":")[0])
 
     @classmethod
-    def is_instance(cls, block: BlockBase[T_Data, T_Type]) -> TypeGuard[BlockBase[T_Data, T_Type]]:
+    def is_instance(cls: Type[T_Block], block: BlockBase[T_Data, T_Type]) -> TypeGuard[T_Block]:
         return isinstance(block, cls)
 
     @staticmethod
@@ -143,6 +143,8 @@ class BlockBase(BaseTheoriqModel, Generic[T_Data, T_Type]):
             return self.data.to_str()
         return json.dumps(self.data, indent=2)
 
+
+T_Block = TypeVar("T_Block", bound=BlockBase[Any, Any])
 
 BlockBasePredicate = Callable[[BlockBase], bool]
 
