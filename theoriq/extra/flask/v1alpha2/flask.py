@@ -226,5 +226,5 @@ def apply_configuration(agent_id: str, agent_configurator: AgentConfigurator) ->
         thread.start()
         return Response(status=202)
     else:
-        agent_configurator.configure_fn(context, payload)
+        agent_configurator.do_configure(context, payload)
         return Response(status=200)

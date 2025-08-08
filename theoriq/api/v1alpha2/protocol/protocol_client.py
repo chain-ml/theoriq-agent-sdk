@@ -144,7 +144,10 @@ class ProtocolClient:
             return AgentResponse.model_validate(response.json())
 
     def get_configuration(
-        self, request_biscuit: Union[TheoriqBiscuit, RequestBiscuit], agent_address: AgentAddress, configuration_hash: str
+        self,
+        request_biscuit: Union[TheoriqBiscuit, RequestBiscuit],
+        agent_address: AgentAddress,
+        configuration_hash: str,
     ) -> Dict[str, Any]:
         key = f"{agent_address.address}_{configuration_hash}"
         cached_response = self._config_cache.get(key)

@@ -6,7 +6,7 @@ from uuid import UUID
 from biscuit_auth import PrivateKey
 from biscuit_auth.biscuit_auth import KeyPair
 
-from theoriq import AgentDeploymentConfiguration
+from theoriq.api.v1alpha2.agent import AgentDeploymentConfiguration
 from theoriq.api.v1alpha2 import ProtocolClient
 from theoriq.biscuit import AgentAddress, TheoriqBiscuit
 from theoriq.biscuit.authentication_biscuit import AuthenticationBiscuit, AuthenticationFacts
