@@ -23,30 +23,25 @@ class LogfmtFormatter(logging.Formatter):
         super().__init__(**kwargs)
 
         record = logging.LogRecord(
-            name="test",
-            level=logging.INFO,
-            pathname=__file__,
-            lineno=1,
-            msg="test",
-            args=(),
-            exc_info=None)
+            name="test", level=logging.INFO, pathname=__file__, lineno=1, msg="test", args=(), exc_info=None
+        )
         self._default_fields = vars(record).keys()
 
     def format(self, record):
         # Get basic log record attributes
         base_info = {
-            'time': self.formatTime(record, self.datefmt),
-            'level': record.levelname,
-            'logger': record.name,
-            'message': record.getMessage(),
+            "time": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
         }
 
-        for (key, value) in record.__dict__.items():
+        for key, value in record.__dict__.items():
             if key not in self._default_fields and value is not None:
                 base_info[key] = value
 
         # Format as logfmt (key=value pairs)
-        logfmt_str = ' '.join([f'{k}={LogfmtFormatter._quote_value(v)}' for k, v in base_info.items()])
+        logfmt_str = " ".join([f"{k}={LogfmtFormatter._quote_value(v)}" for k, v in base_info.items()])
 
         # Add exception info if present
         if record.exc_info:
@@ -59,7 +54,7 @@ class LogfmtFormatter(logging.Formatter):
     def _quote_value(value):
         """Quote values that contain spaces or special characters"""
         value_str = str(value)
-        if ' ' in value_str or '=' in value_str or '"' in value_str:
+        if " " in value_str or "=" in value_str or '"' in value_str:
             # Escape quotes and wrap in quotes
             value_str = value_str.replace('"', '\\"')
             return f'"{value_str}"'
