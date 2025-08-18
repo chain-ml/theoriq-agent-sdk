@@ -27,4 +27,4 @@ def init_logfmt(app: Flask, level: Optional[Union[str, int]] = None, force: bool
     init_logging(app, level, force)
     logger = logging.getLogger()
     for handler in logger.handlers:
-        handler.setFormatter(LogfmtFormatter(datefmt="%Y-%m-%dT%H:%M:%S"))
+        handler.setFormatter(LogfmtFormatter(datefmt="%Y-%m-%dT%H:%M:%SZ"))
