@@ -31,6 +31,10 @@ class PublisherContext:
         self._client.post_notification(biscuit, self._address.address, message)
 
     @property
+    def agent(self) -> Agent:
+        return self._agent
+
+    @property
     def configuration(self) -> Optional[Dict[str, Any]]:
         return self._configuration
 
