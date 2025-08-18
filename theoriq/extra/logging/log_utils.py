@@ -28,7 +28,6 @@ class LogfmtFormatter(logging.Formatter):
         self._default_fields = vars(record).keys()
 
     def format(self, record):
-        # Get basic log record attributes
         base_info = {
             "time": self.formatTime(record, self.datefmt),
             "level": record.levelname,
@@ -40,10 +39,8 @@ class LogfmtFormatter(logging.Formatter):
             if key not in self._default_fields and value is not None:
                 base_info[key] = value
 
-        # Format as logfmt (key=value pairs)
         logfmt_str = " ".join([f"{k}={LogfmtFormatter._quote_value(v)}" for k, v in base_info.items()])
 
-        # Add exception info if present
         if record.exc_info:
             exc_text = self.formatException(record.exc_info)
             logfmt_str += f' exception="{exc_text}"'
