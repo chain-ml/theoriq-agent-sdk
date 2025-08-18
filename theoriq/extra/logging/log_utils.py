@@ -51,7 +51,7 @@ class LogfmtFormatter(logging.Formatter):
         return logfmt_str
 
     @staticmethod
-    def _quote_value(value):
+    def _quote_value(value: Any) -> str:
         """Quote values that contain spaces or special characters"""
         value_str = str(value)
         if " " in value_str or "=" in value_str or '"' in value_str:
