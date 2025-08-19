@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 from typing import Any, Optional, Union
 
 from . import execute_context, http_request_context
@@ -22,6 +23,7 @@ class LogfmtFormatter(logging.Formatter):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
+        self.converter = time.gmtime
         record = logging.LogRecord(
             name="test", level=logging.INFO, pathname=__file__, lineno=1, msg="test", args=(), exc_info=None
         )
@@ -29,7 +31,7 @@ class LogfmtFormatter(logging.Formatter):
 
     def format(self, record):
         base_info = {
-            "time": self.formatTime(record, self.datefmt),
+            "ts": self.formatTime(record, self.datefmt),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
