@@ -17,8 +17,10 @@ logger = logging.getLogger(__name__)
 # The function takes a message string as input and returns nothing
 SubscribeHandlerFn = Callable[[str], None]
 
+
 class SubscriberStopException(Exception):
     pass
+
 
 class Subscriber:
     """Enables subscribing to agent notifications."""
@@ -57,6 +59,7 @@ class Subscriber:
                     time.sleep(1)  # wait for 1 second before reconnecting
             finally:
                 logger.warning("End of subscription job")
+
         return threading.Thread(target=_subscribe_job, daemon=background)
 
     @classmethod
