@@ -53,6 +53,7 @@ class Subscriber:
                             handler(message)
                         logger.warning("Connection to server lost. Reconnecting...")
                     except SubscriberStopException:
+                        logger.info("Received stop exception")
                         return
                     except Exception as e:
                         logger.warning(f"Something went wrong: {e}. Retrying...")
