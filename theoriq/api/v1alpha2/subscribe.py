@@ -5,8 +5,6 @@ import threading
 import time
 from typing import Callable, Optional
 
-import httpx
-
 from theoriq.biscuit import AgentAddress
 
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
@@ -19,6 +17,8 @@ logger = logging.getLogger(__name__)
 # The function takes a message string as input and returns nothing
 SubscribeHandlerFn = Callable[[str], None]
 
+class SubscriberStopException(Exception):
+    pass
 
 class Subscriber:
     """Enables subscribing to agent notifications."""
@@ -43,16 +43,20 @@ class Subscriber:
         """
 
         def _subscribe_job() -> None:
-            while True:
-                try:
-                    biscuit = self._biscuit_provider.get_biscuit()
-                    for message in self._client.subscribe_to_agent_notifications(biscuit, agent_address.address):
-                        handler(message)
-                    logger.warning("Connection to server lost. Reconnecting...")
-                except (httpx.HTTPStatusError, httpx.RequestError, httpx.TimeoutException) as e:
-                    logger.warning(f"Something went wrong: {e}. Retrying...")
-                time.sleep(1)  # wait for 1 second before reconnecting
-
+            try:
+                while True:
+                    try:
+                        biscuit = self._biscuit_provider.get_biscuit()
+                        for message in self._client.subscribe_to_agent_notifications(biscuit, agent_address.address):
+                            handler(message)
+                        logger.warning("Connection to server lost. Reconnecting...")
+                    except SubscriberStopException:
+                        return
+                    except Exception as e:
+                        logger.warning(f"Something went wrong: {e}. Retrying...")
+                    time.sleep(1)  # wait for 1 second before reconnecting
+            finally:
+                logger.warning("End of subscription job")
         return threading.Thread(target=_subscribe_job, daemon=background)
 
     @classmethod
