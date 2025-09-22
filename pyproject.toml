@@ -37,6 +37,7 @@ isort = "6.0.1"
 types-jsonschema = "^4.23.0.20241208"
 types-pyyaml = "^6.0.12.20241230"
 python-dotenv = ">=1.1.0,<2.0.0"
+pytest-timeout = "^2.4.0"
 
 [tool.pytest.ini_options]
 log_cli = "True"
