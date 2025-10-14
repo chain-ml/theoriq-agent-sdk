@@ -298,6 +298,12 @@ class ProtocolClient:
         with httpx.Client(timeout=self._timeout) as client:
             client.post(url=url, json=MetricsRequestBody(metrics).to_dict(), headers=headers)
 
+    def post_agent_metrics(self, biscuit: TheoriqBiscuit, agent_id: str, metrics: List[Metric]) -> None:
+        url = f"{self._uri}/agents/{agent_id}/metrics"
+        headers = biscuit.to_headers()
+        with httpx.Client(timeout=self._timeout) as client:
+            client.post(url=url, json=MetricsRequestBody(metrics).to_dict(), headers=headers)
+
     def _send_event(self, request: EventRequestBody, headers: Dict[str, str]) -> None:
         url = f"{self._uri}/requests/{request.request_id.replace('-', '')}/events"
         with httpx.Client(timeout=self._timeout) as client:
