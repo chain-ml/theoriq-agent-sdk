@@ -1,4 +1,5 @@
 import os
+from decimal import Decimal, InvalidOperation
 from typing import Callable, Optional, Type, TypeVar
 
 
@@ -66,6 +67,16 @@ def _bool_converter(name: str) -> Callable[[str], bool]:
     return convert
 
 
+def _decimal_converter(name: str) -> Callable[[str], Decimal]:
+    def convert(x: str) -> Decimal:
+        try:
+            return Decimal(x)
+        except InvalidOperation as e:
+            raise EnvVariableValueException(name=name, value=x, expected_type=Decimal) from e
+
+    return convert
+
+
 def read_env_str(name: str, default: Optional[str] = None) -> Optional[str]:
     """Read an environment variable as optional string."""
     return _read_env_optional(name, default, lambda x: x)
@@ -104,3 +115,13 @@ def read_env_bool(name: str, default: Optional[bool] = None) -> Optional[bool]:
 def must_read_env_bool(name: str) -> bool:
     """Read an environment variable as boolean."""
     return _read_env_required(name, _bool_converter(name))
+
+
+def read_env_decimal(name: str, default: Optional[Decimal] = None) -> Optional[Decimal]:
+    """Read an environment variable as optional decimal."""
+    return _read_env_optional(name, default, _decimal_converter(name))
+
+
+def must_read_env_decimal(name: str) -> Decimal:
+    """Read an environment variable as decimal."""
+    return _read_env_required(name, _decimal_converter(name))
