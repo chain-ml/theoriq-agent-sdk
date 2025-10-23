@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 from tests import OsEnviron
 
@@ -5,10 +7,12 @@ from theoriq.utils import (
     EnvVariableValueException,
     MissingEnvVariableException,
     must_read_env_bool,
+    must_read_env_decimal,
     must_read_env_float,
     must_read_env_int,
     must_read_env_str,
     read_env_bool,
+    read_env_decimal,
     read_env_float,
     read_env_int,
     read_env_str,
@@ -48,7 +52,14 @@ def test_must_read_env_bool() -> None:
         assert not value
 
 
-def test_read_env_str_with_default() -> None:
+def test_must_read_env_decimal() -> None:
+    with OsEnviron(name="DECIMAL", value="1.23456"):
+        value = must_read_env_decimal("DECIMAL")
+        assert isinstance(value, Decimal)
+        assert value == Decimal("1.23456")
+
+
+def test_read_env_with_default() -> None:
     str_value = read_env_str("MISSING", default="DEFAULT")
     assert isinstance(str_value, str)
     assert str_value == "DEFAULT"
@@ -65,6 +76,10 @@ def test_read_env_str_with_default() -> None:
     assert isinstance(bool_value, bool)
     assert not bool_value
 
+    decimal_value = read_env_decimal("MISSING", default=Decimal("1.23456"))
+    assert isinstance(decimal_value, Decimal)
+    assert decimal_value == Decimal("1.23456")
+
 
 def test_missing_env() -> None:
     str_value = read_env_str("MISSING")
@@ -79,6 +94,9 @@ def test_missing_env() -> None:
     bool_value = read_env_bool("MISSING")
     assert bool_value is None
 
+    decimal_value = read_env_decimal("MISSING")
+    assert decimal_value is None
+
     with pytest.raises(MissingEnvVariableException):
         must_read_env_str("MISSING")
 
@@ -90,6 +108,9 @@ def test_missing_env() -> None:
 
     with pytest.raises(MissingEnvVariableException):
         must_read_env_bool("MISSING")
+
+    with pytest.raises(MissingEnvVariableException):
+        must_read_env_decimal("MISSING")
 
 
 def test_invalid_env() -> None:
@@ -104,3 +125,7 @@ def test_invalid_env() -> None:
     with OsEnviron(name="INVALID_BOOL", value="Tue"):
         with pytest.raises(EnvVariableValueException):
             must_read_env_bool("INVALID_BOOL")
+
+    with OsEnviron(name="INVALID_DECIMAL", value="twenty_four"):
+        with pytest.raises(EnvVariableValueException):
+            must_read_env_decimal("INVALID_DECIMAL")
