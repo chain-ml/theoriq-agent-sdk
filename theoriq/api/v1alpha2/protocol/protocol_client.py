@@ -304,6 +304,31 @@ class ProtocolClient:
         with httpx.Client(timeout=self._timeout) as client:
             client.post(url=url, json=MetricsRequestBody(metrics).to_dict(), headers=headers)
 
+    def get_agent_metrics(
+        self,
+        *,
+        agent_id: str,
+        name: str,
+        submitted_after: Optional[datetime] = None,
+        submitted_before: Optional[datetime] = None,
+        limit: int = 100,
+    ) -> List[Metric]:
+        url = f"{self._uri}/agents/{agent_id}/metrics"
+        params: Dict[str, Union[str, int]] = {
+            "name": name,
+            "limit": limit,
+        }
+        if submitted_after is not None:
+            params["submittedAfter"] = submitted_after.isoformat()
+        if submitted_before is not None:
+            params["submittedBefore"] = submitted_before.isoformat()
+
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.get(url=url, headers={}, params=params)
+            response.raise_for_status()
+            data = response.json()
+            return [Metric.from_dict(item) for item in data["items"]]
+
     def _send_event(self, request: EventRequestBody, headers: Dict[str, str]) -> None:
         url = f"{self._uri}/requests/{request.request_id.replace('-', '')}/events"
         with httpx.Client(timeout=self._timeout) as client:
