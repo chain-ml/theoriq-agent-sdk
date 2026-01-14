@@ -21,6 +21,7 @@ from ..schemas import (
     AgentWeb3Transaction,
     BiscuitResponse,
     EventRequestBody,
+    MetricResponse,
     MetricsRequestBody,
     PublicKeyResponse,
     RequestAudit,
@@ -312,7 +313,7 @@ class ProtocolClient:
         submitted_after: Optional[datetime] = None,
         submitted_before: Optional[datetime] = None,
         limit: int = 100,
-    ) -> List[Metric]:
+    ) -> List[MetricResponse]:
         url = f"{self._uri}/agents/{agent_id}/metrics"
         params: Dict[str, Union[str, int]] = {
             "name": name,
@@ -327,7 +328,7 @@ class ProtocolClient:
             response = client.get(url=url, headers={}, params=params)
             response.raise_for_status()
             data = response.json()
-            return [Metric.from_dict(item) for item in data["items"]]
+            return [MetricResponse.from_dict(item) for item in data["items"]]
 
     def _send_event(self, request: EventRequestBody, headers: Dict[str, str]) -> None:
         url = f"{self._uri}/requests/{request.request_id.replace('-', '')}/events"

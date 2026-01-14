@@ -5,6 +5,7 @@ from typing import List, Optional, Sequence
 
 from theoriq.api.v1alpha2 import ProtocolClient
 from theoriq.api.v1alpha2.protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
+from theoriq.api.v1alpha2.schemas.metrics import MetricResponse
 from theoriq.types import Metric
 
 
@@ -38,7 +39,7 @@ class AgentMetricsReader:
         submitted_after: Optional[datetime] = None,
         submitted_before: Optional[datetime] = None,
         limit: int = 100,
-    ) -> List[Metric]:
+    ) -> List[MetricResponse]:
         return self._client.get_agent_metrics(
             agent_id=agent_id,
             name=name,
@@ -46,3 +47,35 @@ class AgentMetricsReader:
             submitted_before=submitted_before,
             limit=limit,
         )
+
+    def query_paginated(
+        self,
+        *,
+        agent_id: str,
+        name: str,
+        submitted_after: Optional[datetime] = None,
+        submitted_before: Optional[datetime] = None,
+        limit: int = 100,
+        max_iterations: int = 100,
+    ) -> List[MetricResponse]:
+        """Query up to `limit * (max_iterations - 1)` last metrics with pagination."""
+        metrics: List[MetricResponse] = []
+
+        for _ in range(max_iterations):
+            metrics_page = self.query(
+                agent_id=agent_id,
+                name=name,
+                submitted_after=submitted_after,
+                submitted_before=submitted_before,
+                limit=limit,
+            )
+
+            metrics.extend(metrics_page)
+
+            if len(metrics_page) < limit:
+                break
+
+            submitted_before = metrics_page[-1].timestamp  # use last metric's timestamp as the cursor for next page
+            metrics.pop()  # remove to avoid duplicate in next iteration
+
+        return metrics
