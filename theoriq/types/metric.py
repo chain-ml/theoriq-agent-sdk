@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Dict, Optional
 
 from typing_extensions import Self
@@ -32,6 +34,10 @@ class Metric:
         self.value = value
         self._custom_labels: Dict[str, str] = custom_labels if custom_labels is not None else {}
 
+    @property
+    def custom_labels(self) -> Dict[str, str]:
+        return self._custom_labels
+
     def add_custom_label(self, name: str, value: str) -> Self:
         """
         Adds a custom label to the metric.
@@ -61,6 +67,10 @@ class Metric:
             result["customLabels"] = self._custom_labels
 
         return result
+
+    @staticmethod
+    def from_dict(data: Dict[str, Any]) -> Metric:
+        return Metric(name=data["name"], value=data["value"], custom_labels=data.get("customLabels"))
 
     def __str__(self) -> str:
         return f"Metric(name={self.name}, value={self.value})"
