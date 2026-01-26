@@ -6,6 +6,7 @@ import pytest
 
 from theoriq.api.v1alpha2 import ProtocolClient
 from theoriq.api.v1alpha2.protocol.biscuit_provider import BiscuitProvider
+from theoriq.api.v1alpha2.schemas import NotificationContext
 from theoriq.api.v1alpha2.subscribe import Subscriber, SubscriberStopException
 from theoriq.biscuit import AgentAddress
 
@@ -15,16 +16,16 @@ def test_subscribe_job_handle_exception() -> None:
     biscuit_provider = MagicMock(spec=BiscuitProvider)
     client = MagicMock(spec=ProtocolClient)
     client.subscribe_to_agent_notifications.side_effect = [
-        ["first"],
+        [NotificationContext.from_str("first")],
         ValueError,
-        ["something"],
+        [NotificationContext.from_str("something")],
         SubscriberStopException,
     ]
     subscriber = Subscriber(biscuit_provider, client)
 
-    actual: Optional[str] = None
+    actual: Optional[NotificationContext] = None
 
-    def handler(message: str) -> None:
+    def handler(message: NotificationContext) -> None:
         nonlocal actual
         actual = message
 
@@ -33,4 +34,5 @@ def test_subscribe_job_handle_exception() -> None:
     time.sleep(4)
 
     assert not job.is_alive()
-    assert actual == "something"
+    assert actual is not None
+    assert actual.notification == "something"
