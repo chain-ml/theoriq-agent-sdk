@@ -8,6 +8,7 @@ from tests.integration.agent_registry import AgentRegistry, AgentType
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.publish import Publisher, PublisherContext
+from theoriq.api.v1alpha2.schemas import NotificationContext
 from theoriq.api.v1alpha2.subscribe import Subscriber
 from theoriq.biscuit import AgentAddress
 
@@ -72,8 +73,8 @@ def test_subscribing_as_agent(
 ) -> None:
     local_notification_queue: List[str] = []
 
-    def subscribing_handler(notification: str) -> None:
-        local_notification_queue.append(notification)
+    def subscribing_handler(notification: NotificationContext) -> None:
+        local_notification_queue.append(notification.notification)
 
     basic_agent_data = agent_registry.get_first_agent_of_type(AgentType.BASIC)
     subscriber = Subscriber.from_env(env_prefix=basic_agent_data.metadata.labels["env_prefix"])
@@ -91,8 +92,8 @@ def test_subscribing_as_user(
 ) -> None:
     local_notification_queue: List[str] = []
 
-    def subscribing_handler(notification: str) -> None:
-        local_notification_queue.append(notification)
+    def subscribing_handler(notification: NotificationContext) -> None:
+        local_notification_queue.append(notification.notification)
 
     subscriber = Subscriber.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
     owner_address = get_owner_agent_address(agent_registry, agent_map)

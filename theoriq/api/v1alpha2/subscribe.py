@@ -3,19 +3,20 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import Callable, Optional
+from typing import Any, Callable, Dict, Optional
 
 from theoriq.biscuit import AgentAddress
 
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 from .protocol.protocol_client import ProtocolClient
+from .schemas.notification import NotificationContext
 
 logger = logging.getLogger(__name__)
 
 
 # Type alias for a function that handles subscription messages
-# The function takes a message string as input and returns nothing
-SubscribeHandlerFn = Callable[[str], None]
+# The function takes a NotificationContext as input and returns nothing
+SubscribeHandlerFn = Callable[[NotificationContext], None]
 
 
 class SubscriberStopException(Exception):
@@ -49,8 +50,14 @@ class Subscriber:
                 while True:
                     try:
                         biscuit = self._biscuit_provider.get_biscuit()
-                        for message in self._client.subscribe_to_agent_notifications(biscuit, agent_address.address):
-                            handler(message)
+                        for notification_message in self._client.subscribe_to_agent_notifications(
+                            biscuit, agent_address.address
+                        ):
+                            notification = NotificationContext(
+                                notification=notification_message,
+                                configuration=self._fetch_configuration(agent_address),
+                            )
+                            handler(notification)
                         logger.warning("Connection to server lost. Reconnecting...")
                     except SubscriberStopException:
                         logger.info("Received stop exception")
@@ -62,6 +69,16 @@ class Subscriber:
                 logger.warning("End of subscription job")
 
         return threading.Thread(target=_subscribe_job, daemon=background)
+
+    def _fetch_configuration(self, agent_address: AgentAddress) -> Optional[Dict[str, Any]]:
+        try:
+            return self._client.get_configuration(
+                request_biscuit=self._biscuit_provider.get_biscuit(),
+                agent_address=agent_address,
+                configuration_hash="hash",  # TODO
+            )
+        except RuntimeError:
+            return {}
 
     @classmethod
     def from_api_key(cls, api_key: str) -> Subscriber:
