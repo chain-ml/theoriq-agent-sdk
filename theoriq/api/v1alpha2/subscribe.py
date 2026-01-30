@@ -89,3 +89,26 @@ class Subscriber:
     @classmethod
     def from_env(cls, env_prefix: str = "") -> Subscriber:
         return Subscriber(biscuit_provider=BiscuitProviderFactory.from_env(env_prefix=env_prefix))
+
+
+class SubscriberBound:
+    """A subscriber bound to a specific agent address for convenient subscription management."""
+
+    def __init__(self, subscriber: Subscriber, agent_address: AgentAddress) -> None:
+        self._subscriber = subscriber
+        self._agent_address = agent_address
+
+    @property
+    def subscriber(self) -> Subscriber:
+        return self._subscriber
+
+    @property
+    def agent_address(self) -> AgentAddress:
+        return self._agent_address
+
+    def new_job(self, handler: SubscribeHandlerFn, background: bool = False) -> threading.Thread:
+        return self._subscriber.new_job(self.agent_address, handler, background)
+
+    @classmethod
+    def from_env(cls, agent_address_env_var: str, *, subscriber_env_prefix: str = "") -> SubscriberBound:
+        return SubscriberBound(Subscriber.from_env(subscriber_env_prefix), AgentAddress.from_env(agent_address_env_var))
