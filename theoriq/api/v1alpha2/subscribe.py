@@ -5,6 +5,8 @@ import threading
 import time
 from typing import Any, Callable, Dict, Optional
 
+from httpx import HTTPStatusError
+
 from theoriq.biscuit import AgentAddress
 
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
@@ -77,7 +79,7 @@ class Subscriber:
                 agent_address=agent_address,
                 configuration_hash="hash",  # TODO
             )
-        except RuntimeError:
+        except (RuntimeError, HTTPStatusError):
             return None
 
     @classmethod

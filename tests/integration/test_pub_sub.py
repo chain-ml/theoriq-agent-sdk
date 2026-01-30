@@ -74,6 +74,7 @@ def test_subscribing_as_agent(
     local_notification_queue: List[str] = []
 
     def subscribing_handler(notification: NotificationContext) -> None:
+        assert notification.configuration is None
         local_notification_queue.append(notification.notification)
 
     basic_agent_data = agent_registry.get_first_agent_of_type(AgentType.BASIC)
@@ -93,6 +94,7 @@ def test_subscribing_as_user(
     local_notification_queue: List[str] = []
 
     def subscribing_handler(notification: NotificationContext) -> None:
+        assert notification.configuration is None
         local_notification_queue.append(notification.notification)
 
     subscriber = Subscriber.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
