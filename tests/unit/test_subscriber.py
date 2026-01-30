@@ -16,11 +16,12 @@ def test_subscribe_job_handle_exception() -> None:
     biscuit_provider = MagicMock(spec=BiscuitProvider)
     client = MagicMock(spec=ProtocolClient)
     client.subscribe_to_agent_notifications.side_effect = [
-        [NotificationContext.from_str("first")],
+        ["first"],
         ValueError,
-        [NotificationContext.from_str("something")],
+        ["something"],
         SubscriberStopException,
     ]
+    client.get_configuration.side_effect = [None, None, None, None]
     subscriber = Subscriber(biscuit_provider, client)
 
     actual: Optional[NotificationContext] = None

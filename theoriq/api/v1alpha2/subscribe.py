@@ -78,7 +78,7 @@ class Subscriber:
                 configuration_hash="hash",  # TODO
             )
         except RuntimeError:
-            return {}
+            return None
 
     @classmethod
     def from_api_key(cls, api_key: str) -> Subscriber:
