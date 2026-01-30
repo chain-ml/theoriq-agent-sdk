@@ -17,10 +17,6 @@ class NotificationContext(BaseTheoriqModel):
     notification: str
     configuration: Optional[Dict[str, Any]] = None
 
-    @classmethod
-    def from_str(cls, notification: str) -> NotificationContext:
-        return NotificationContext(notification=notification, configuration=None)
-
     def try_parse_configuration(self, configuration_cls: Type[T]) -> Optional[T]:
         if self.configuration is None:
             return None
