@@ -12,6 +12,7 @@ from theoriq.biscuit import AgentAddress
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 from .protocol.protocol_client import ProtocolClient
 from .schemas.notification import NotificationContext
+from ...types import SourceType
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,8 @@ class Subscriber:
         self._client = client or ProtocolClient.from_env()
         self._biscuit_provider = biscuit_provider
         self._configuration_hash: Optional[str] = None
+
+        self._is_user = SourceType.from_address(self._biscuit_provider.address).is_user
 
     def new_job(
         self, agent_address: AgentAddress, handler: SubscribeHandlerFn, background: bool = False
@@ -73,6 +76,9 @@ class Subscriber:
         return threading.Thread(target=_subscribe_job, daemon=background)
 
     def _fetch_configuration(self) -> Optional[Dict[str, Any]]:
+        if self._is_user:
+            return None
+
         configuration_hash = self._get_configuration_hash()
         if configuration_hash is None:
             return None
@@ -83,7 +89,7 @@ class Subscriber:
                 agent_address=AgentAddress(self._biscuit_provider.address),
                 configuration_hash=configuration_hash,
             )
-        except (RuntimeError, HTTPStatusError):  # ValueError, TypeError
+        except (RuntimeError, HTTPStatusError):
             return None
 
     def _get_configuration_hash(self) -> Optional[str]:
