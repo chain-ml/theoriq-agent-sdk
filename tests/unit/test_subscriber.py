@@ -25,6 +25,7 @@ def _create_mock_agent_response(configuration_hash: Optional[str]) -> MagicMock:
 @pytest.mark.timeout(10)
 def test_subscribe_job_handle_exception() -> None:
     biscuit_provider = MagicMock(spec=BiscuitProvider)
+    type(biscuit_provider).address = PropertyMock(return_value="0x1234512345123451234512345123451234512345")
     client = MagicMock(spec=ProtocolClient)
     client.subscribe_to_agent_notifications.side_effect = [
         ["first"],
