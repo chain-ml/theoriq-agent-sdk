@@ -9,10 +9,10 @@ from httpx import HTTPStatusError
 
 from theoriq.biscuit import AgentAddress
 
+from ...types import SourceType
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 from .protocol.protocol_client import ProtocolClient
 from .schemas.notification import NotificationContext
-from ...types import SourceType
 
 logger = logging.getLogger(__name__)
 
