@@ -12,7 +12,7 @@ from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.protocol.biscuit_provider import BiscuitProviderFactory
 from theoriq.api.v1alpha2.publish import Publisher, PublisherContext
 from theoriq.api.v1alpha2.schemas import NotificationContext
-from theoriq.api.v1alpha2.subscribe import Subscriber
+from theoriq.api.v1alpha2.subscribe import SubscribeHandlerFn, Subscriber
 from theoriq.biscuit import AgentAddress
 from theoriq.types import AgentConfiguration, AgentMetadata
 
@@ -40,10 +40,12 @@ def get_owner_agent_address(agent_registry: AgentRegistry, agent_map: Dict[str, 
     owner_agent = next(agent for agent in agent_map.values() if agent.metadata.name == owner_name)
     return AgentAddress(owner_agent.system.id)
 
+
 def get_configurable_agent(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> AgentResponse:
     configurable_agent_data = agent_registry.get_first_agent_of_type(AgentType.CONFIGURABLE)
     configurable_name = configurable_agent_data.spec.metadata.name
     return next(agent for agent in agent_map.values() if agent.metadata.name == configurable_name)
+
 
 @pytest.mark.order(1)
 @pytest.mark.usefixtures("agent_flask_apps")
@@ -77,6 +79,7 @@ def test_configuration(
         agent = user_manager.create_agent(metadata, configuration)
         assert agent.configuration.is_virtual
         agent_map[agent.system.id] = agent
+
 
 @pytest.mark.order(3)
 @pytest.mark.usefixtures("agent_flask_apps")
@@ -133,6 +136,48 @@ def test_subscribing_as_user(
 
     time.sleep(1.0)
     assert_notification_queues(publisher_queue=notification_queue, subscriber_queue=local_notification_queue)
+
+
+@pytest.mark.order(6)
+@pytest.mark.usefixtures("agent_flask_apps")
+def test_subscribing_as_virtual_agents(
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], notification_queue: List[str]
+) -> None:
+    virtual_agents = [agent for agent in agent_map.values() if agent.configuration.is_virtual]
+    assert len(virtual_agents) == 2
+
+    def make_handler(expected: Dict[str, Any], queue: List[str]) -> SubscribeHandlerFn:
+        def subscribing_handler(notification: NotificationContext) -> None:
+            assert notification.configuration is not None
+            assert notification.configuration == expected
+
+            parsed_config = notification.try_parse_configuration(TestConfig)
+            assert parsed_config is not None
+            assert parsed_config.text == expected["text"]
+            assert parsed_config.number == expected["number"]
+
+            queue.append(notification.notification)
+
+        return subscribing_handler
+
+    configurable_agent_data = agent_registry.get_first_agent_of_type(AgentType.CONFIGURABLE)
+    root_agent = Agent.from_env(env_prefix=configurable_agent_data.metadata.labels["env_prefix"])
+    owner_address = get_owner_agent_address(agent_registry, agent_map)
+
+    for virtual_agent in virtual_agents:
+        local_notification_queue: List[str] = []
+        virtual_address = AgentAddress(virtual_agent.system.id)
+        expected_config = virtual_agent.configuration.ensure_virtual.configuration
+
+        biscuit_provider = BiscuitProviderFactory.from_agent(
+            private_key=root_agent.config.private_key, address=virtual_address
+        )
+        subscriber = Subscriber(biscuit_provider)
+        handler = make_handler(expected_config, local_notification_queue)
+        subscriber.new_job(owner_address, handler, background=True).start()
+
+        time.sleep(1.0)
+        assert_notification_queues(publisher_queue=notification_queue, subscriber_queue=local_notification_queue)
 
 
 @pytest.mark.order(-1)
