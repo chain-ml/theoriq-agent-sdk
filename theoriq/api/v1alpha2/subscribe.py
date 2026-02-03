@@ -31,6 +31,7 @@ class Subscriber:
     def __init__(self, biscuit_provider: BiscuitProvider, client: Optional[ProtocolClient] = None) -> None:
         self._client = client or ProtocolClient.from_env()
         self._biscuit_provider = biscuit_provider
+        self._configuration_hash: Optional[str] = None
 
     def new_job(
         self, agent_address: AgentAddress, handler: SubscribeHandlerFn, background: bool = False
@@ -56,8 +57,7 @@ class Subscriber:
                             biscuit, agent_address.address
                         ):
                             notification = NotificationContext(
-                                notification=notification_message,
-                                configuration=self._fetch_configuration(agent_address),
+                                notification=notification_message, configuration=self._fetch_configuration()
                             )
                             handler(notification)
                         logger.warning("Connection to server lost. Reconnecting...")
@@ -72,15 +72,30 @@ class Subscriber:
 
         return threading.Thread(target=_subscribe_job, daemon=background)
 
-    def _fetch_configuration(self, agent_address: AgentAddress) -> Optional[Dict[str, Any]]:
+    def _fetch_configuration(self) -> Optional[Dict[str, Any]]:
+        configuration_hash = self._get_configuration_hash()
+        if configuration_hash is None:
+            return None
+
         try:
             return self._client.get_configuration(
                 request_biscuit=self._biscuit_provider.get_biscuit(),
-                agent_address=agent_address,
-                configuration_hash="hash",  # TODO
+                agent_address=AgentAddress(self._biscuit_provider.address),
+                configuration_hash=configuration_hash,
             )
-        except (RuntimeError, HTTPStatusError):
+        except (RuntimeError, HTTPStatusError):  # ValueError, TypeError
             return None
+
+    def _get_configuration_hash(self) -> Optional[str]:
+        if self._configuration_hash is not None:
+            return self._configuration_hash
+
+        agent_metadata = self._client.get_agent(self._biscuit_provider.address, self._biscuit_provider.get_biscuit())
+        if not agent_metadata.configuration.virtual:
+            return None
+
+        self._configuration_hash = agent_metadata.configuration.virtual.configuration_hash
+        return self._configuration_hash
 
     @classmethod
     def from_api_key(cls, api_key: str) -> Subscriber:
