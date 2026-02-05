@@ -5,11 +5,8 @@ import threading
 import time
 from typing import Any, Callable, Dict, Optional
 
-from httpx import HTTPStatusError
-
 from theoriq.biscuit import AgentAddress
 
-from ...types import SourceType
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 from .protocol.protocol_client import ProtocolClient
 from .schemas.notification import NotificationContext

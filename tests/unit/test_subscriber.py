@@ -1,13 +1,13 @@
 import time
 from typing import Optional
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import MagicMock
 
 import pytest
 
 from theoriq.api.v1alpha2 import ProtocolClient
 from theoriq.api.v1alpha2.protocol.biscuit_provider import BiscuitProvider
 from theoriq.api.v1alpha2.schemas import NotificationContext
-from theoriq.api.v1alpha2.subscribe import Subscriber, SubscriberStopException
+from theoriq.api.v1alpha2.subscribe import Subscriber, SubscriberStopException, VirtualSubscriber
 from theoriq.biscuit import AgentAddress
 
 
@@ -25,7 +25,6 @@ def _create_mock_agent_response(configuration_hash: Optional[str]) -> MagicMock:
 @pytest.mark.timeout(10)
 def test_subscribe_job_handle_exception() -> None:
     biscuit_provider = MagicMock(spec=BiscuitProvider)
-    type(biscuit_provider).address = PropertyMock(return_value="0x1234512345123451234512345123451234512345")
     client = MagicMock(spec=ProtocolClient)
     client.subscribe_to_agent_notifications.side_effect = [
         ["first"],
@@ -33,13 +32,11 @@ def test_subscribe_job_handle_exception() -> None:
         ["something"],
         SubscriberStopException,
     ]
-    # _fetch_configuration uses get_agent to check if subscriber is virtual
-    client.get_agent.return_value = _create_mock_agent_response(configuration_hash=None)
     subscriber = Subscriber(biscuit_provider, client)
 
-    actual: Optional[NotificationContext] = None
+    actual: Optional[str] = None
 
-    def handler(message: NotificationContext) -> None:
+    def handler(message: str) -> None:
         nonlocal actual
         actual = message
 
@@ -49,18 +46,16 @@ def test_subscribe_job_handle_exception() -> None:
 
     assert not job.is_alive()
     assert actual is not None
-    assert actual.notification == "something"
-    assert actual.configuration is None
+    assert actual == "something"
 
 
 @pytest.mark.timeout(10)
-def test_subscribe_job_virtual_agent_receives_own_config() -> None:
+def test_virtual_subscribe_job_receive_config() -> None:
     subscriber_config = {"text": "subscriber config", "number": 42}
     config_hash = "abc123hash"
-    subscriber_address = str(AgentAddress.random())
+    virtual_agent_address = AgentAddress.random()
 
     biscuit_provider = MagicMock(spec=BiscuitProvider)
-    type(biscuit_provider).address = PropertyMock(return_value=subscriber_address)
     client = MagicMock(spec=ProtocolClient)
     client.subscribe_to_agent_notifications.side_effect = [
         ["notification"],
@@ -68,9 +63,9 @@ def test_subscribe_job_virtual_agent_receives_own_config() -> None:
     ]
     # get_agent returns the configuration hash for virtual agents
     client.get_agent.return_value = _create_mock_agent_response(configuration_hash=config_hash)
-    # get_configuration returns the actual config (with caching support)
+    # get_configuration returns the config
     client.get_configuration.return_value = subscriber_config
-    subscriber = Subscriber(biscuit_provider, client)
+    subscriber = VirtualSubscriber(biscuit_provider, virtual_agent_address=virtual_agent_address, client=client)
 
     actual: Optional[NotificationContext] = None
 
@@ -88,6 +83,6 @@ def test_subscribe_job_virtual_agent_receives_own_config() -> None:
     assert actual.configuration == subscriber_config
 
     # verify get_agent was called with subscriber's address to get the hash
-    client.get_agent.assert_called_with(subscriber_address, biscuit_provider.get_biscuit())
+    client.get_agent.assert_called_with(virtual_agent_address, biscuit_provider.get_biscuit())
     # verify get_configuration was called with the hash (uses caching)
     client.get_configuration.assert_called()
