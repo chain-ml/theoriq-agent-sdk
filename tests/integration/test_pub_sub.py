@@ -7,12 +7,11 @@ from tests.integration.agent_registry import AgentRegistry, AgentType
 from tests.integration.agent_runner import TestConfig
 
 from theoriq.api.v1alpha2 import AgentResponse
-from theoriq.api.v1alpha2.agent import Agent
 from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.protocol.biscuit_provider import BiscuitProviderFactory
 from theoriq.api.v1alpha2.publish import Publisher, PublisherContext
-from theoriq.api.v1alpha2.schemas import NotificationContext
-from theoriq.api.v1alpha2.subscribe import SubscribeHandlerFn, Subscriber
+from theoriq.api.v1alpha2.schemas import VirtualAgentNotification
+from theoriq.api.v1alpha2.subscribe import Subscriber, VirtualSubscribeHandlerFn, VirtualSubscriber
 from theoriq.biscuit import AgentAddress
 from theoriq.types import AgentConfiguration, AgentMetadata
 
@@ -106,9 +105,8 @@ def test_subscribing_as_agent(
 ) -> None:
     local_notification_queue: List[str] = []
 
-    def subscribing_handler(notification: NotificationContext) -> None:
-        assert notification.configuration is None
-        local_notification_queue.append(notification.notification)
+    def subscribing_handler(message: str) -> None:
+        local_notification_queue.append(message)
 
     basic_agent_data = agent_registry.get_first_agent_of_type(AgentType.BASIC)
     subscriber = Subscriber.from_env(env_prefix=basic_agent_data.metadata.labels["env_prefix"])
@@ -126,9 +124,8 @@ def test_subscribing_as_user(
 ) -> None:
     local_notification_queue: List[str] = []
 
-    def subscribing_handler(notification: NotificationContext) -> None:
-        assert notification.configuration is None
-        local_notification_queue.append(notification.notification)
+    def subscribing_handler(message: str) -> None:
+        local_notification_queue.append(message)
 
     subscriber = Subscriber.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
     owner_address = get_owner_agent_address(agent_registry, agent_map)
@@ -146,9 +143,9 @@ def test_subscribing_as_virtual_agents(
     virtual_agents = [agent for agent in agent_map.values() if agent.configuration.is_virtual]
     assert len(virtual_agents) == 2
 
-    def make_handler(expected: Dict[str, Any], queue: List[str]) -> SubscribeHandlerFn:
-        def subscribing_handler(notification: NotificationContext) -> None:
-            assert notification.configuration is not None
+    def make_handler(name: str, expected: Dict[str, Any], queue: List[str]) -> VirtualSubscribeHandlerFn:
+        def subscribing_handler(notification: VirtualAgentNotification) -> None:
+            print(f"Got notification {notification} as {name}")
             assert notification.configuration == expected
 
             parsed_config = notification.try_parse_configuration(TestConfig)
@@ -160,20 +157,15 @@ def test_subscribing_as_virtual_agents(
 
         return subscribing_handler
 
-    configurable_agent_data = agent_registry.get_first_agent_of_type(AgentType.CONFIGURABLE)
-    root_agent = Agent.from_env(env_prefix=configurable_agent_data.metadata.labels["env_prefix"])
     owner_address = get_owner_agent_address(agent_registry, agent_map)
 
     for virtual_agent in virtual_agents:
         local_notification_queue: List[str] = []
-        virtual_address = AgentAddress(virtual_agent.system.id)
         expected_config = virtual_agent.configuration.ensure_virtual.configuration
 
-        biscuit_provider = BiscuitProviderFactory.from_agent(
-            private_key=root_agent.config.private_key, address=virtual_address
-        )
-        subscriber = Subscriber(biscuit_provider)
-        handler = make_handler(expected_config, local_notification_queue)
+        biscuit_provider = BiscuitProviderFactory.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
+        subscriber = VirtualSubscriber(biscuit_provider, virtual_agent_address=AgentAddress(virtual_agent.system.id))
+        handler = make_handler(virtual_agent.metadata.name, expected_config, local_notification_queue)
         subscriber.new_job(owner_address, handler, background=True).start()
 
         time.sleep(1.0)
