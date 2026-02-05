@@ -133,7 +133,7 @@ class VirtualSubscriber:
             return self._configuration_hash
 
         agent_metadata = self._client.get_agent(str(self._virtual_agent_address), self._biscuit_provider.get_biscuit())
-        # ensure virtual is safe because of self._virtual_agent_address validated during construction
+        # ensure virtual is safe because of self._virtual_agent_address was validated during __init__()
         self._configuration_hash = agent_metadata.configuration.ensure_virtual.configuration_hash
         return self._configuration_hash
 
