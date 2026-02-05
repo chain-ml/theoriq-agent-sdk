@@ -1,4 +1,3 @@
-import os
 import time
 from typing import Any, Dict, Generator, List
 
@@ -8,7 +7,6 @@ from tests.integration.agent_runner import TestConfig
 
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import AgentManager
-from theoriq.api.v1alpha2.protocol.biscuit_provider import BiscuitProviderFactory
 from theoriq.api.v1alpha2.publish import Publisher, PublisherContext
 from theoriq.api.v1alpha2.schemas import VirtualAgentNotification
 from theoriq.api.v1alpha2.subscribe import Subscriber, VirtualSubscribeHandlerFn, VirtualSubscriber
@@ -120,14 +118,17 @@ def test_subscribing_as_agent(
 @pytest.mark.order(5)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_subscribing_as_user(
-    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], notification_queue: List[str]
+    theoriq_api_key: str,
+    agent_registry: AgentRegistry,
+    agent_map: Dict[str, AgentResponse],
+    notification_queue: List[str],
 ) -> None:
     local_notification_queue: List[str] = []
 
     def subscribing_handler(message: str) -> None:
         local_notification_queue.append(message)
 
-    subscriber = Subscriber.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
+    subscriber = Subscriber.from_api_key(api_key=theoriq_api_key)
     owner_address = get_owner_agent_address(agent_registry, agent_map)
     subscriber.new_job(owner_address, subscribing_handler, background=True).start()
 
@@ -138,7 +139,10 @@ def test_subscribing_as_user(
 @pytest.mark.order(6)
 @pytest.mark.usefixtures("agent_flask_apps")
 def test_subscribing_as_virtual_agents(
-    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], notification_queue: List[str]
+    theoriq_api_key: str,
+    agent_registry: AgentRegistry,
+    agent_map: Dict[str, AgentResponse],
+    notification_queue: List[str],
 ) -> None:
     virtual_agents = [agent for agent in agent_map.values() if agent.configuration.is_virtual]
     assert len(virtual_agents) == 2
@@ -163,7 +167,9 @@ def test_subscribing_as_virtual_agents(
         local_notification_queue: List[str] = []
         expected_config = virtual_agent.configuration.ensure_virtual.configuration
 
-        subscriber = VirtualSubscriber.from_api_key(api_key=os.environ["THEORIQ_API_KEY"], virtual_agent_address=AgentAddress(virtual_agent.system.id))
+        subscriber = VirtualSubscriber.from_api_key(
+            api_key=theoriq_api_key, virtual_agent_address=AgentAddress(virtual_agent.system.id)
+        )
         handler = make_handler(virtual_agent.metadata.name, expected_config, local_notification_queue)
         subscriber.new_job(owner_address, handler, background=True).start()
 

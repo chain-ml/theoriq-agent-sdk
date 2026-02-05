@@ -1,4 +1,3 @@
-import os
 from typing import Dict
 
 import httpx
@@ -13,8 +12,8 @@ from theoriq.types import AgentConfiguration, AgentMetadata
 
 
 @pytest.fixture()
-def virtual_manager() -> AgentManager:
-    return AgentManager.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
+def virtual_manager(theoriq_api_key: str) -> AgentManager:
+    return AgentManager.from_api_key(api_key=theoriq_api_key)
 
 
 def assert_send_message_to_configurable_agent(

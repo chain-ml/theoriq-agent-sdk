@@ -1,4 +1,3 @@
-import os
 from typing import Dict, Final, Generator
 
 import dotenv
@@ -10,6 +9,7 @@ from tests.integration.agent_runner import AgentRunner, TestConfig
 from theoriq.api.v1alpha2 import AgentResponse
 from theoriq.api.v1alpha2.manage import AgentManager
 from theoriq.api.v1alpha2.message import Messenger
+from theoriq.utils import must_read_env_str
 
 dotenv.load_dotenv()
 
@@ -51,13 +51,18 @@ def agent_map() -> Generator[Dict[str, AgentResponse], None, None]:
 
 
 @pytest.fixture()
-def user_manager() -> AgentManager:
-    return AgentManager.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
+def theoriq_api_key() -> str:
+    return must_read_env_str("THEORIQ_API_KEY")
 
 
 @pytest.fixture()
-def user_messenger() -> Messenger:
-    return Messenger.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
+def user_manager(theoriq_api_key: str) -> AgentManager:
+    return AgentManager.from_api_key(api_key=theoriq_api_key)
+
+
+@pytest.fixture()
+def user_messenger(theoriq_api_key: str) -> Messenger:
+    return Messenger.from_api_key(api_key=theoriq_api_key)
 
 
 @pytest.fixture()
