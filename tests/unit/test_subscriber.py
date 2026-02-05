@@ -11,14 +11,11 @@ from theoriq.api.v1alpha2.subscribe import Subscriber, SubscriberStopException, 
 from theoriq.biscuit import AgentAddress
 
 
-def _create_mock_agent_response(configuration_hash: Optional[str]) -> MagicMock:
-    """Create a mock AgentResponse for testing, virtual if configuration hash is not None."""
+def _create_mock_virtual_agent_response(configuration_hash: str) -> MagicMock:
+    mock_virtual = MagicMock()
+    mock_virtual.configuration_hash = configuration_hash
     mock_response = MagicMock()
-    mock_response.configuration.virtual = None
-    if configuration_hash is not None:
-        mock_virtual = MagicMock()
-        mock_virtual.configuration_hash = configuration_hash
-        mock_response.configuration.virtual = mock_virtual
+    mock_response.configuration.virtual = mock_virtual
     return mock_response
 
 
@@ -45,7 +42,6 @@ def test_subscribe_job_handle_exception() -> None:
     time.sleep(4)
 
     assert not job.is_alive()
-    assert actual is not None
     assert actual == "something"
 
 
@@ -62,7 +58,7 @@ def test_virtual_subscribe_job_receive_config() -> None:
         SubscriberStopException,
     ]
     # get_agent returns the configuration hash for virtual agents
-    client.get_agent.return_value = _create_mock_agent_response(configuration_hash=config_hash)
+    client.get_agent.return_value = _create_mock_virtual_agent_response(config_hash)
     # get_configuration returns the config
     client.get_configuration.return_value = subscriber_config
     subscriber = VirtualSubscriber(biscuit_provider, virtual_agent_address=virtual_agent_address, client=client)
@@ -82,7 +78,7 @@ def test_virtual_subscribe_job_receive_config() -> None:
     assert actual.notification == "notification"
     assert actual.configuration == subscriber_config
 
-    # verify get_agent was called with subscriber's address to get the hash
+    # verify get_agent was called with virtual agent address's address to get the hash
     client.get_agent.assert_called_with(virtual_agent_address, biscuit_provider.get_biscuit())
-    # verify get_configuration was called with the hash (uses caching)
+    # verify get_configuration was called
     client.get_configuration.assert_called()
