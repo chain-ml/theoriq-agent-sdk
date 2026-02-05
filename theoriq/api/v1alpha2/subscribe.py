@@ -9,7 +9,7 @@ from theoriq.biscuit import AgentAddress
 
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 from .protocol.protocol_client import ProtocolClient
-from .schemas.notification import NotificationContext
+from .schemas.notification import VirtualAgentNotification
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ SubscribeHandlerFn = Callable[[str], None]
 
 # Type alias for a function that handles subscription messages with context
 # The function takes a NotificationContext as input and returns nothing
-VirtualSubscribeHandlerFn = Callable[[NotificationContext], None]
+VirtualSubscribeHandlerFn = Callable[[VirtualAgentNotification], None]
 
 
 class SubscriberStopException(Exception):
@@ -116,7 +116,7 @@ class VirtualSubscriber:
         """
 
         def wrapped_handler(message: str) -> None:
-            notification = NotificationContext(notification=message, configuration=self._fetch_configuration())
+            notification = VirtualAgentNotification(notification=message, configuration=self._fetch_configuration())
             handler(notification)
 
         return self._subscriber.new_job(agent_address, wrapped_handler, background)

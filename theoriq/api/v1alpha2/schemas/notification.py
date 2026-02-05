@@ -7,10 +7,8 @@ from theoriq.dialog.block import BaseTheoriqModel
 T = TypeVar("T", bound=BaseModel)
 
 
-class NotificationContext(BaseTheoriqModel):
-    """
-    Represents a notification message with configuration.
-    """
+class VirtualAgentNotification(BaseTheoriqModel):
+    """Represents a notification message with virtual agent's configuration."""
 
     notification: str
     configuration: Dict[str, Any]

@@ -6,7 +6,7 @@ import pytest
 
 from theoriq.api.v1alpha2 import ProtocolClient
 from theoriq.api.v1alpha2.protocol.biscuit_provider import BiscuitProvider
-from theoriq.api.v1alpha2.schemas import NotificationContext
+from theoriq.api.v1alpha2.schemas import VirtualAgentNotification
 from theoriq.api.v1alpha2.subscribe import Subscriber, SubscriberStopException, VirtualSubscriber
 from theoriq.biscuit import AgentAddress
 
@@ -67,9 +67,9 @@ def test_virtual_subscribe_job_receive_config() -> None:
     client.get_configuration.return_value = subscriber_config
     subscriber = VirtualSubscriber(biscuit_provider, virtual_agent_address=virtual_agent_address, client=client)
 
-    actual: Optional[NotificationContext] = None
+    actual: Optional[VirtualAgentNotification] = None
 
-    def handler(message: NotificationContext) -> None:
+    def handler(message: VirtualAgentNotification) -> None:
         nonlocal actual
         actual = message
 
