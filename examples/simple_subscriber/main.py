@@ -3,17 +3,14 @@ import os
 
 import dotenv
 
-from theoriq.api.v1alpha2.schemas import NotificationContext
 from theoriq.api.v1alpha2.subscribe import Subscriber
 from theoriq.biscuit import AgentAddress
 
 logger = logging.getLogger(__name__)
 
 
-def notification_handler(notification: NotificationContext) -> None:
-    logger.info(f"Notification: {notification.notification}")
-    if notification.configuration:
-        logger.info(f"Configuration: {notification.configuration}")
+def notification_handler(notification: str) -> None:
+    logger.info(notification)
 
 
 if __name__ == "__main__":
