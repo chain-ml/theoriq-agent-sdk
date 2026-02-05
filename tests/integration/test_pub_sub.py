@@ -31,17 +31,13 @@ def assert_notification_queues(*, publisher_queue: List[str], subscriber_queue: 
         assert notification in publisher_queue
 
 
-def get_owner_agent_address(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> AgentAddress:
-    owner_agent_data = agent_registry.get_first_agent_of_type(AgentType.OWNER)
+def get_first_agent_of_type_address(
+    agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], agent_type: AgentType
+) -> AgentAddress:
+    owner_agent_data = agent_registry.get_first_agent_of_type(agent_type)
     owner_name = owner_agent_data.spec.metadata.name
     owner_agent = next(agent for agent in agent_map.values() if agent.metadata.name == owner_name)
     return AgentAddress(owner_agent.system.id)
-
-
-def get_configurable_agent(agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse]) -> AgentResponse:
-    configurable_agent_data = agent_registry.get_first_agent_of_type(AgentType.CONFIGURABLE)
-    configurable_name = configurable_agent_data.spec.metadata.name
-    return next(agent for agent in agent_map.values() if agent.metadata.name == configurable_name)
 
 
 @pytest.mark.order(1)
@@ -60,7 +56,9 @@ def test_registration(
 def test_configuration(
     agent_registry: AgentRegistry, agent_map: Dict[str, AgentResponse], user_manager: AgentManager
 ) -> None:
-    configurable_agent = get_configurable_agent(agent_registry, agent_map)
+    configurable_agent_address = get_first_agent_of_type_address(
+        agent_registry, agent_map, agent_type=AgentType.CONFIGURABLE
+    )
 
     for i in range(1, 3):
         metadata = AgentMetadata(
@@ -70,7 +68,7 @@ def test_configuration(
         )
         config = TestConfig(text=f"Subscriber config #{i}", number=i * 100)
         configuration = AgentConfiguration.for_virtual(
-            agent_id=configurable_agent.system.id, configuration=config.model_dump()
+            agent_id=str(configurable_agent_address), configuration=config.model_dump()
         )
 
         agent = user_manager.create_agent(metadata, configuration)
@@ -108,7 +106,7 @@ def test_subscribing_as_agent(
 
     basic_agent_data = agent_registry.get_first_agent_of_type(AgentType.BASIC)
     subscriber = Subscriber.from_env(env_prefix=basic_agent_data.metadata.labels["env_prefix"])
-    owner_address = get_owner_agent_address(agent_registry, agent_map)
+    owner_address = get_first_agent_of_type_address(agent_registry, agent_map, agent_type=AgentType.OWNER)
     subscriber.new_job(owner_address, subscribing_handler, background=True).start()
 
     time.sleep(1.0)
@@ -129,7 +127,7 @@ def test_subscribing_as_user(
         local_notification_queue.append(message)
 
     subscriber = Subscriber.from_api_key(api_key=theoriq_api_key)
-    owner_address = get_owner_agent_address(agent_registry, agent_map)
+    owner_address = get_first_agent_of_type_address(agent_registry, agent_map, agent_type=AgentType.OWNER)
     subscriber.new_job(owner_address, subscribing_handler, background=True).start()
 
     time.sleep(1.0)
@@ -147,21 +145,21 @@ def test_subscribing_as_virtual_agents(
     virtual_agents = [agent for agent in agent_map.values() if agent.configuration.is_virtual]
     assert len(virtual_agents) == 2
 
-    def make_handler(name: str, expected: Dict[str, Any], queue: List[str]) -> VirtualSubscribeHandlerFn:
+    def make_handler(name: str, expected_configuration: Dict[str, Any], queue: List[str]) -> VirtualSubscribeHandlerFn:
         def subscribing_handler(notification: VirtualAgentNotification) -> None:
             print(f"Got notification {notification} as {name}")
-            assert notification.configuration == expected
+            assert notification.configuration == expected_configuration
 
             parsed_config = notification.try_parse_configuration(TestConfig)
             assert parsed_config is not None
-            assert parsed_config.text == expected["text"]
-            assert parsed_config.number == expected["number"]
+            assert parsed_config.text == expected_configuration["text"]
+            assert parsed_config.number == expected_configuration["number"]
 
             queue.append(notification.notification)
 
         return subscribing_handler
 
-    owner_address = get_owner_agent_address(agent_registry, agent_map)
+    owner_address = get_first_agent_of_type_address(agent_registry, agent_map, agent_type=AgentType.OWNER)
 
     for virtual_agent in virtual_agents:
         local_notification_queue: List[str] = []
