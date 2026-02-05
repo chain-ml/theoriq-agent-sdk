@@ -137,6 +137,20 @@ class VirtualSubscriber:
         self._configuration_hash = agent_metadata.configuration.ensure_virtual.configuration_hash
         return self._configuration_hash
 
+    @classmethod
+    def from_api_key(cls, api_key: str, virtual_agent_address: AgentAddress) -> VirtualSubscriber:
+        return VirtualSubscriber(
+            biscuit_provider=BiscuitProviderFactory.from_api_key(api_key=api_key),
+            virtual_agent_address=virtual_agent_address,
+        )
+
+    @classmethod
+    def from_env(cls, virtual_agent_address_env_name: str, *, env_prefix: str = "") -> VirtualSubscriber:
+        return VirtualSubscriber(
+            biscuit_provider=BiscuitProviderFactory.from_env(env_prefix=env_prefix),
+            virtual_agent_address=AgentAddress.from_env(virtual_agent_address_env_name),
+        )
+
 
 class SubscriberBound:
     """A subscriber bound to a specific agent address for convenient subscription management."""
