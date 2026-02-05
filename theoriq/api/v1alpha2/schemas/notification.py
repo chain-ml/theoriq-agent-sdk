@@ -9,16 +9,13 @@ T = TypeVar("T", bound=BaseModel)
 
 class NotificationContext(BaseTheoriqModel):
     """
-    Represents a notification message with optional configuration.
+    Represents a notification message with configuration.
     """
 
     notification: str
-    configuration: Optional[Dict[str, Any]] = None
+    configuration: Dict[str, Any]
 
     def try_parse_configuration(self, configuration_cls: Type[T]) -> Optional[T]:
-        if self.configuration is None:
-            return None
-
         try:
             return configuration_cls.model_validate(self.configuration)
         except ValidationError:
