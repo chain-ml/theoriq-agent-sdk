@@ -163,8 +163,7 @@ def test_subscribing_as_virtual_agents(
         local_notification_queue: List[str] = []
         expected_config = virtual_agent.configuration.ensure_virtual.configuration
 
-        biscuit_provider = BiscuitProviderFactory.from_api_key(api_key=os.environ["THEORIQ_API_KEY"])
-        subscriber = VirtualSubscriber(biscuit_provider, virtual_agent_address=AgentAddress(virtual_agent.system.id))
+        subscriber = VirtualSubscriber.from_api_key(api_key=os.environ["THEORIQ_API_KEY"], virtual_agent_address=AgentAddress(virtual_agent.system.id))
         handler = make_handler(virtual_agent.metadata.name, expected_config, local_notification_queue)
         subscriber.new_job(owner_address, handler, background=True).start()
 
