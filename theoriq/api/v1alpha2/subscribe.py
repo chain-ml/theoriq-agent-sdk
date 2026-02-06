@@ -3,12 +3,13 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import Callable, Optional
+from typing import Any, Callable, Dict, Optional
 
 from theoriq.biscuit import AgentAddress
 
 from .protocol.biscuit_provider import BiscuitProvider, BiscuitProviderFactory
 from .protocol.protocol_client import ProtocolClient
+from .schemas.notification import VirtualAgentNotification
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,10 @@ logger = logging.getLogger(__name__)
 # Type alias for a function that handles subscription messages
 # The function takes a message string as input and returns nothing
 SubscribeHandlerFn = Callable[[str], None]
+
+# Type alias for a function that handles subscription messages with context
+# The function takes a NotificationContext as input and returns nothing
+VirtualSubscribeHandlerFn = Callable[[VirtualAgentNotification], None]
 
 
 class SubscriberStopException(Exception):
@@ -70,6 +75,81 @@ class Subscriber:
     @classmethod
     def from_env(cls, env_prefix: str = "") -> Subscriber:
         return Subscriber(biscuit_provider=BiscuitProviderFactory.from_env(env_prefix=env_prefix))
+
+
+class VirtualSubscriber:
+    """Enables subscribing to agent notifications with virtual agent address and configuration support."""
+
+    def __init__(
+        self,
+        biscuit_provider: BiscuitProvider,
+        virtual_agent_address: AgentAddress,
+        client: Optional[ProtocolClient] = None,
+    ) -> None:
+        self._client = client or ProtocolClient.from_env()
+        self._biscuit_provider = biscuit_provider
+        self._subscriber = Subscriber(biscuit_provider=self._biscuit_provider, client=self._client)
+        self._virtual_agent_address = virtual_agent_address
+        self._validate_virtual_agent_address()
+
+        self._configuration_hash: Optional[str] = None
+
+    def _validate_virtual_agent_address(self) -> None:
+        """Ensure the provided address is a virtual agent address."""
+        agent_metadata = self._client.get_agent(str(self._virtual_agent_address), self._biscuit_provider.get_biscuit())
+        if not agent_metadata.configuration.is_virtual:
+            raise ValueError(f"Agent {self._virtual_agent_address} is not a virtual agent")
+
+    def new_job(
+        self, agent_address: AgentAddress, handler: VirtualSubscribeHandlerFn, background: bool = False
+    ) -> threading.Thread:
+        """
+        Subscribe to an agent's notifications.
+
+        Args:
+            agent_address: The address of the agent to subscribe to
+            handler: The handler function to call when a message is received
+            background: Whether to run the job in the background
+
+        Returns:
+            A thread object that can be started to run the subscription job
+        """
+
+        def wrapped_handler(message: str) -> None:
+            notification = VirtualAgentNotification(notification=message, configuration=self._fetch_configuration())
+            handler(notification)
+
+        return self._subscriber.new_job(agent_address, wrapped_handler, background)
+
+    def _fetch_configuration(self) -> Dict[str, Any]:
+        return self._client.get_configuration(
+            request_biscuit=self._biscuit_provider.get_biscuit(),
+            agent_address=self._virtual_agent_address,
+            configuration_hash=self._get_configuration_hash(),
+        )
+
+    def _get_configuration_hash(self) -> str:
+        if self._configuration_hash is not None:
+            return self._configuration_hash
+
+        agent_metadata = self._client.get_agent(str(self._virtual_agent_address), self._biscuit_provider.get_biscuit())
+        # ensure virtual is safe because of self._virtual_agent_address was validated during __init__()
+        self._configuration_hash = agent_metadata.configuration.ensure_virtual.configuration_hash
+        return self._configuration_hash
+
+    @classmethod
+    def from_api_key(cls, api_key: str, virtual_agent_address: AgentAddress) -> VirtualSubscriber:
+        return VirtualSubscriber(
+            biscuit_provider=BiscuitProviderFactory.from_api_key(api_key=api_key),
+            virtual_agent_address=virtual_agent_address,
+        )
+
+    @classmethod
+    def from_env(cls, virtual_agent_address_env_name: str, *, env_prefix: str = "") -> VirtualSubscriber:
+        return VirtualSubscriber(
+            biscuit_provider=BiscuitProviderFactory.from_env(env_prefix=env_prefix),
+            virtual_agent_address=AgentAddress.from_env(virtual_agent_address_env_name),
+        )
 
 
 class SubscriberBound:
