@@ -107,7 +107,7 @@ This approach will create a minimal agent that you can run and start interacting
 poetry run add-agent      
 ```
 2. Fill out the requested information based on your preference. If not sure, you can accept the default choices and just press enter.
-3. After you finish the set up, you will have a folder with your project name, and see the commands to install dependencies and run your agent.
+3. After you finish the setup, you will have a folder with your project name, and see the commands to install dependencies and run your agent.
 4. When your agent is running, you can use the provided address of your agent in the terminal in step 3. 
 
 > **_NOTE:_**  If you are running your agent locally and behind a modem, you may need to forward the flask port in your modem. You can find more information here: https://www.noip.com/support/knowledgebase/general-port-forwarding-guide
@@ -149,7 +149,7 @@ By following these steps and precautions, you will maintain the integrity and se
 
 ### Core of the Agent
 
-Writing the core function of an `HelloWorld` Agent
+Writing the core function of a `HelloWorld` Agent
 
 ```python
 def execute(context: ExecuteContext, req: ExecuteRequestBody) -> ExecuteResponse:
