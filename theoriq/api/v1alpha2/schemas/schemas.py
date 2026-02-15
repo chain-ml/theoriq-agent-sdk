@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Sequence, Type, List, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
+from theoriq.dialog import BlockBase
+
+
+BlockTypes = Union[Type[BlockBase[Any, Any]], Sequence[Type[BlockBase[Any, Any]]]]
 
 class ExecuteSchema(BaseModel):
     """
@@ -16,6 +20,15 @@ class ExecuteSchema(BaseModel):
 
     request: Dict[str, Any]
     response: Dict[str, Any]
+
+    @classmethod
+    def from_base_models(cls, request_types: BlockTypes, response_types: BlockTypes) -> ExecuteSchema:
+        request = Union[tuple(request_types)] if isinstance(request_types, list) else request_types
+        response = Union[tuple(response_types)] if isinstance(response_types, list) else response_types
+        return cls(
+            request=RootModel[List[request]].model_json_schema(),
+            response=RootModel[List[response]].model_json_schema(),
+        )
 
 
 class AgentSchemas(BaseModel):
